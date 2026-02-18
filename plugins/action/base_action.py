@@ -481,7 +481,7 @@ class BaseResourceActionPlugin(ActionBase):
                 task_vars=task_vars
             )
         except Exception as e:
-            logger.warning(f"Failed to set facts: {e}")
+            logger.debug(f"Failed to set facts: {e}")
 
         client = ManagerRPCClient(meraki_url, socket_path, authkey)
         logger.info(f"Spawned and connected to new manager at {socket_path}")

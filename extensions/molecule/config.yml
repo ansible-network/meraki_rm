@@ -17,6 +17,9 @@ ansible:
   env:
     ANSIBLE_FORCE_COLOR: "true"
     ANSIBLE_HOST_KEY_CHECKING: "false"
+    ANSIBLE_DEPRECATION_WARNINGS: "false"
+    ANSIBLE_SYSTEM_WARNINGS: "false"
+    ANSIBLE_COMMAND_WARNINGS: "false"
 
 scenario:
   test_sequence:
