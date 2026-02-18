@@ -21,8 +21,8 @@ from __future__ import annotations
 import base64
 import importlib
 import logging
+import os
 import secrets
-import tempfile
 import time
 from pathlib import Path
 
@@ -30,8 +30,10 @@ import yaml
 from ansible.errors import AnsibleError
 from ansible.module_utils.common.arg_spec import ArgumentSpecValidator
 from ansible.plugins.action import ActionBase
+from ansible.utils.display import Display
 
 logger = logging.getLogger(__name__)
+display = Display()
 
 
 class BaseResourceActionPlugin(ActionBase):
@@ -163,6 +165,9 @@ class BaseResourceActionPlugin(ActionBase):
         if task_vars is None:
             task_vars = {}
 
+        self._manager_socket = None
+        self._manager_authkey_b64 = None
+
         args = self._task.args.copy()
 
         try:
@@ -188,12 +193,10 @@ class BaseResourceActionPlugin(ActionBase):
                 )
                 if argspec and gathered:
                     gathered = self._validate_output(gathered, argspec)
-                return {
-                    'failed': False,
-                    'changed': False,
-                    'gathered': gathered,
-                    'config': gathered,
-                }
+                return self._build_result(
+                    failed=False, changed=False,
+                    gathered=gathered, config=gathered,
+                )
 
             # -- mutating states: before → apply → after --------------------
             before = self._do_gathered(
@@ -225,15 +228,22 @@ class BaseResourceActionPlugin(ActionBase):
 
             changed = self._lists_differ(before, after)
 
-            return {
-                'failed': False,
-                'changed': changed,
-                'before': before,
-                'after': after,
-                'config': after,
-            }
+            return self._build_result(
+                failed=False, changed=changed,
+                before=before, after=after, config=after,
+            )
         except Exception as e:
-            return {'failed': True, 'msg': str(e)}
+            return self._build_result(failed=True, msg=str(e))
+
+    def _build_result(self, **kwargs):
+        """Build result dict, injecting ansible_facts for manager reuse."""
+        result = dict(kwargs)
+        if self._manager_socket and self._manager_authkey_b64:
+            result['ansible_facts'] = {
+                'platform_manager_socket': self._manager_socket,
+                'platform_manager_authkey': self._manager_authkey_b64,
+            }
+        return result
 
     # ------------------------------------------------------------------ #
     #  State dispatch helpers                                              #
@@ -302,6 +312,8 @@ class BaseResourceActionPlugin(ActionBase):
             elif self.PRIMARY_KEY and not item.get(self.PRIMARY_KEY):
                 op = 'create'
             else:
+                if before and self._config_matches(item, before[0]):
+                    continue
                 op = operation
 
             manager.execute(op, self.MODULE_NAME, user_data)
@@ -382,22 +394,46 @@ class BaseResourceActionPlugin(ActionBase):
     #  Manager lifecycle                                                   #
     # ------------------------------------------------------------------ #
 
-    def _get_or_spawn_manager(self, task_vars: dict):
+    @staticmethod
+    def _runtime_dir():
+        """Return a user-private runtime directory for sockets, keys, PIDs.
+
+        Prefers $XDG_RUNTIME_DIR (per-user tmpfs, 0700).  Falls back to
+        /tmp/meraki_rm_<uid> created with mode 0700.
         """
-        Get existing manager or spawn new one.
+        base = os.environ.get('XDG_RUNTIME_DIR')
+        if base:
+            d = Path(base) / 'meraki_rm'
+        else:
+            d = Path(f'/tmp/meraki_rm_{os.getuid()}')
+        d.mkdir(mode=0o700, exist_ok=True)
+        return d
 
-        Checks if a manager is already running (stored in hostvars).
-        If found, connects to it. If not, spawns a new manager process.
+    def _get_or_spawn_manager(self, task_vars: dict):
+        """Get existing manager or spawn a new one.
 
-        Args:
-            task_vars: Task variables from Ansible
+        The manager is **always** detached from Python's atexit cleanup so
+        it survives Ansible fork-worker exits (task-to-task reuse).
+
+        Lifecycle is controlled by a ``.survive`` flag file in the runtime
+        directory:
+
+        - **No flag file (production)**: The server process watches
+          ``os.getppid()`` and shuts itself down when the parent
+          ``ansible-playbook`` process exits.  No orphans.
+        - **Flag file present (Molecule)**: No watchdog — the manager
+          lives indefinitely across playbooks.  ``default/destroy.yml``
+          kills it via the PID file and removes all runtime files.
+
+        Reconnection tiers:
+
+        1. **ansible_facts** — socket/authkey injected by a prior task in
+           the same playbook (zero I/O, fastest).
+        2. **socket + keyfile** — the manager from a prior task/playbook
+           is still alive on disk.
 
         Returns:
             ManagerRPCClient instance
-
-        Raises:
-            AnsibleError: If meraki_dashboard_url not configured
-            RuntimeError: If manager fails to start
         """
         from ..plugin_utils.manager.rpc_client import ManagerRPCClient
 
@@ -405,8 +441,6 @@ class BaseResourceActionPlugin(ActionBase):
         inventory_hostname = task_vars.get('inventory_hostname', 'localhost')
         host_vars = hostvars.get(inventory_hostname, {})
 
-        socket_path = host_vars.get('platform_manager_socket')
-        authkey_b64 = host_vars.get('platform_manager_authkey')
         meraki_url = host_vars.get('meraki_dashboard_url')
         meraki_api_key = host_vars.get('meraki_api_key')
 
@@ -414,49 +448,81 @@ class BaseResourceActionPlugin(ActionBase):
             raise AnsibleError(
                 "meraki_dashboard_url must be defined in inventory or host_vars"
             )
-
         if not meraki_api_key:
             raise AnsibleError(
                 "meraki_api_key must be defined in inventory or host_vars"
             )
 
-        if socket_path and authkey_b64 and Path(socket_path).exists():
+        runtime = self._runtime_dir()
+        stem = f'manager_{inventory_hostname}'
+        socket_path = str(runtime / f'{stem}.sock')
+        keyfile = runtime / f'{stem}.key'
+        pidfile = runtime / f'{stem}.pid'
+
+        # ── Tier 1: ansible_facts from a prior task in this playbook ──
+        cached_socket = task_vars.get('platform_manager_socket')
+        cached_authkey_b64 = task_vars.get('platform_manager_authkey')
+
+        if cached_socket and cached_authkey_b64 and Path(cached_socket).exists():
             try:
-                authkey = base64.b64decode(authkey_b64)
-                client = ManagerRPCClient(meraki_url, socket_path, authkey)
-                logger.info("Connected to existing manager")
+                authkey = base64.b64decode(cached_authkey_b64)
+                client = ManagerRPCClient(meraki_url, cached_socket, authkey)
+                display.v("Platform Manager: Tier-1 reconnect via ansible_facts")
                 return client
             except Exception as e:
-                logger.warning(
-                    f"Failed to connect to existing manager: {e}. "
-                    f"Spawning new one..."
-                )
+                display.v(f"Platform Manager: Tier-1 reconnect failed: {e}")
 
-        logger.info("Spawning new Platform Manager")
+        # ── Tier 2: socket + keyfile on disk ──────────────────────────
+        if Path(socket_path).exists() and keyfile.exists():
+            try:
+                authkey = keyfile.read_bytes()
+                client = ManagerRPCClient(meraki_url, socket_path, authkey)
+                display.v(
+                    f"Platform Manager: Tier-2 reconnect via keyfile "
+                    f"at {socket_path}"
+                )
+                return client
+            except Exception as e:
+                display.v(
+                    f"Platform Manager: Tier-2 reconnect failed (stale): {e}"
+                )
+                Path(socket_path).unlink(missing_ok=True)
+                keyfile.unlink(missing_ok=True)
+                pidfile.unlink(missing_ok=True)
+
+        # ── Spawn a new manager ───────────────────────────────────────
+        survive = (runtime / f'{stem}.survive').exists()
+        display.v(
+            f"Platform Manager: spawning new instance (survive={survive})"
+        )
 
         from ..plugin_utils.manager.platform_manager import (
             PlatformManager,
             PlatformService,
         )
 
-        socket_dir = Path(tempfile.gettempdir()) / 'meraki_rm'
-        socket_dir.mkdir(exist_ok=True)
-        socket_path = str(socket_dir / f'manager_{inventory_hostname}.sock')
         authkey = secrets.token_bytes(32)
-
-        if Path(socket_path).exists():
-            try:
-                Path(socket_path).unlink()
-            except Exception as e:
-                logger.warning(f"Failed to remove old socket: {e}")
 
         service = PlatformService(meraki_url, meraki_api_key)
         PlatformManager.register(
             'get_platform_service',
             callable=lambda: service,
         )
+
         manager = PlatformManager(address=socket_path, authkey=authkey)
         manager.start()
+
+        # Always detach from Python's atexit so the server survives
+        # fork-worker exits.  Three mechanisms would otherwise kill it:
+        #   1. atexit joins/terminates active _children
+        #   2. BaseManager._finalize_manager sends shutdown RPC
+        #   3. Process-group signals (os.setsid in server handles #3)
+        import multiprocessing.process
+        from multiprocessing.util import _finalizer_registry
+        multiprocessing.process._children.discard(manager._process)
+        fin = manager.shutdown
+        if hasattr(fin, '_key') and fin._key in _finalizer_registry:
+            del _finalizer_registry[fin._key]
 
         max_wait = 50
         for _ in range(max_wait):
@@ -465,26 +531,26 @@ class BaseResourceActionPlugin(ActionBase):
             time.sleep(0.1)
         else:
             raise RuntimeError(
-                f"Manager failed to start within {max_wait * 0.1} seconds"
+                f"Manager socket not ready after {max_wait * 0.1}s"
             )
 
-        authkey_b64 = base64.b64encode(authkey).decode('utf-8')
-
+        # Always persist runtime files for Tier-2 reconnection.
+        old_umask = os.umask(0o177)
         try:
-            self._execute_module(
-                module_name='ansible.builtin.set_fact',
-                module_args={
-                    'platform_manager_socket': socket_path,
-                    'platform_manager_authkey': authkey_b64,
-                    'cacheable': True
-                },
-                task_vars=task_vars
-            )
-        except Exception as e:
-            logger.debug(f"Failed to set facts: {e}")
+            keyfile.write_bytes(authkey)
+        finally:
+            os.umask(old_umask)
+        pidfile.write_text(str(manager._process.pid))
+
+        display.v(
+            f"Platform Manager: spawned PID {manager._process.pid} "
+            f"at {socket_path}"
+        )
 
         client = ManagerRPCClient(meraki_url, socket_path, authkey)
-        logger.info(f"Spawned and connected to new manager at {socket_path}")
+
+        self._manager_socket = socket_path
+        self._manager_authkey_b64 = base64.b64encode(authkey).decode('utf-8')
 
         return client
 

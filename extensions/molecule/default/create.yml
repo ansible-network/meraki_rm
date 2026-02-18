@@ -30,3 +30,21 @@
       ansible.builtin.set_fact:
         mock_server_pid: "{{ server_start.stdout | trim }}"
         cacheable: true
+
+    - name: Determine runtime directory
+      ansible.builtin.set_fact:
+        _mgr_runtime: >-
+          {{ lookup('env', 'XDG_RUNTIME_DIR')
+             | default('/tmp/meraki_rm_' + lookup('pipe', 'id -u'), true) }}/meraki_rm
+
+    - name: Ensure runtime directory exists
+      ansible.builtin.file:
+        path: "{{ _mgr_runtime }}"
+        state: directory
+        mode: "0700"
+
+    - name: Create .survive flag for platform manager
+      ansible.builtin.file:
+        path: "{{ _mgr_runtime }}/manager_localhost.survive"
+        state: touch
+        mode: "0644"

@@ -653,14 +653,67 @@ class PlatformService:
 
 
 class PlatformManager(ThreadingMixIn, BaseManager):
-    """
-    Custom Manager for sharing PlatformService across processes.
+    """Custom Manager for sharing PlatformService across processes.
 
     Uses ThreadingMixIn to handle concurrent client connections.
     Enables multiple Ansible tasks to communicate with the same
     PlatformService instance via RPC.
 
-    Attributes:
-        daemon_threads: Threads exit when main process exits
+    Lifecycle (handled inside the server child process):
+
+      1. ``os.setsid()`` detaches from the parent's process group.
+      2. A watchdog daemon thread decides when to shut down:
+
+         - **No ``.survive`` flag at startup (production)** — watch
+           ``os.getppid()``.  When the parent ``ansible-playbook``
+           exits, the watchdog sends ``SIGTERM`` to itself.
+         - **``.survive`` flag present at startup (Molecule)** — watch
+           the flag file.  When ``destroy.yml`` removes it, the
+           watchdog sends ``SIGTERM`` to itself.
+
+      The watchdog always runs; the only difference is what it watches.
     """
+
     daemon_threads = True
+
+    @staticmethod
+    def _run_server(*args, **kwargs):
+        """Detach into own session, arm watchdog, then serve."""
+        import os
+        import signal
+
+        os.setsid()
+
+        address = args[1] if len(args) > 1 else kwargs.get('address')
+        survive_file = None
+        if address and isinstance(address, str):
+            from pathlib import Path
+            sf = Path(address).with_suffix('.survive')
+            if sf.exists():
+                survive_file = sf
+
+        parent_pid = os.getppid()
+
+        def _watchdog():
+            while True:
+                time.sleep(2)
+                if survive_file is not None:
+                    if not survive_file.exists():
+                        logger.info(
+                            ".survive removed — shutting down manager"
+                        )
+                        os.kill(os.getpid(), signal.SIGTERM)
+                        break
+                else:
+                    if os.getppid() != parent_pid:
+                        logger.info(
+                            "Parent PID %d gone — shutting down manager",
+                            parent_pid,
+                        )
+                        os.kill(os.getpid(), signal.SIGTERM)
+                        break
+
+        t = threading.Thread(target=_watchdog, daemon=True)
+        t.start()
+
+        BaseManager._run_server(*args, **kwargs)

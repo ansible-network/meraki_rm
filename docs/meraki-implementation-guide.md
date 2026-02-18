@@ -1032,6 +1032,114 @@ See `NESTED_SCENARIOS.md` in the Molecule repo for the full proposal.
 (slash in name, mixed depths) over flags. Make the default behavior smarter rather than
 adding opt-in complexity.
 
+### 24. Singleton Idempotence — Skip Check for Keyless Resources
+
+**Mistake**: Modules without `PRIMARY_KEY` (singletons like `network_settings`,
+`appliance_security`) always sent the API update on every run because the
+`_apply_merged_or_replaced` skip-if-matching check was gated behind
+`if self.PRIMARY_KEY`. The before/after comparison then detected changes introduced
+by the mock server's response (extra fields, type coercion) and reported `changed: true`
+on idempotence replay.
+
+**Fix**: Added a `_config_matches(item, before[0])` check in the `else` branch
+(no PRIMARY_KEY). Singletons now compare the desired config against the existing state
+and skip the API call when all user-supplied fields already match.
+
+**Rule**: Every code path through `_apply_merged_or_replaced` must have a no-op
+short-circuit. Test idempotence for both keyed (list) and keyless (singleton) resources.
+
+### 25. Platform Manager Lifecycle — Surviving the Ansible Fork Model
+
+**Problem**: The multiprocessing manager died after every task. The call chain is
+`ansible-playbook → fork worker → manager.start() → server child`. Three independent
+Python mechanisms conspire to kill the server child when the fork worker exits:
+
+1. `multiprocessing.process._children` — atexit handler joins/terminates active children
+2. `BaseManager._finalize_manager` — a `Finalize` callback sends a shutdown RPC to
+   the server via the socket
+3. Process-group signals — `SIGTERM`/`SIGHUP` sent to the worker's PGID propagate to
+   same-group children
+
+This is unlike the classic "weather station" `BaseManager` pattern where the manager
+IS the main process and nothing kills it.
+
+**Fix**: Always detach, with lifecycle controlled by a `.survive` flag file.
+
+The manager is **always** detached from Python's cleanup (three-part detach below) so
+it survives Ansible fork-worker exits.  This gives task-to-task reuse within a
+playbook and cross-playbook reuse.
+
+```python
+# 1. Remove from _children so atexit won't join/terminate
+multiprocessing.process._children.discard(manager._process)
+
+# 2. Cancel the Finalize callback so atexit won't send shutdown RPC
+fin = manager.shutdown
+del _finalizer_registry[fin._key]
+
+# 3. os.setsid() in PlatformManager._run_server (server-side)
+#    — own session, immune to parent's PGID signals
+```
+
+**Lifecycle — unified watchdog, two strategies:**
+
+A daemon watchdog thread always runs inside the server child process.  At startup it
+checks for a `.survive` flag file next to its socket and picks a strategy:
+
+- **No flag file (production)**: Watch `os.getppid()`.  When the parent
+  `ansible-playbook` process exits, the watchdog sends `SIGTERM` to itself — clean
+  shutdown, no orphans.
+- **Flag file present (Molecule)**: Watch the flag file.  When `destroy.yml` removes
+  it, the watchdog sends `SIGTERM` to itself — clean shutdown, no PID-file parsing or
+  `kill` needed.
+
+`default/create.yml` touches the flag; `default/destroy.yml` removes it and waits for
+the socket to disappear.  No environment variables — the `.survive` file is the only
+interface.
+
+**Reconnection tiers:**
+
+| Tier | Scope | Mechanism |
+|------|-------|-----------|
+| 1 | Task-to-task (same playbook) | `ansible_facts` with socket + authkey |
+| 2 | Task/playbook-to-playbook | Socket + keyfile on disk |
+
+Runtime files (`.sock`, `.key`, `.pid`) are always written so both tiers work in
+all modes.
+
+**Runtime directory**: `$XDG_RUNTIME_DIR/meraki_rm/` (per-user tmpfs, 0700).
+Falls back to `/tmp/meraki_rm_<uid>/` if `XDG_RUNTIME_DIR` is unset.
+
+```
+$XDG_RUNTIME_DIR/meraki_rm/
+├── manager_localhost.sock     # Unix domain socket
+├── manager_localhost.pid      # PID (informational / fallback)
+├── manager_localhost.key      # 32-byte authkey (0600)
+└── manager_localhost.survive  # optional: watchdog watches file not ppid
+```
+
+**Rule**: `BaseManager` is designed for client-server use where the server is the main
+process. When spawning as a child inside Ansible's fork model, you must always detach
+from all three cleanup mechanisms (`_children`, `_finalizer_registry`, PGID signals).
+Use a flag file — not an env var — for lifecycle control since the server child process
+reads it after fork, and env vars don't propagate reliably through Ansible's process
+tree.
+
+### 26. Molecule Wildcard Scenario Selection
+
+**Problem**: Running `molecule test -s 'appliance_vlans/*'` failed because the
+`Scenarios._verify()` method compared the literal `appliance_vlans/*` against
+resolved config names (`appliance_vlans/merged`, etc.) and rejected the mismatch.
+
+**Fix**: After `get_configs()` resolves the glob to actual configs, replace
+`scenario_names` with the discovered config names. This lets the verify pass
+naturally for wildcard expansions. Combined with the collection-mode path-based
+`_resolve_scenario_glob`, users can target all states for a module with a single
+`-s 'module/*'` flag.
+
+**Rule**: When glob-based discovery happens before name validation, the validation
+must accept the expanded names, not the original glob pattern.
+
 ---
 
 ## Related Documents
@@ -1043,4 +1151,4 @@ adding opt-in complexity.
 - [10-case-study-novacom.md](10-case-study-novacom.md) — NovaCom module map (Meraki equivalent)
 - [11-testing-strategy.md](11-testing-strategy.md) — Mock server, Molecule, testing workflow
 
-*Document version: 1.6 | Meraki Dashboard (`cisco.meraki_rm`) | Implementation Guide*
+*Document version: 1.7 | Meraki Dashboard (`cisco.meraki_rm`) | Implementation Guide*

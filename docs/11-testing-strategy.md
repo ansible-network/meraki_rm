@@ -308,6 +308,9 @@ ansible:
   env:
     ANSIBLE_FORCE_COLOR: "true"
     ANSIBLE_HOST_KEY_CHECKING: "false"
+    ANSIBLE_DEPRECATION_WARNINGS: "false"
+    ANSIBLE_SYSTEM_WARNINGS: "false"
+    ANSIBLE_COMMAND_WARNINGS: "false"
 
 scenario:
   test_sequence:
@@ -329,6 +332,7 @@ Key points:
 - **Depth-independent inventory path** — Uses `MOLECULE_PROJECT_DIRECTORY` (collection root) rather than `MOLECULE_SCENARIO_DIRECTORY` to resolve `inventory.yml`. This works regardless of how deeply a scenario is nested (`default/` at depth 1, `appliance_vlans/merged/` at depth 2, etc.).
 - **No create/destroy in component sequence** — Component scenarios run only prepare / converge / verify / idempotence / verify / cleanup. With `shared_state: true`, Molecule delegates lifecycle to the default scenario.
 - **Default scenario** — Has its own `molecule.yml` with `test_sequence: [create, destroy]`. Molecule runs **default create** first, then all component scenarios, then **default destroy** last. This happens for both `molecule test --all` and `molecule test -s appliance_vlans/merged`. One mock server for the whole run. See [Testing resource management playbooks (default scenario)](https://docs.ansible.com/projects/molecule/getting-started-collections/#testing-resource-management-playbooks-default-scenario).
+- **Manager `.survive` flag** — `default/create.yml` touches a `.survive` flag file in the runtime directory. A watchdog thread inside the manager watches this file: while it exists the manager stays alive across playbooks. When `default/destroy.yml` removes the flag, the watchdog shuts the manager down gracefully. In production (no flag), the watchdog instead monitors the parent `ansible-playbook` PID and shuts down when it exits. See Lesson 25.
 - **Idempotence in sequence** — Converge runs twice; second time must produce `changed: false`.
 - **Double verify** — Verify runs after converge and again after idempotence, catching state drift.
 
@@ -355,23 +359,27 @@ With `molecule test --all` or `molecule test -s appliance_vlans/merged`:
 
 ```
 1.  default                        → create     Start mock server
-2.  appliance_vlans/merged         → prepare    (no-op for merged)
-3.  appliance_vlans/merged         → converge   set_fact + module call
-4.  appliance_vlans/merged         → verify     Independent gather + assert
-5.  appliance_vlans/merged         → idempotence  Replay converge → changed: false
-6.  appliance_vlans/merged         → verify     Re-verify
-7.  appliance_vlans/merged         → cleanup    Delete test resources
-8.  appliance_vlans/replaced       → prepare    Seed via merged
-9.  appliance_vlans/replaced       → converge   set_fact + module call (replaced)
-10. appliance_vlans/replaced       → verify/idempotence/verify/cleanup
-11. appliance_vlans/overridden     → prepare/converge/.../cleanup
-12. appliance_vlans/deleted        → prepare/converge/.../cleanup
-13. wireless_ssid/merged           → prepare/converge/.../cleanup
+2.  appliance_vlans/merged         → converge   Module call (spawns Platform Manager)
+3.  appliance_vlans/merged         → verify     Independent gather + assert (reconnects to manager)
+4.  appliance_vlans/merged         → idempotence  Replay converge → changed: false (reconnects)
+5.  appliance_vlans/merged         → verify     Re-verify (reconnects)
+6.  appliance_vlans/merged         → cleanup    Delete test resources (reconnects)
+7.  appliance_vlans/replaced       → prepare    Seed via merged (reconnects to same manager)
+8.  appliance_vlans/replaced       → converge   Module call (replaced)
+9.  appliance_vlans/replaced       → verify/idempotence/verify/cleanup
+10. appliance_vlans/overridden     → prepare/converge/.../cleanup
+11. appliance_vlans/deleted        → prepare/converge/.../cleanup
+12. wireless_ssid/merged           → prepare/converge/.../cleanup
 ...                                → (all per-state scenarios, only with --all)
-N.  default                        → destroy    Stop mock server
+N.  default                        → destroy    Stop mock server + kill Platform Manager
 ```
 
-Mock server runs once. All scenarios share it. Every state for every module gets its own idempotence check.
+Mock server and Platform Manager both run once. The manager is spawned on the first
+module task and reused across all Molecule phases via socket + keyfile reconnection
+(enabled by the `.survive` flag file created in `default/create.yml`). Within a single
+playbook, tasks reuse the manager via `ansible_facts` (zero I/O). `default/destroy.yml`
+removes the `.survive` flag — the manager's watchdog detects this and shuts down
+gracefully. The mock server is killed directly.
 
 ---
 
@@ -788,44 +796,51 @@ The `.pre-commit-config.yaml` wires `inject_examples.py --check` as a hook. If y
 
 With `shared_state: true`, Molecule uses the **default scenario as the lifecycle manager**. Even when targeting a single scenario with `-s`, Molecule runs **default create** first and **default destroy** last. Component scenarios skip create/destroy entirely — they only run their own test sequence (prepare / converge / verify / idempotence / verify / cleanup).
 
-This means the mock server is always started and stopped for you. You never need to start it manually. See the [official Collection Testing guide](https://docs.ansible.com/projects/molecule/getting-started-collections/#shared-state-vs-per-scenario-resources).
+This means the mock server is always started and stopped for you. You never need to start it manually. The Platform Manager (multiprocessing RPC service) is spawned on the first module task and reused across all Molecule phases via socket + keyfile reconnection. See the [official Collection Testing guide](https://docs.ansible.com/projects/molecule/getting-started-collections/#shared-state-vs-per-scenario-resources).
 
-### Single Module
+### Single Module (All States)
 
 ```bash
-# default create → appliance_vlans sequence → default destroy
-molecule test -s appliance_vlans
+# Wildcard: run all states for a module (merged, replaced, overridden, deleted, gathered)
+MOLECULE_GLOB="extensions/molecule/**/molecule.yml" molecule test -s 'appliance_vlans/*'
+```
+
+### Single State
+
+```bash
+# Target a specific state
+MOLECULE_GLOB="extensions/molecule/**/molecule.yml" molecule test -s appliance_vlans/merged
 ```
 
 ### Iteration
 
 ```bash
 # converge/verify only (default scenario still manages server lifecycle)
-molecule converge -s appliance_vlans
-molecule verify -s appliance_vlans
+MOLECULE_GLOB="extensions/molecule/**/molecule.yml" molecule converge -s appliance_vlans/merged
+MOLECULE_GLOB="extensions/molecule/**/molecule.yml" molecule verify -s appliance_vlans/merged
 ```
 
 ### Full Integration Suite
 
 ```bash
-# All module scenarios with shared mock server
-molecule test --all --command-borders --report
+# All module scenarios with shared mock server + platform manager
+MOLECULE_GLOB="extensions/molecule/**/molecule.yml" molecule test --all --command-borders --report
 ```
 
 This runs the complete flow:
 
 ```
 DETAILS
-default            → create:      Start mock server
-appliance_vlans    → prepare:     (no-op)
-appliance_vlans    → converge:    merged.yml + replaced.yml
-appliance_vlans    → verify:      gathered.yml assertions
-appliance_vlans    → idempotence: re-run converge, assert changed: false
-appliance_vlans    → verify:      re-verify after idempotence
-appliance_vlans    → cleanup:     deleted.yml
-wireless_ssid      → prepare/converge/verify/idempotence/verify/cleanup
-...                → (all ~48 module scenarios)
-default            → destroy:     Stop mock server
+default                      → create:      Start mock server
+appliance_vlans/merged       → converge:    Module call (spawns Platform Manager)
+appliance_vlans/merged       → verify/idempotence/verify/cleanup
+appliance_vlans/replaced     → prepare/converge/verify/idempotence/verify/cleanup
+appliance_vlans/overridden   → prepare/converge/.../cleanup
+appliance_vlans/deleted      → prepare/converge/.../cleanup
+appliance_vlans/gathered     → prepare/converge/.../cleanup
+wireless_ssid/merged         → converge/.../cleanup
+...                          → (all ~186 per-state scenarios)
+default                      → destroy:     Stop mock server + kill Platform Manager
 
 SCENARIO RECAP
 default            : actions=2   successful=2
