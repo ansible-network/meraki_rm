@@ -12,7 +12,7 @@ Source paths:
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any, Dict, List, Optional
+from typing import Any, ClassVar, Dict, List, Optional
 
 
 @dataclass
@@ -22,6 +22,11 @@ class WirelessRfProfile:
     Fields use camelCase matching the Meraki Dashboard API.
     The transform mixin converts to/from snake_case User Model fields.
     """
+
+    _FIELD_CONSTRAINTS: ClassVar[dict] = {
+        'bandSelectionType': {'enum': ['ap', 'ssid']},
+        'minBitrateType': {'enum': ['band', 'ssid']},
+    }
 
     # Settings that will be enabled if selectionType is set to 'ap'.
     apBandSettings: Optional[Dict[str, Any]] = None

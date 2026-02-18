@@ -2,10 +2,10 @@
 # -*- coding: utf-8 -*-
 
 # This module is implemented as an action plugin.
-# See plugins/action/meraki_meraki_auth_users.py for the implementation.
+# See plugins/action/meraki_auth_users.py for the implementation.
 
 DOCUMENTATION = r'''
-module: meraki_meraki_auth_users
+module: meraki_auth_users
 
 short_description: Manage Meraki dashboard authentication users
 
@@ -90,7 +90,7 @@ EXAMPLES = r'''
       email_password_to_user: true
 
 - name: Create auth_users with merged state
-  cisco.meraki_rm.meraki_meraki_auth_users:
+  cisco.meraki_rm.meraki_auth_users:
     network_id: "N_123456789012345678"
     state: merged
     config:
@@ -133,7 +133,7 @@ EXAMPLES = r'''
       email_password_to_user: true
 
 - name: Replace auth_users configuration
-  cisco.meraki_rm.meraki_meraki_auth_users:
+  cisco.meraki_rm.meraki_auth_users:
     network_id: "N_123456789012345678"
     state: replaced
     config:
@@ -177,7 +177,7 @@ EXAMPLES = r'''
       email_password_to_user: true
 
 - name: Override all auth_users — desired state only
-  cisco.meraki_rm.meraki_meraki_auth_users:
+  cisco.meraki_rm.meraki_auth_users:
     network_id: "N_123456789012345678"
     state: overridden
     config:
@@ -209,7 +209,7 @@ EXAMPLES = r'''
 # Manage Meraki dashboard authentication users — gather current configuration
 
 - name: Gather current auth_users configuration
-  cisco.meraki_rm.meraki_meraki_auth_users:
+  cisco.meraki_rm.meraki_auth_users:
     network_id: "N_123456789012345678"
     state: gathered
   register: gathered
@@ -233,7 +233,7 @@ EXAMPLES = r'''
       meraki_auth_users_id: example
 
 - name: Delete auth_users configuration
-  cisco.meraki_rm.meraki_meraki_auth_users:
+  cisco.meraki_rm.meraki_auth_users:
     network_id: "N_123456789012345678"
     state: deleted
     config:

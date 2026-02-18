@@ -12,7 +12,7 @@ Source paths:
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any, Dict, List, Optional
+from typing import Any, ClassVar, Dict, List, Optional
 
 
 @dataclass
@@ -22,6 +22,10 @@ class MerakiAuthUser:
     Fields use camelCase matching the Meraki Dashboard API.
     The transform mixin converts to/from snake_case User Model fields.
     """
+
+    _FIELD_CONSTRAINTS: ClassVar[dict] = {
+        'accountType': {'enum': ['802.1X', 'Client VPN', 'Guest']},
+    }
 
     # Authorization type for user.
     accountType: Optional[str] = None

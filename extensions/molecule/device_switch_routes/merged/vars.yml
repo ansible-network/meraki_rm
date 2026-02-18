@@ -1,10 +1,7 @@
 ---
 expected_config:
-  interface_id: example
   name: Test-Config
-  subnet: 192.168.128.0/24
-  interface_ip: 10.0.0.1
-  default_gateway: 10.0.0.1
-  vlan_id: '100'
-  multicast_routing: example
-  dhcp_mode: example
+  subnet: "192.168.128.0/24"
+  interface_ip: "10.0.0.1"
+  default_gateway: "10.0.0.1"
+  multicast_routing: disabled

@@ -1,6 +1,5 @@
 ---
 expected_config:
-  alert_config_id: example
-  type: access
+  type: wanStatus
   enabled: true
   description: Managed by Ansible

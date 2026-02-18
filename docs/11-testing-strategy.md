@@ -19,6 +19,8 @@ This document defines the testing architecture for an OpenAPI-driven resource mo
 3. [Molecule Collection Testing](#section-3-molecule-collection-testing)
 4. [Test Anatomy — Per-Module Scenarios](#section-4-test-anatomy--per-module-scenarios)
 5. [Unit Tests — Colocated `*_test.py` Files](#section-5-unit-tests--colocated-_testpy-files)
+5a. [Contract Tests — `test_action_contracts.py`](#section-5a-contract-tests--testsunittest_action_contractspy)
+5b. [Full-Flow Spec Validation — `test_spec_validation.py`](#section-5b-full-flow-spec-validation--testsunittest_spec_validationpy)
 6. [Adding Tests for a New Module](#section-6-adding-tests-for-a-new-module)
 7. [Running Tests](#section-7-running-tests)
 8. [What Each Layer Catches](#section-8-what-each-layer-catches)
@@ -81,13 +83,19 @@ All three together give confidence: the module speaks the API correctly (Layer 1
                     ├──────────┤  (~45 scenarios, slower ~30s startup)
                     │          │
                ┌────┴──────────┴────┐
+               │  Full-Flow Spec    │  Argspec → transform → validate()
+               │  Validation        │  → jsonschema vs spec (tests/unit/)
+               ├────────────────────┤  (~138 tests, <3 seconds)
+               │  Contract Tests    │  Action plugin ↔ endpoint op wiring
+               │                    │  (tests/unit/, ~414 tests, <2 seconds)
+               ├────────────────────┤
                │  Colocated Unit    │  Sibling *_test.py files in
                │  Tests (pytest)    │  plugin_utils/ — transform
                │                    │  roundtrips, spec drift, types
                └────────────────────┘  (sub-second, no server needed)
 ```
 
-**Unit tests must run first.** Pure-Python data bugs — wrong field names, scope param leaks, broken transforms, missing dataclass fields — should fail in sub-second `pytest` runs, not after a ~30s Molecule startup cycle. Molecule integration tests verify the full CRUD lifecycle against the mock server, but they are the **second** line of defense, not the first.
+**Unit tests must run first.** Pure-Python data bugs — wrong field names, scope param leaks, broken transforms, missing dataclass fields, invalid enum values, argspec mismatches — should fail in sub-second `pytest` runs, not after a ~30s Molecule startup cycle. Molecule integration tests verify the full CRUD lifecycle against the mock server, but they are the **second** line of defense, not the first.
 
 Unit tests run in milliseconds and catch transform logic bugs. Molecule scenarios run in seconds per module and catch integration bugs (wrong endpoint, broken state logic, non-idempotent behavior). Both are needed, but unit tests gate integration.
 
@@ -712,6 +720,113 @@ Separate from colocated tests, the mock server has its own tests in `tests/`:
 
 ---
 
+## SECTION 5a: Contract Tests — `tests/unit/test_action_contracts.py`
+
+### Purpose
+
+Validate the architectural wiring between action plugins, their transform mixins, and endpoint operations. These tests are parametrized over every `meraki_*.py` action plugin and run entirely in Python — no Ansible runtime, no mock server.
+
+### Location
+
+```
+tests/unit/
+├── conftest.py                  # Shared discovery helpers (parse_action_plugin, load_classes)
+├── test_action_contracts.py     # Contract validation (~414 tests)
+└── test_spec_validation.py      # Full-flow spec validation (Section 5b)
+```
+
+### What Contract Tests Validate
+
+| Contract | Assertion |
+|---|---|
+| **State routing** | Every state in `VALID_STATES` maps to an existing endpoint operation (`merged` → `update` or `create`, `deleted` → `delete`, `gathered` → `find`) |
+| **Identity fields** | `SCOPE_PARAM` and `PRIMARY_KEY` exist as fields on the User Model dataclass |
+| **Field mapping keys** | Every key in `_field_mapping` is a real field on the User Model |
+| **Field mapping values** | Every value in `_field_mapping` is a real field on the API class |
+| **Endpoint fields** | Fields listed in `EndpointOperation.fields` exist on the API class |
+| **Data roundtrip** | `UserModel → .to_api() → .to_ansible()` preserves all mapped field values |
+
+### Discovery
+
+Tests dynamically discover all action plugins by globbing `plugins/action/meraki_*.py`, parsing class attributes (`MODULE_NAME`, `SCOPE_PARAM`, `USER_MODEL`, `PRIMARY_KEY`, `VALID_STATES`, `SUPPORTS_DELETE`) from source text without importing, then loading the corresponding classes.
+
+### Why These Live in `tests/unit/` Not `plugins/`
+
+Ansible's plugin loader scans `plugins/` directories. Test files placed there would be mistakenly loaded as plugins. The `tests/unit/` location avoids this, with `conftest.py` adding `plugins/` to `sys.path` for imports.
+
+---
+
+## SECTION 5b: Full-Flow Spec Validation — `tests/unit/test_spec_validation.py`
+
+### Purpose
+
+End-to-end validation of the data pipeline from Molecule fixture data through the transform layer to the OpenAPI spec — without running Ansible, Molecule, or the mock server. Uses the same `vars.yml` files that Molecule uses as fixtures.
+
+### Three Stages
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│ Stage 0: Argspec Validation                                     │
+│ "Does the fixture data pass Ansible's own argument spec?"       │
+│                                                                  │
+│ Loads DOCUMENTATION from the module file, feeds vars.yml data   │
+│ through Ansible's ArgumentSpecValidator — type coercion,        │
+│ choices, required_if, mutually_exclusive, nested suboptions.    │
+└─────────────────────────────────────────────────────────────────┘
+                              │
+                              ▼
+┌─────────────────────────────────────────────────────────────────┐
+│ Stage 1: Outbound — Request Body Validation                     │
+│ "Does the transformed API payload match the OpenAPI spec?"      │
+│                                                                  │
+│ vars.yml → UserModel(**config) → .to_api() → validate()        │
+│ (checks _FIELD_CONSTRAINTS enums) → build request body          │
+│ → jsonschema.validate() against spec's request schema           │
+└─────────────────────────────────────────────────────────────────┘
+                              │
+                              ▼
+┌─────────────────────────────────────────────────────────────────┐
+│ Stage 2: Inbound — Response Roundtrip Validation                │
+│ "Does a spec-shaped response survive the reverse transform?"    │
+│                                                                  │
+│ Simulated response (request body + schema defaults + identity   │
+│ fields) → _safe_construct(APIClass) → .to_ansible()             │
+│ → assert every expected_config key matches                      │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+### `_FIELD_CONSTRAINTS` — Spec-Derived Validation on API Dataclasses
+
+The code generator (`tools/generators/extract_meraki_schemas.py`) extracts enum constraints from the OpenAPI spec and emits them as `_FIELD_CONSTRAINTS` class variables on generated API dataclasses:
+
+```python
+@dataclass
+class WirelessRfProfile:
+    _FIELD_CONSTRAINTS: ClassVar[dict] = {
+        'bandSelectionType': {'enum': ['ap', 'ssid']},
+        'minBitrateType': {'enum': ['band', 'ssid']},
+    }
+    # ... fields ...
+```
+
+`BaseTransformMixin.validate()` checks these constraints and raises `ValueError` listing all violations. This fires in tests and can be called in the action plugin before building request bodies — catching bad values *before* the API call.
+
+### Discovery
+
+Fixtures are discovered by globbing `extensions/molecule/*/merged/vars.yml`. Each directory name maps to an action plugin file `plugins/action/meraki_{dir_name}.py`, and the corresponding module file `plugins/modules/meraki_{dir_name}.py` provides the argspec.
+
+### Fixture Data as Single Source of Truth
+
+The `vars.yml` files serve triple duty:
+
+1. **Molecule integration tests** — converge/verify playbooks load them
+2. **Full-flow spec validation** — this test suite uses them as fixtures
+3. **Documentation** — `inject_examples.py` renders them into module `EXAMPLES`
+
+When a `vars.yml` changes, all three consumers automatically pick up the change.
+
+---
+
 ## SECTION 6: Adding Tests for a New Module
 
 When adding a new resource module (see [07-adding-resources.md](07-adding-resources.md)), follow this checklist to add tests.
@@ -866,10 +981,16 @@ pytest plugins/plugin_utils/platform/ -v
 # Spec drift detection only
 pytest plugins/plugin_utils/api/v1/generated/ -v
 
-# Mock server self-tests (in tests/ tree)
+# Contract tests — action plugin ↔ endpoint wiring (~414 tests, <2 seconds)
+pytest tests/unit/test_action_contracts.py -v
+
+# Full-flow spec validation — argspec + transform + jsonschema (~138 tests, <3 seconds)
+pytest tests/unit/test_spec_validation.py -v
+
+# All tests/ tree (contract + spec validation + mock server self-tests)
 pytest tests/ -v
 
-# Everything
+# Everything (colocated + tests/ tree)
 pytest -v
 ```
 
@@ -905,7 +1026,7 @@ jobs:
       - run: molecule test --all --report
 ```
 
-Unit tests run first (fast gate — ~700 tests in <2s). Integration tests run only if unit tests pass. This prevents wasting CI minutes on Molecule runs that would fail due to a simple field mapping bug.
+Unit tests run first (fast gate — ~1200+ tests in <5s across colocated, contract, and spec validation). Integration tests run only if unit tests pass. This prevents wasting CI minutes on Molecule runs that would fail due to a simple field mapping bug, an invalid enum value, or an argspec mismatch.
 
 ---
 
@@ -913,38 +1034,46 @@ Unit tests run first (fast gate — ~700 tests in <2s). Integration tests run on
 
 ### Bug Category to Test Layer Matrix
 
-| Bug Category | Colocated Unit (Tier) | Spec Validation (Mock) | Molecule Behavior | Molecule Idempotence |
-|---|---|---|---|---|
-| **Wrong camelCase field name** (e.g., `applianceIP` instead of `applianceIp`) | Tier 1 forward (AttributeError) | Catches (400 from mock) | — | — |
-| **Wrong field mapping** (e.g., `id` vs `qualityRetentionProfileId`) | Tier 1 forward / Tier 2 reverse | Catches (wrong payload) | — | — |
-| **Scope param leaks into API output** (`networkId` in body) | Tier 1 scope exclusion | Catches (extra field) | — | — |
-| **Missing required field in request** | — | Catches (400 from mock) | — | — |
-| **Invalid field type** (string where int expected) | — | Catches (400 from mock) | — | — |
-| **Wrong API endpoint path** | Tier 2 endpoint ops | Catches (404 from mock) | — | — |
-| **Broken forward transform** (User → API) | Tier 1 forward + Tier 2 roundtrip | Catches (invalid payload) | — | — |
-| **Broken reverse transform** (API → User) | Tier 2 reverse + roundtrip | — | Catches (verify assertions fail) | — |
-| **Generated dataclass field drift** (spec regeneration) | Tier 3 spec drift | — | — | — |
-| **Extra/missing fields on generated dataclass** | Tier 3 field count + inventory | — | — | — |
-| **BaseTransformMixin field filtering broken** | Tier 4 base_transform | — | Catches (constructor error) | — |
-| **Module creates wrong resource** | — | — | Catches (verify finds wrong data) | — |
-| **Module does not create resource** | — | — | Catches (verify finds nothing) | — |
-| **Module does not update resource** | — | — | Catches (verify finds old data) | — |
-| **Module does not delete resource** | — | — | Catches (cleanup + verify) | — |
-| **Module not idempotent** (re-creates on re-run) | — | — | — | Catches (changed: true on re-run) |
-| **Spurious diff** (unchanged field reported as changed) | — | — | — | Catches (changed: true on re-run) |
-| **Gathered output does not match merged input format** | — | — | Catches (verify assertions fail) | — |
-| **Read-only field leaks into write** | — | Catches (extra field in request) | — | — |
-| **Name-to-ID transform broken** | Tier 2 roundtrip | — | Catches (wrong IDs in request) | — |
-| **Multi-endpoint ordering wrong** | — | — | Catches (dependent operation fails) | — |
+| Bug Category | Colocated Unit (Tier) | Contract Tests | Full-Flow Spec | Spec Validation (Mock) | Molecule Behavior | Molecule Idempotence |
+|---|---|---|---|---|---|---|
+| **Wrong camelCase field name** | Tier 1 forward (AttributeError) | — | — | Catches (400) | — | — |
+| **Wrong field mapping** | Tier 1 forward / Tier 2 reverse | — | — | Catches (wrong payload) | — | — |
+| **Scope param leaks into API output** | Tier 1 scope exclusion | — | — | Catches (extra field) | — | — |
+| **Missing required field in request** | — | — | Catches (jsonschema) | Catches (400) | — | — |
+| **Invalid enum value** (e.g., `"example"`) | — | — | Catches (validate() + jsonschema) | Catches (400) | — | — |
+| **Invalid field type** (string where int) | — | — | Catches (argspec + jsonschema) | Catches (400) | — | — |
+| **Argspec choices violation** | — | — | Catches (ArgumentSpecValidator) | — | — | — |
+| **Wrong API endpoint path** | Tier 2 endpoint ops | — | — | Catches (404) | — | — |
+| **State has no matching endpoint op** | — | Catches (state routing) | — | — | — | — |
+| **PRIMARY_KEY missing from user model** | — | Catches (identity fields) | — | — | — | — |
+| **Endpoint field not on API class** | — | Catches (endpoint fields) | — | — | — | — |
+| **Broken forward transform** (User → API) | Tier 1 forward + Tier 2 roundtrip | — | Catches (jsonschema) | Catches (invalid payload) | — | — |
+| **Broken reverse transform** (API → User) | Tier 2 reverse + roundtrip | — | Catches (roundtrip) | — | Catches (verify) | — |
+| **Generated dataclass field drift** | Tier 3 spec drift | — | — | — | — | — |
+| **Extra/missing fields on generated dataclass** | Tier 3 field count + inventory | — | — | — | — | — |
+| **BaseTransformMixin field filtering broken** | Tier 4 base_transform | — | — | — | Catches (constructor error) | — |
+| **Module creates wrong resource** | — | — | — | — | Catches (verify) | — |
+| **Module does not create resource** | — | — | — | — | Catches (verify) | — |
+| **Module does not update resource** | — | — | — | — | Catches (verify) | — |
+| **Module does not delete resource** | — | — | — | — | Catches (cleanup) | — |
+| **Module not idempotent** | — | — | — | — | — | Catches (changed: true) |
+| **Spurious diff** | — | — | — | — | — | Catches (changed: true) |
+| **Gathered output ≠ merged input format** | — | — | Catches (roundtrip) | — | Catches (verify) | — |
+| **Read-only field leaks into write** | — | — | — | Catches (extra field) | — | — |
+| **Name-to-ID transform broken** | Tier 2 roundtrip | — | — | — | Catches (wrong IDs) | — |
+| **Multi-endpoint ordering wrong** | — | — | — | — | Catches (dependent op fails) | — |
+| **vars.yml fixture data invalid** | — | — | Catches (all 3 stages) | — | — | — |
 
 ### Reading the Matrix
 
-- **Colocated unit tests (Tiers 1–4)** catch pure-Python data bugs in sub-seconds. No server, no Ansible, no YAML. These are the **first line of defense** — run them before anything else. Most transform and field mapping bugs appear here.
-- **Spec validation** catches HTTP contract bugs. The mock server enforces the spec so the module cannot lie about what it sends.
+- **Colocated unit tests (Tiers 1–4)** catch pure-Python data bugs in sub-seconds. No server, no Ansible, no YAML. First line of defense.
+- **Contract tests** catch architectural wiring bugs — state-to-operation mismatches, missing identity fields, broken field lists. Pure Python, ~1 second.
+- **Full-flow spec validation** catches data-level bugs — invalid enums, type mismatches, argspec violations, request schema violations, response roundtrip drift. Uses the same vars.yml fixtures as Molecule but runs in ~2 seconds.
+- **Spec validation (mock server)** catches HTTP contract bugs at runtime. The mock server enforces the spec at the wire level.
 - **Molecule behavior** catches functional bugs. The module must actually do what the user asked.
 - **Molecule idempotence** catches convergence bugs. The module must detect existing state and not act unnecessarily.
 
-No single column covers all rows. All four are needed for confidence. But the leftmost column (unit tests) is the fastest and should be the first gate in CI and in the developer workflow.
+No single column covers all rows. All six are needed for confidence. The leftmost columns are the fastest and should be the first gate in CI.
 
 ---
 
@@ -953,7 +1082,10 @@ No single column covers all rows. All four are needed for confidence. But the le
 | Component | Location | Purpose |
 |---|---|---|
 | **Colocated Unit Tests** | `plugins/plugin_utils/**/*_test.py` | Transform roundtrips, spec drift, foundation (700+ tests) |
+| **Contract Tests** | `tests/unit/test_action_contracts.py` | Action plugin ↔ endpoint wiring validation (414+ tests) |
+| **Full-Flow Spec Validation** | `tests/unit/test_spec_validation.py` | Argspec + transform + jsonschema validation (138+ tests) |
 | **Test Generator** | `tools/generate_model_tests.py` | Auto-generates Tier 1–3 `*_test.py` files from dataclass introspection |
+| **Schema Generator** | `tools/generators/extract_meraki_schemas.py` | Generates API dataclasses with `_FIELD_CONSTRAINTS` from spec |
 | **pytest Config** | `pyproject.toml` | Discovers `*_test.py` in both `tests/` and `plugins/` |
 | **Examples** | `examples/{module}/{state}.yml` | Source of truth for docs + tests |
 | **Injection Hook** | `tools/inject_examples.py` | Syncs examples into module `EXAMPLES` strings |
@@ -969,7 +1101,9 @@ No single column covers all rows. All four are needed for confidence. But the le
 | Command | Purpose | Speed |
 |---|---|---|
 | `pytest plugins/ -v` | Colocated unit tests (transforms, spec drift, foundation) | <2 seconds |
-| `pytest -v` | All unit tests (colocated + tests/ tree) | <3 seconds |
+| `pytest tests/unit/test_action_contracts.py -v` | Contract tests (action plugin ↔ endpoint wiring) | <2 seconds |
+| `pytest tests/unit/test_spec_validation.py -v` | Full-flow spec validation (argspec + transform + jsonschema) | <3 seconds |
+| `pytest -v` | All unit tests (colocated + contract + spec + mock server) | <5 seconds |
 | `molecule test -s {module}` | Single module integration test | ~30 seconds |
 | `molecule test --all --report` | Full integration suite (~48 modules) | Minutes |
 
@@ -979,6 +1113,7 @@ No single column covers all rows. All four are needed for confidence. But the le
 |---|---|
 | `python tools/generate_model_tests.py` | (Re)generate colocated `*_test.py` files from dataclass introspection |
 | `python tools/generate_model_tests.py --check` | Dry-run: report what would change without writing |
+| `python -m tools.generators.extract_meraki_schemas --spec spec3.json --output plugins/plugin_utils/api/v1/generated/` | (Re)generate API dataclasses with `_FIELD_CONSTRAINTS` from OpenAPI spec |
 | `python tools/generate_examples.py` | (Re)generate per-state example files from DOCUMENTATION |
 | `python tools/inject_examples.py` | Inject examples into module `EXAMPLES` strings |
 | `python tools/inject_examples.py --check` | Verify all modules are in sync (pre-commit hook) |
@@ -994,4 +1129,4 @@ No single column covers all rows. All four are needed for confidence. But the le
 - [09-agent-collaboration.md](09-agent-collaboration.md) — Agent testing workflow (Phase C)
 - [10-case-study-novacom.md](10-case-study-novacom.md) — Module map drives the scenario list
 
-*Document version: 1.2 | OpenAPI Resource Module SDK | Testing Strategy*
+*Document version: 1.3 | OpenAPI Resource Module SDK | Testing Strategy*

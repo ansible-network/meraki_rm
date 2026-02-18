@@ -1,10 +1,6 @@
 ---
 expected_config:
-  policy_object_id: example
   name: Test-Config
   category: adaptivePolicy
   type: adaptivePolicyIpv4Cidr
   cidr: 192.168.128.0/24
-  fqdn: example.com
-  ip: 10.0.0.1
-  mask: 24

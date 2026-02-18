@@ -1,6 +1,5 @@
 ---
 expected_config:
-  port_id: '1'
   enabled: true
   type: access
   vlan: 1

@@ -15,7 +15,7 @@ Source paths:
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any, Dict, List, Optional
+from typing import Any, ClassVar, Dict, List, Optional
 
 
 @dataclass
@@ -25,6 +25,13 @@ class ConfigTemplate:
     Fields use camelCase matching the Meraki Dashboard API.
     The transform mixin converts to/from snake_case User Model fields.
     """
+
+    _FIELD_CONSTRAINTS: ClassVar[dict] = {
+        'accessPolicyType': {'enum': ['Custom access policy', 'MAC allow list', 'Open', 'Sticky MAC allow list']},
+        'stpGuard': {'enum': ['bpdu guard', 'disabled', 'loop guard', 'root guard']},
+        'type': {'enum': ['access', 'dad', 'routed', 'stack', 'svl', 'trunk']},
+        'udld': {'enum': ['Alert only', 'Enforce']},
+    }
 
     # The number of a custom access policy to configure on the switch template ...
     accessPolicyNumber: Optional[int] = None

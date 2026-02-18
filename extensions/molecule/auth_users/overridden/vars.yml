@@ -1,6 +1,5 @@
 ---
 expected_config:
-  meraki_auth_users_id: example
   name: Replaced-Config
   email: replaced-admin@example.com
   password: example

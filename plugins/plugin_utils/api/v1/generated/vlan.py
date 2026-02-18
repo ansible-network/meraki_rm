@@ -13,7 +13,7 @@ Source paths:
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any, Dict, List, Optional
+from typing import Any, ClassVar, Dict, List, Optional
 
 
 @dataclass
@@ -23,6 +23,12 @@ class Vlan:
     Fields use camelCase matching the Meraki Dashboard API.
     The transform mixin converts to/from snake_case User Model fields.
     """
+
+    _FIELD_CONSTRAINTS: ClassVar[dict] = {
+        'dhcpHandling': {'enum': ['Do not respond to DHCP requests', 'Relay DHCP to another server', 'Run a DHCP server']},
+        'dhcpLeaseTime': {'enum': ['1 day', '1 hour', '1 week', '12 hours', '30 minutes', '4 hours']},
+        'templateVlanType': {'enum': ['same', 'unique']},
+    }
 
     # The local IP of the appliance on the VLAN
     applianceIp: Optional[str] = None

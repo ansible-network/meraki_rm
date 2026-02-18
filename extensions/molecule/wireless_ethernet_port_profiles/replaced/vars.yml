@@ -1,5 +1,4 @@
 ---
 expected_config:
-  profile_id: example
   name: Replaced-Config
   is_default: true

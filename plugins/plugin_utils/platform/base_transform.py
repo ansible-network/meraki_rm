@@ -323,13 +323,35 @@ class BaseTransformMixin(ABC):
             f"{cls.__name__} must implement _get_ansible_class()"
         )
 
-    def validate(self) -> bool:
-        """
-        Hook for module-specific validation.
+    def validate(self) -> None:
+        """Validate field values against spec-derived constraints.
 
-        Subclasses can override to add custom validation logic.
+        Checks _FIELD_CONSTRAINTS (emitted by the generator on API
+        dataclasses) for enum membership.  Raises ValueError listing
+        every violation so the caller gets a single, complete report.
 
-        Returns:
-            True if valid, False otherwise
+        Subclasses can call super().validate() and add custom checks.
+
+        Raises:
+            ValueError: One or more fields violate their constraints.
         """
-        return True
+        constraints = getattr(self, '_FIELD_CONSTRAINTS', None)
+        if not constraints:
+            return
+
+        errors = []
+        for field_name, rules in constraints.items():
+            value = getattr(self, field_name, None)
+            if value is None:
+                continue
+            allowed = rules.get('enum')
+            if allowed and value not in allowed:
+                errors.append(
+                    f"{field_name}={value!r} not in {allowed}"
+                )
+
+        if errors:
+            cls_name = type(self).__name__
+            raise ValueError(
+                f"{cls_name} constraint violations: {'; '.join(errors)}"
+            )

@@ -1,4 +1,2 @@
 ---
 expected_config:
-  port_id: '1'
-  port_schedule_id: example

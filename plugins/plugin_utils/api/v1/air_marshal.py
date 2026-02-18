@@ -35,24 +35,9 @@ class AirMarshalTransformMixin_v1(BaseTransformMixin):
                 required_for='create',
                 order=1,
             ),
-            'find': EndpointOperation(
-                path='/networks/{networkId}/wireless/airMarshal/rules/{ruleId}',
-                method='GET',
-                fields=[],
-                path_params=['networkId', 'ruleId'],
-                path_param_aliases=_PATH_PARAM_ALIASES,
-                required_for='find',
-                order=2,
-            ),
-            'find_all': EndpointOperation(
-                path='/networks/{networkId}/wireless/airMarshal/rules',
-                method='GET',
-                fields=[],
-                path_params=['networkId'],
-                path_param_aliases=_PATH_PARAM_ALIASES,
-                required_for='find',
-                order=1,
-            ),
+            # Note: The spec has no GET for network-level air marshal rules.
+            # Listing is at org level: GET /organizations/{orgId}/wireless/airMarshal/rules
+            # gather/find is not supported for this resource at the network scope.
             'update': EndpointOperation(
                 path='/networks/{networkId}/wireless/airMarshal/rules/{ruleId}',
                 method='PUT',

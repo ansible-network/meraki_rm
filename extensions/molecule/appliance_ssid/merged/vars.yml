@@ -6,5 +6,4 @@ expected_config:
   auth_mode: open
   encryption_mode: wpa
   psk: testpassword123
-  default_vlan_id: 1
   visible: true

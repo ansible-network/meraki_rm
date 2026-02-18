@@ -1,6 +1,6 @@
 ---
 expected_config:
-  switch_stack_id: example
   name: Test-Config
-  is_monitor_only: true
-  virtual_mac: example
+  serials:
+    - "Q2XX-XXXX-0001"
+    - "Q2XX-XXXX-0002"

@@ -12,7 +12,7 @@ Source paths:
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any, Dict, List, Optional
+from typing import Any, ClassVar, Dict, List, Optional
 
 
 @dataclass
@@ -22,6 +22,11 @@ class SwitchAccessPolicy:
     Fields use camelCase matching the Meraki Dashboard API.
     The transform mixin converts to/from snake_case User Model fields.
     """
+
+    _FIELD_CONSTRAINTS: ClassVar[dict] = {
+        'accessPolicyType': {'enum': ['802.1x', 'Hybrid authentication', 'MAC authentication bypass']},
+        'hostMode': {'enum': ['Multi-Auth', 'Multi-Domain', 'Multi-Host', 'Single-Host']},
+    }
 
     # Access policy number is used to identify the access policy within the net...
     accessPolicyNumber: Optional[str] = None

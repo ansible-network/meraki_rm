@@ -4,6 +4,11 @@
   hosts: localhost
   gather_facts: false
   tasks:
+    - name: Kill any stale mock server on target port
+      ansible.builtin.shell: |
+        fuser {{ mock_server_port }}/tcp -k 2>/dev/null || true
+      changed_when: false
+
     - name: Start mock server in background
       ansible.builtin.command:
         cmd: >-

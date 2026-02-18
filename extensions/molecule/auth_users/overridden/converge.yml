@@ -6,7 +6,7 @@
   - vars.yml
   tasks:
   - name: "Override all auth_users \u2014 desired state only"
-    cisco.meraki_rm.meraki_meraki_auth_users:
+    cisco.meraki_rm.meraki_auth_users:
       network_id: N_123456789012345678
       state: overridden
       config:

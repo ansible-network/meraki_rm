@@ -476,11 +476,19 @@ def main() -> None:
         os.setsid()
         # Close inherited file descriptors so the parent (Ansible command
         # module) doesn't block waiting for pipe EOF.
+        log_path = os.environ.get(
+            'MOCK_SERVER_LOG', os.devnull,
+        )
         devnull = os.open(os.devnull, os.O_RDWR)
         os.dup2(devnull, 0)
-        os.dup2(devnull, 1)
-        os.dup2(devnull, 2)
         os.close(devnull)
+        log_fd = os.open(
+            log_path, os.O_WRONLY | os.O_CREAT | os.O_APPEND, 0o644,
+        )
+        os.dup2(log_fd, 1)
+        os.dup2(log_fd, 2)
+        if log_fd > 2:
+            os.close(log_fd)
 
     app = create_app(args.spec)
     app.run(host=args.host, port=args.port, debug=args.debug)

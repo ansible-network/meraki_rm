@@ -18,7 +18,7 @@ Source paths:
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any, Dict, List, Optional
+from typing import Any, ClassVar, Dict, List, Optional
 
 
 @dataclass
@@ -28,6 +28,11 @@ class AdaptivePolicy:
     Fields use camelCase matching the Meraki Dashboard API.
     The transform mixin converts to/from snake_case User Model fields.
     """
+
+    _FIELD_CONSTRAINTS: ClassVar[dict] = {
+        'ipVersion': {'enum': ['any', 'ipv4', 'ipv6']},
+        'lastEntryRule': {'enum': ['allow', 'default', 'deny']},
+    }
 
     # ID of the adaptive policy ACL
     aclId: Optional[str] = None

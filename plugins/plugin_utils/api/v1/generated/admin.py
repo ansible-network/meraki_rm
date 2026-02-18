@@ -12,7 +12,7 @@ Source paths:
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any, Dict, List, Optional
+from typing import Any, ClassVar, Dict, List, Optional
 
 
 @dataclass
@@ -22,6 +22,12 @@ class Admin:
     Fields use camelCase matching the Meraki Dashboard API.
     The transform mixin converts to/from snake_case User Model fields.
     """
+
+    _FIELD_CONSTRAINTS: ClassVar[dict] = {
+        'accountStatus': {'enum': ['locked', 'ok', 'pending', 'unverified']},
+        'authenticationMethod': {'enum': ['Cisco SecureX Sign-On', 'Email']},
+        'orgAccess': {'enum': ['enterprise', 'full', 'none', 'read-only']},
+    }
 
     # Status of the admin's account
     accountStatus: Optional[str] = None

@@ -12,7 +12,7 @@ Source paths:
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any, Dict, List, Optional
+from typing import Any, ClassVar, Dict, List, Optional
 
 
 @dataclass
@@ -22,6 +22,10 @@ class OrgAlertProfile:
     Fields use camelCase matching the Meraki Dashboard API.
     The transform mixin converts to/from snake_case User Model fields.
     """
+
+    _FIELD_CONSTRAINTS: ClassVar[dict] = {
+        'type': {'enum': ['appOutage', 'voipJitter', 'voipMos', 'voipPacketLoss', 'wanLatency', 'wanPacketLoss', 'wanStatus', 'wanUtilization']},
+    }
 
     # The conditions that determine if the alert triggers
     alertCondition: Optional[Dict[str, Any]] = None

@@ -1,7 +1,9 @@
 ---
 expected_config:
   mode: none
-  subnet: 192.168.128.0/24
+  subnets:
+    - localSubnet: "192.168.128.0/24"
+      useVpn: true
   enabled: true
   as_number: 1
   ibgp_hold_timer: 1

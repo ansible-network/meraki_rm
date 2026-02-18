@@ -16,7 +16,7 @@ Source paths:
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any, Dict, List, Optional
+from typing import Any, ClassVar, Dict, List, Optional
 
 
 @dataclass
@@ -26,6 +26,11 @@ class NetworkSettings:
     Fields use camelCase matching the Meraki Dashboard API.
     The transform mixin converts to/from snake_case User Model fields.
     """
+
+    _FIELD_CONSTRAINTS: ClassVar[dict] = {
+        'access': {'enum': ['community', 'none', 'users']},
+        'mode': {'enum': ['basic', 'detailed', 'disabled']},
+    }
 
     # The type of SNMP access. Can be one of 'none' (disabled), 'community' (V1...
     access: Optional[str] = None

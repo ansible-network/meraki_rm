@@ -20,6 +20,7 @@ ansible:
     ANSIBLE_DEPRECATION_WARNINGS: "false"
     ANSIBLE_SYSTEM_WARNINGS: "false"
     ANSIBLE_COMMAND_WARNINGS: "false"
+    MOCK_SERVER_LOG: "/tmp/mock_server.log"
 
 scenario:
   test_sequence:

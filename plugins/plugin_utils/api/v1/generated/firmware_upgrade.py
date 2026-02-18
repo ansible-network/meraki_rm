@@ -18,7 +18,7 @@ Source paths:
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any, Dict, List, Optional
+from typing import Any, ClassVar, Dict, List, Optional
 
 
 @dataclass
@@ -28,6 +28,11 @@ class FirmwareUpgrade:
     Fields use camelCase matching the Meraki Dashboard API.
     The transform mixin converts to/from snake_case User Model fields.
     """
+
+    _FIELD_CONSTRAINTS: ClassVar[dict] = {
+        'product': {'enum': ['appliance', 'camera', 'cellularGateway', 'secureConnect', 'switch', 'switchCatalyst', 'wireless', 'wirelessController']},
+        'status': {'enum': ['canceled', 'completed', 'in_progress', 'pending']},
+    }
 
     # Array of Staged Upgrade Groups
     _json: Optional[List[Dict[str, Any]]] = None

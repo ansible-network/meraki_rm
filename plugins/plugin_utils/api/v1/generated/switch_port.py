@@ -15,7 +15,7 @@ Source paths:
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any, Dict, List, Optional
+from typing import Any, ClassVar, Dict, List, Optional
 
 
 @dataclass
@@ -25,6 +25,16 @@ class SwitchPort:
     Fields use camelCase matching the Meraki Dashboard API.
     The transform mixin converts to/from snake_case User Model fields.
     """
+
+    _FIELD_CONSTRAINTS: ClassVar[dict] = {
+        'accessPolicyType': {'enum': ['Custom access policy', 'MAC allow list', 'Open', 'Sticky MAC allow list']},
+        'duplex': {'enum': ['', 'full', 'half']},
+        'speed': {'enum': ['', '1 Gbps', '10 Gbps', '10 Mbps', '100 Gbps', '100 Mbps', '2.5 Gbps', '20 Gbps', '25 Gbps', '40 Gbps', '5 Gbps', '50 Gbps']},
+        'status': {'enum': ['Connected', 'Disabled', 'Disconnected']},
+        'stpGuard': {'enum': ['bpdu guard', 'disabled', 'loop guard', 'root guard']},
+        'type': {'enum': ['access', 'dad', 'routed', 'stack', 'svl', 'trunk']},
+        'udld': {'enum': ['Alert only', 'Enforce']},
+    }
 
     # The number of a custom access policy to configure on the switch port. Onl...
     accessPolicyNumber: Optional[int] = None

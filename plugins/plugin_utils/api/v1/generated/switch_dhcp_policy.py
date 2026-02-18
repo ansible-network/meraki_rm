@@ -14,7 +14,7 @@ Source paths:
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any, Dict, List, Optional
+from typing import Any, ClassVar, Dict, List, Optional
 
 
 @dataclass
@@ -24,6 +24,10 @@ class SwitchDhcpPolicy:
     Fields use camelCase matching the Meraki Dashboard API.
     The transform mixin converts to/from snake_case User Model fields.
     """
+
+    _FIELD_CONSTRAINTS: ClassVar[dict] = {
+        'defaultPolicy': {'enum': ['allow', 'block']},
+    }
 
     # Email alert settings for DHCP servers
     alerts: Optional[Dict[str, Any]] = None

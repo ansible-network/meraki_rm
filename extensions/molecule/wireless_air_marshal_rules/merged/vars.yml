@@ -1,6 +1,6 @@
 ---
 expected_config:
-  rule_id: example
-  type: access
-  default_policy: example
-  ssid: example
+  type: allow
+  match:
+    type: bssid
+    string: "00:11:22:33:44:55"

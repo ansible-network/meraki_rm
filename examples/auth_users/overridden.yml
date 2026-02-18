@@ -14,7 +14,7 @@
       email_password_to_user: true
 
 - name: Override all auth_users — desired state only
-  cisco.meraki_rm.meraki_meraki_auth_users:
+  cisco.meraki_rm.meraki_auth_users:
     network_id: "N_123456789012345678"
     state: overridden
     config:

@@ -34,7 +34,7 @@ action_groups:
     - meraki_firmware_upgrade
     - meraki_webhooks
     - meraki_vlan_profiles
-    - meraki_meraki_auth_users
+    - meraki_auth_users
     - meraki_mqtt_brokers
     - meraki_camera_quality_retention_profiles
     - meraki_camera_wireless_profiles

@@ -1,12 +1,5 @@
 ---
 expected_config:
-  admin_id: example
   name: Test-Config
   email: admin@example.com
   org_access: full
-  tags:
-  - ansible
-  - test
-  authentication_method: Email
-  account_status: example
-  two_factor_auth_enabled: true

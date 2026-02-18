@@ -53,15 +53,6 @@ class SwitchStackTransformMixin_v1(BaseTransformMixin):
                 required_for='find',
                 order=1,
             ),
-            'update': EndpointOperation(
-                path='/networks/{networkId}/switch/stacks/{switchStackId}',
-                method='PUT',
-                fields=_UPDATE_FIELDS,
-                path_params=['networkId', 'switchStackId'],
-                path_param_aliases=_PATH_PARAM_ALIASES,
-                required_for='update',
-                order=1,
-            ),
             'delete': EndpointOperation(
                 path='/networks/{networkId}/switch/stacks/{switchStackId}',
                 method='DELETE',

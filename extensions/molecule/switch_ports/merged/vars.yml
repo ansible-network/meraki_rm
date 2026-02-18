@@ -1,6 +1,5 @@
 ---
 expected_config:
-  port_id: '1'
   name: Test-Config
   tags:
   - ansible

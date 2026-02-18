@@ -12,7 +12,7 @@ Source paths:
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any, Dict, List, Optional
+from typing import Any, ClassVar, Dict, List, Optional
 
 
 @dataclass
@@ -22,6 +22,10 @@ class GroupPolicy:
     Fields use camelCase matching the Meraki Dashboard API.
     The transform mixin converts to/from snake_case User Model fields.
     """
+
+    _FIELD_CONSTRAINTS: ClassVar[dict] = {
+        'splashAuthSettings': {'enum': ['bypass', 'network default']},
+    }
 
     # The bandwidth settings for clients bound to your group policy.
     bandwidth: Optional[Dict[str, Any]] = None

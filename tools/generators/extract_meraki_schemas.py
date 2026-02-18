@@ -252,13 +252,12 @@ def merge_fields(
         if name not in merged:
             merged[name] = fi
         else:
-            # Keep the richer description
             if fi.description and not merged[name].description:
                 merged[name].description = fi.description
-            # Mark required only if required in both
             if not fi.required:
                 merged[name].required = False
-            # Merge nested fields recursively
+            if fi.enum and not merged[name].enum:
+                merged[name].enum = fi.enum
             if fi.nested_fields and merged[name].nested_fields:
                 merged[name].nested_fields = merge_fields(
                     merged[name].nested_fields, fi.nested_fields
@@ -389,6 +388,21 @@ def _field_to_dataclass_line(fi: FieldInfo, indent: str = '    ') -> str:
     return f'{indent}{fi.name}: {py_type} = None'
 
 
+def _build_constraints(fields: Dict[str, FieldInfo]) -> Dict[str, Dict[str, Any]]:
+    """Build a field constraints dict from FieldInfo entries.
+
+    Only includes fields that have actionable constraints (enum values).
+    """
+    constraints: Dict[str, Dict[str, Any]] = {}
+    for fi in fields.values():
+        entry: Dict[str, Any] = {}
+        if fi.enum:
+            entry['enum'] = fi.enum
+        if entry:
+            constraints[fi.name] = entry
+    return constraints
+
+
 def generate_dataclass(entity: EntitySchema) -> str:
     """Generate Python dataclass source code for an entity.
 
@@ -408,20 +422,7 @@ def generate_dataclass(entity: EntitySchema) -> str:
         key=lambda f: (not f.required, f.name),
     )
 
-    field_lines = []
-    for fi in sorted_fields:
-        if fi.description:
-            desc = fi.description.replace('\n', ' ').strip()
-            if len(desc) > 76:
-                desc = desc[:73] + '...'
-            field_lines.append(f'    # {desc}')
-        field_lines.append(_field_to_dataclass_line(fi))
-
-    fields_block = '\n'.join(field_lines)
-
-    source_paths_comment = '\n'.join(
-        f'#   {p}' for p in sorted(entity.source_paths)
-    )
+    constraints = _build_constraints(entity.fields)
 
     lines = [
         f'"""Generated API dataclass for Meraki {entity.domain} {entity.entity_name}.',
@@ -440,7 +441,7 @@ def generate_dataclass(entity: EntitySchema) -> str:
         'from __future__ import annotations',
         '',
         'from dataclasses import dataclass',
-        'from typing import Any, Dict, List, Optional',
+        f'from typing import Any, {"ClassVar, " if constraints else ""}Dict, List, Optional',
         '',
         '',
         '@dataclass',
@@ -452,6 +453,14 @@ def generate_dataclass(entity: EntitySchema) -> str:
         '    """',
         '',
     ])
+
+    if constraints:
+        lines.append('    _FIELD_CONSTRAINTS: ClassVar[dict] = {')
+        for fname in sorted(constraints):
+            entry = constraints[fname]
+            lines.append(f'        {fname!r}: {entry!r},')
+        lines.append('    }')
+        lines.append('')
 
     for fi in sorted_fields:
         if fi.description:

@@ -25,7 +25,7 @@ Source paths:
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any, Dict, List, Optional
+from typing import Any, ClassVar, Dict, List, Optional
 
 
 @dataclass
@@ -35,6 +35,22 @@ class Ssid:
     Fields use camelCase matching the Meraki Dashboard API.
     The transform mixin converts to/from snake_case User Model fields.
     """
+
+    _FIELD_CONSTRAINTS: ClassVar[dict] = {
+        'authMode': {'enum': ['8021x-entra', '8021x-google', '8021x-localradius', '8021x-meraki', '8021x-nac', '8021x-radius', 'ipsk-with-nac', 'ipsk-with-radius', 'ipsk-with-radius-easy-psk', 'ipsk-without-radius', 'open', 'open-enhanced', 'open-with-nac', 'open-with-radius', 'psk']},
+        'bandSelection': {'enum': ['5 GHz band only', 'Dual band operation', 'Dual band operation with Band Steering']},
+        'controllerDisconnectionBehavior': {'enum': ['default', 'open', 'restricted']},
+        'encryptionMode': {'enum': ['wep', 'wpa']},
+        'enterpriseAdminAccess': {'enum': ['access disabled', 'access enabled']},
+        'ipAssignmentMode': {'enum': ['Bridge mode', 'Campus Gateway', 'Ethernet over GRE', 'Layer 3 roaming', 'Layer 3 roaming with a concentrator', 'NAT mode', 'VPN']},
+        'networkAccessType': {'enum': ['Chargeable public network', 'Emergency services only network', 'Free public network', 'Personal device network', 'Private network', 'Private network with guest access', 'Test or experimental', 'Wildcard']},
+        'radiusAttributeForGroupPolicies': {'enum': ['Airespace-ACL-Name', 'Aruba-User-Role', 'Filter-Id', 'Reply-Message']},
+        'radiusFailoverPolicy': {'enum': ['Allow access', 'Deny access']},
+        'radiusLoadBalancingPolicy': {'enum': ['Round robin', 'Strict priority order']},
+        'splashPage': {'enum': ['Billing', 'Cisco ISE', 'Click-through splash page', 'Facebook Wi-Fi', 'Google Apps domain', 'Google OAuth', 'Microsoft Entra ID', 'None', 'Password-protected with Active Directory', 'Password-protected with LDAP', 'Password-protected with Meraki RADIUS', 'Password-protected with custom RADIUS', 'SMS authentication', 'Sponsored guest', 'Systems Manager Sentry']},
+        'splashTimeout': {'enum': [30, 60, 120, 240, 480, 720, 1080, 1440, 2880, 5760, 7200, 10080, 20160, 43200, 86400, 129600]},
+        'wpaEncryptionMode': {'enum': ['WPA1 and WPA2', 'WPA1 only', 'WPA2 only', 'WPA3 192-bit Security', 'WPA3 Transition Mode', 'WPA3 only']},
+    }
 
     # The current setting for Active Directory. Only valid if splashPage is 'Pa...
     activeDirectory: Optional[Dict[str, Any]] = None

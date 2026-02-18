@@ -12,7 +12,7 @@ Source paths:
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any, Dict, List, Optional
+from typing import Any, ClassVar, Dict, List, Optional
 
 
 @dataclass
@@ -22,6 +22,12 @@ class ApplianceSsid:
     Fields use camelCase matching the Meraki Dashboard API.
     The transform mixin converts to/from snake_case User Model fields.
     """
+
+    _FIELD_CONSTRAINTS: ClassVar[dict] = {
+        'authMode': {'enum': ['8021x-meraki', '8021x-radius', 'open', 'psk']},
+        'encryptionMode': {'enum': ['wep', 'wpa']},
+        'wpaEncryptionMode': {'enum': ['WPA1 and WPA2', 'WPA2 only', 'WPA3 Transition Mode', 'WPA3 only']},
+    }
 
     # The association control method for the SSID.
     authMode: Optional[str] = None

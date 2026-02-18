@@ -1,5 +1,4 @@
 ---
 expected_config:
-  profile_id: example
   name: Test-Config
   is_default: true
