@@ -1,0 +1,26 @@
+---
+# Stop the mock server after all scenarios complete.
+- name: Destroy — Stop Meraki mock server
+  hosts: localhost
+  gather_facts: false
+  tasks:
+    - name: Find mock server process
+      ansible.builtin.shell:
+        cmd: pgrep -f "tools.mock_server.server" || true
+      register: mock_pids
+      changed_when: false
+
+    - name: Stop mock server
+      ansible.builtin.command:
+        cmd: "kill {{ item }}"
+      loop: "{{ mock_pids.stdout_lines }}"
+      when: mock_pids.stdout_lines | length > 0
+      changed_when: true
+      ignore_errors: true
+
+    - name: Wait for mock server to stop
+      ansible.builtin.wait_for:
+        port: "{{ mock_server_port }}"
+        state: stopped
+        timeout: 10
+      ignore_errors: true

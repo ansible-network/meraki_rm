@@ -1,0 +1,12 @@
+---
+- name: "Cleanup \u2014 switch_link_aggregations (merged)"
+  hosts: localhost
+  gather_facts: false
+  tasks:
+  - name: Remove test resources
+    cisco.meraki_rm.meraki_switch_link_aggregations:
+      network_id: N_123456789012345678
+      state: deleted
+      config:
+      - link_aggregation_id: example
+    ignore_errors: true

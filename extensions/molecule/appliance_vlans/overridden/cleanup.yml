@@ -1,0 +1,13 @@
+---
+- name: "Cleanup \u2014 appliance_vlans (overridden)"
+  hosts: localhost
+  gather_facts: false
+  tasks:
+  - name: Remove test resources
+    cisco.meraki_rm.meraki_appliance_vlans:
+      network_id: N_123456789012345678
+      state: deleted
+      config:
+      - vlan_id: '100'
+        group_policy_id: example
+    ignore_errors: true

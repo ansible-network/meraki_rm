@@ -1,0 +1,12 @@
+---
+- name: "Cleanup \u2014 wireless_rf_profiles (gathered)"
+  hosts: localhost
+  gather_facts: false
+  tasks:
+  - name: Remove test resources
+    cisco.meraki_rm.meraki_wireless_rf_profiles:
+      network_id: N_123456789012345678
+      state: deleted
+      config:
+      - rf_profile_id: example
+    ignore_errors: true

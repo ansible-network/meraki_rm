@@ -1,0 +1,11 @@
+---
+- name: "Prepare \u2014 switch_link_aggregations (replaced)"
+  hosts: localhost
+  gather_facts: false
+  tasks:
+  - name: Seed resource via merged (prerequisite for replaced)
+    cisco.meraki_rm.meraki_switch_link_aggregations:
+      network_id: N_123456789012345678
+      state: merged
+      config:
+      - link_aggregation_id: example

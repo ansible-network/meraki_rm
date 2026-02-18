@@ -1,0 +1,10 @@
+---
+expected_config:
+  number: 1
+  name: Test-Config
+  enabled: true
+  auth_mode: open
+  encryption_mode: wpa
+  psk: testpassword123
+  wpa_encryption_mode: WPA1 and WPA2
+  ip_assignment_mode: NAT mode

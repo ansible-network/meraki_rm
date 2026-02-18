@@ -1,0 +1,32 @@
+---
+# Start the stateful mock server for integration testing.
+- name: Create — Start Meraki mock server
+  hosts: localhost
+  gather_facts: false
+  tasks:
+    - name: Start mock server in background
+      ansible.builtin.command:
+        cmd: >-
+          python -m tools.mock_server.server
+          --spec {{ mock_server_spec }}
+          --port {{ mock_server_port }}
+          --daemon
+      args:
+        chdir: "{{ lookup('env', 'MOLECULE_PROJECT_DIRECTORY') }}"
+      changed_when: true
+      register: server_start
+
+    - name: Wait for mock server to be ready
+      ansible.builtin.uri:
+        url: "http://127.0.0.1:{{ mock_server_port }}/health"
+        method: GET
+        status_code: 200
+      register: health_check
+      retries: 30
+      delay: 3
+      until: health_check.status == 200
+
+    - name: Store mock server PID
+      ansible.builtin.set_fact:
+        mock_server_pid: "{{ server_start.stdout | trim }}"
+        cacheable: true

@@ -1,0 +1,14 @@
+---
+- name: "Prepare \u2014 network_settings (replaced)"
+  hosts: localhost
+  gather_facts: false
+  tasks:
+  - name: Seed resource via merged (prerequisite for replaced)
+    cisco.meraki_rm.meraki_network_settings:
+      network_id: N_123456789012345678
+      state: merged
+      config:
+      - local_status_page_enabled: true
+        remote_status_page_enabled: true
+        reporting_enabled: true
+        mode: none

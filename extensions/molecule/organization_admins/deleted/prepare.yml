@@ -1,0 +1,20 @@
+---
+- name: "Prepare \u2014 organization_admins (deleted)"
+  hosts: localhost
+  gather_facts: false
+  tasks:
+  - name: Seed resource via merged (prerequisite for deleted)
+    cisco.meraki_rm.meraki_organization_admins:
+      organization_id: '123456'
+      state: merged
+      config:
+      - admin_id: example
+        name: Test-Config
+        email: admin@example.com
+        org_access: full
+        tags:
+        - ansible
+        - test
+        authentication_method: Email
+        account_status: example
+        two_factor_auth_enabled: true

@@ -1,0 +1,14 @@
+---
+- name: "Converge \u2014 switch_link_aggregations (replaced)"
+  hosts: localhost
+  gather_facts: false
+  vars_files:
+  - vars.yml
+  tasks:
+  - name: Replace switch_link_aggregations configuration
+    cisco.meraki_rm.meraki_switch_link_aggregations:
+      network_id: N_123456789012345678
+      state: replaced
+      config:
+      - '{{ expected_config }}'
+    register: replace_result

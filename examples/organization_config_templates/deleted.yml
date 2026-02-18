@@ -1,0 +1,22 @@
+---
+# Manage Meraki organization configuration templates — remove configuration
+
+- name: Define resource to delete
+  ansible.builtin.set_fact:
+    expected_config:
+      config_template_id: example
+      copy_from_network_id: example
+
+- name: Delete organization_config_templates configuration
+  cisco.meraki_rm.meraki_organization_config_templates:
+    organization_id: "123456"
+    state: deleted
+    config:
+      - "{{ expected_config }}"
+  register: delete_result
+
+- name: Assert resource was deleted
+  ansible.builtin.assert:
+    that:
+      - delete_result is changed
+      - delete_result is not failed

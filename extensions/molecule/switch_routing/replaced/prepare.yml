@@ -1,0 +1,14 @@
+---
+- name: "Prepare \u2014 switch_routing (replaced)"
+  hosts: localhost
+  gather_facts: false
+  tasks:
+  - name: Seed resource via merged (prerequisite for replaced)
+    cisco.meraki_rm.meraki_switch_routing:
+      network_id: N_123456789012345678
+      state: merged
+      config:
+      - enabled: true
+        hello_timer_in_seconds: 1
+        dead_timer_in_seconds: 1
+        md5_authentication_enabled: true

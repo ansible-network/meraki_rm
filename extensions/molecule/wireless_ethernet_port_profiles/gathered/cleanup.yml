@@ -1,0 +1,12 @@
+---
+- name: "Cleanup \u2014 wireless_ethernet_port_profiles (gathered)"
+  hosts: localhost
+  gather_facts: false
+  tasks:
+  - name: Remove test resources
+    cisco.meraki_rm.meraki_wireless_ethernet_port_profiles:
+      network_id: N_123456789012345678
+      state: deleted
+      config:
+      - profile_id: example
+    ignore_errors: true

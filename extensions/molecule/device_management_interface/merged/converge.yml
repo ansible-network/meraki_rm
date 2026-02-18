@@ -1,0 +1,12 @@
+---
+- name: "Converge \u2014 device_management_interface (merged)"
+  hosts: localhost
+  gather_facts: false
+  tasks:
+  - name: Create device_management_interface with merged state
+    cisco.meraki_rm.meraki_device_management_interface:
+      serial: Q2XX-XXXX-XXXX
+      state: merged
+      config:
+      - '{{ expected_config }}'
+    register: merge_result

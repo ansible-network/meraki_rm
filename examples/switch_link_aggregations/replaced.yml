@@ -1,0 +1,37 @@
+---
+# Manage Meraki switch link aggregations — full resource replacement
+
+- name: Define replacement configuration
+  ansible.builtin.set_fact:
+    expected_config:
+      link_aggregation_id: example
+
+- name: Replace switch_link_aggregations configuration
+  cisco.meraki_rm.meraki_switch_link_aggregations:
+    network_id: "N_123456789012345678"
+    state: replaced
+    config:
+      - "{{ expected_config }}"
+  register: replace_result
+
+- name: Assert resource was replaced
+  ansible.builtin.assert:
+    that:
+      - replace_result is changed
+      - replace_result.config | length == 1
+
+- name: Compare expected paths to result (subset check)
+  ansible.builtin.set_fact:
+    path_check: "{{ expected_paths | cisco.meraki_rm.path_contained_in(result_paths) }}"
+  vars:
+    expected_paths: "{{ expected_config | ansible.utils.to_paths }}"
+    result_paths: "{{ replace_result.config[0] | ansible.utils.to_paths }}"
+
+- name: Assert all expected fields are present and match
+  ansible.builtin.assert:
+    that: path_check.contained | bool
+    success_msg: "{{ success_msg }}"
+    fail_msg: "{{ fail_msg }}"
+  vars:
+    success_msg: "All expected fields match. Extras: {{ path_check.extras }}"
+    fail_msg: "Missing or mismatch: {{ path_check.missing }}. Extras: {{ path_check.extras }}"

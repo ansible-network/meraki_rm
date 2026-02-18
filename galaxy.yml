@@ -1,0 +1,43 @@
+---
+namespace: cisco
+name: meraki_rm
+version: 0.1.0
+readme: README.md
+authors:
+  - Cisco Meraki RM Collection Authors
+
+description: >-
+  Ansible resource module collection for managing Cisco Meraki Dashboard
+  infrastructure using a state-driven, entity-centric approach.
+
+license:
+  - GPL-3.0-or-later
+
+tags:
+  - cisco
+  - meraki
+  - networking
+  - resource_module
+  - dashboard
+
+dependencies:
+  ansible.utils: ">=2.10.0"
+
+repository: https://github.com/cisco/meraki_rm
+documentation: https://github.com/cisco/meraki_rm/tree/main/docs
+homepage: https://github.com/cisco/meraki_rm
+issues: https://github.com/cisco/meraki_rm/issues
+
+build_ignore:
+  - .git
+  - .github
+  - .venv
+  - venv
+  - spec3.json
+  - tools
+  - tests
+  - extensions
+  - docs
+  - "*.tar.gz"
+  - __pycache__
+  - "*.pyc"

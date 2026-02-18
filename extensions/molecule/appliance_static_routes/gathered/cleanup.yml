@@ -1,0 +1,13 @@
+---
+- name: "Cleanup \u2014 appliance_static_routes (gathered)"
+  hosts: localhost
+  gather_facts: false
+  tasks:
+  - name: Remove test resources
+    cisco.meraki_rm.meraki_appliance_static_routes:
+      network_id: N_123456789012345678
+      state: deleted
+      config:
+      - static_route_id: example
+        gateway_vlan_id: 1
+    ignore_errors: true

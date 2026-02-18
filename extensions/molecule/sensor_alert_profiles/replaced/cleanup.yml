@@ -1,0 +1,12 @@
+---
+- name: "Cleanup \u2014 sensor_alert_profiles (replaced)"
+  hosts: localhost
+  gather_facts: false
+  tasks:
+  - name: Remove test resources
+    cisco.meraki_rm.meraki_sensor_alert_profiles:
+      network_id: N_123456789012345678
+      state: deleted
+      config:
+      - id: example
+    ignore_errors: true

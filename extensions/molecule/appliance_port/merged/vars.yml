@@ -1,0 +1,9 @@
+---
+expected_config:
+  port_id: '1'
+  enabled: true
+  type: access
+  vlan: 1
+  allowed_vlans: all
+  access_policy: example
+  drop_untagged_traffic: true

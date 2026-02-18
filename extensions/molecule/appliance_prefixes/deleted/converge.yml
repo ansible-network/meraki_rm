@@ -1,0 +1,14 @@
+---
+- name: "Converge \u2014 appliance_prefixes (deleted)"
+  hosts: localhost
+  gather_facts: false
+  vars_files:
+  - vars.yml
+  tasks:
+  - name: Delete appliance_prefixes configuration
+    cisco.meraki_rm.meraki_appliance_prefixes:
+      network_id: N_123456789012345678
+      state: deleted
+      config:
+      - '{{ expected_config }}'
+    register: delete_result

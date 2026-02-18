@@ -1,0 +1,16 @@
+---
+- name: "Verify \u2014 group_policies (gathered)"
+  hosts: localhost
+  gather_facts: false
+  tasks:
+  - name: Gather current configuration
+    cisco.meraki_rm.meraki_group_policies:
+      network_id: N_123456789012345678
+      state: gathered
+    register: gathered
+  - name: Assert gathered configuration is not empty
+    ansible.builtin.assert:
+      that:
+      - gathered.gathered is defined
+      - gathered.gathered | length > 0
+      fail_msg: "Gathered config is empty \u2014 expected at least one resource"

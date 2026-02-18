@@ -1,0 +1,8 @@
+---
+- name: "Cleanup \u2014 device (replaced)"
+  hosts: localhost
+  gather_facts: false
+  tasks:
+  - name: No cleanup configured for singleton resource
+    ansible.builtin.debug:
+      msg: device does not support delete

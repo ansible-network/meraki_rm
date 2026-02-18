@@ -1,0 +1,12 @@
+---
+- name: "Cleanup \u2014 organization_alert_profiles (merged)"
+  hosts: localhost
+  gather_facts: false
+  tasks:
+  - name: Remove test resources
+    cisco.meraki_rm.meraki_organization_alert_profiles:
+      organization_id: '123456'
+      state: deleted
+      config:
+      - alert_config_id: example
+    ignore_errors: true

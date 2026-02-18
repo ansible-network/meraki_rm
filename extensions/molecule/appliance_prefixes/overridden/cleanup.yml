@@ -1,0 +1,12 @@
+---
+- name: "Cleanup \u2014 appliance_prefixes (overridden)"
+  hosts: localhost
+  gather_facts: false
+  tasks:
+  - name: Remove test resources
+    cisco.meraki_rm.meraki_appliance_prefixes:
+      network_id: N_123456789012345678
+      state: deleted
+      config:
+      - static_delegated_prefix_id: example
+    ignore_errors: true

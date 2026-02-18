@@ -1,0 +1,14 @@
+---
+- name: "Converge \u2014 organization_policy_objects (deleted)"
+  hosts: localhost
+  gather_facts: false
+  vars_files:
+  - vars.yml
+  tasks:
+  - name: Delete organization_policy_objects configuration
+    cisco.meraki_rm.meraki_organization_policy_objects:
+      organization_id: '123456'
+      state: deleted
+      config:
+      - '{{ expected_config }}'
+    register: delete_result

@@ -1,0 +1,12 @@
+---
+- name: "Converge \u2014 switch_acl (replaced)"
+  hosts: localhost
+  gather_facts: false
+  tasks:
+  - name: Replace switch_acl configuration
+    cisco.meraki_rm.meraki_switch_acl:
+      network_id: N_123456789012345678
+      state: replaced
+      config:
+      - '{{ expected_config }}'
+    register: replace_result

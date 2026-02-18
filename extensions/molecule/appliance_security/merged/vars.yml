@@ -1,0 +1,4 @@
+---
+expected_config:
+  mode: none
+  ids_rulesets: example

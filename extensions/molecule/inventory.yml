@@ -1,0 +1,13 @@
+---
+# Shared inventory for cisco.meraki_rm Molecule testing
+# Points all modules at the local mock server.
+all:
+  hosts:
+    localhost:
+      ansible_connection: local
+      ansible_python_interpreter: "{{ ansible_playbook_python }}"
+      meraki_dashboard_url: "http://127.0.0.1:{{ mock_server_port | default('29443') }}"
+      meraki_api_key: "test-mock-api-key-for-molecule"
+  vars:
+    mock_server_port: 29443
+    mock_server_spec: "{{ lookup('env', 'MOLECULE_PROJECT_DIRECTORY') }}/spec3.json"

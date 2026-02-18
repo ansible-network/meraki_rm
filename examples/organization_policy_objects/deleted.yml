@@ -1,0 +1,21 @@
+---
+# Manage Meraki organization policy objects — remove configuration
+
+- name: Define resource to delete
+  ansible.builtin.set_fact:
+    expected_config:
+      policy_object_id: example
+
+- name: Delete organization_policy_objects configuration
+  cisco.meraki_rm.meraki_organization_policy_objects:
+    organization_id: "123456"
+    state: deleted
+    config:
+      - "{{ expected_config }}"
+  register: delete_result
+
+- name: Assert resource was deleted
+  ansible.builtin.assert:
+    that:
+      - delete_result is changed
+      - delete_result is not failed

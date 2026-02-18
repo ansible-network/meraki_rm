@@ -1,0 +1,15 @@
+---
+repos:
+  - repo: local
+    hooks:
+      - id: inject-examples
+        name: Sync examples/ into module EXAMPLES strings
+        entry: python tools/inject_examples.py --check
+        language: python
+        pass_filenames: false
+        files: ^(examples/|plugins/modules/)
+        description: >
+          Ensures examples/{module}/{state}.yml files are injected into
+          the EXAMPLES block of plugins/modules/meraki_*.py. Fails if
+          any module is stale — run `python tools/inject_examples.py`
+          to fix.

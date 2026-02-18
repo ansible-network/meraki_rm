@@ -1,0 +1,7 @@
+---
+expected_config:
+  mode: spoke
+  subnet: 10.20.0.0/24
+  enabled: false
+  as_number: 1
+  ibgp_hold_timer: 1

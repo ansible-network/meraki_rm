@@ -1,0 +1,18 @@
+---
+- name: "Prepare \u2014 mqtt_brokers (overridden)"
+  hosts: localhost
+  gather_facts: false
+  tasks:
+  - name: Seed resource via merged (prerequisite for overridden)
+    cisco.meraki_rm.meraki_mqtt_brokers:
+      network_id: N_123456789012345678
+      state: merged
+      config:
+      - mqtt_broker_id: example
+        name: Test-Config
+        host: mqtt.example.com
+        port: 1883
+      - mqtt_broker_id: '999'
+        name: Extra-To-Delete
+        host: mqtt.example.com
+        port: 1883

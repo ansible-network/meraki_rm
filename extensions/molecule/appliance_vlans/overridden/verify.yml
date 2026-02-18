@@ -1,0 +1,37 @@
+---
+- name: "Verify \u2014 appliance_vlans (overridden)"
+  hosts: localhost
+  gather_facts: false
+  vars_files:
+  - vars.yml
+  tasks:
+  - name: Gather current configuration
+    cisco.meraki_rm.meraki_appliance_vlans:
+      network_id: N_123456789012345678
+      state: gathered
+    register: gathered
+  - name: Assert configuration exists after overridden
+    ansible.builtin.assert:
+      that:
+      - gathered.gathered is defined
+      - gathered.gathered | length > 0
+      fail_msg: Expected at least one resource after overridden
+  - name: Compare expected paths to gathered state (subset check)
+    ansible.builtin.set_fact:
+      path_check: '{{ expected_paths | cisco.meraki_rm.path_contained_in(result_paths) }}'
+    vars:
+      expected_paths: '{{ expected_config | ansible.utils.to_paths }}'
+      result_paths: '{{ gathered.gathered[0] | ansible.utils.to_paths }}'
+  - name: Assert all expected fields are present and match
+    ansible.builtin.assert:
+      that: path_check.contained | bool
+      success_msg: '{{ success_msg }}'
+      fail_msg: '{{ fail_msg }}'
+    vars:
+      success_msg: 'All expected fields match. Extras: {{ path_check.extras }}'
+      fail_msg: 'Missing or mismatch: {{ path_check.missing }}. Extras: {{ path_check.extras }}'
+  - name: Assert only desired resources remain
+    ansible.builtin.assert:
+      that:
+      - gathered.gathered | length == 1
+      fail_msg: Overridden should leave exactly one resource, got {{ gathered.gathered | length }}

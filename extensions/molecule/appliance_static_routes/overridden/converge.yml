@@ -1,0 +1,14 @@
+---
+- name: "Converge \u2014 appliance_static_routes (overridden)"
+  hosts: localhost
+  gather_facts: false
+  vars_files:
+  - vars.yml
+  tasks:
+  - name: "Override all appliance_static_routes \u2014 desired state only"
+    cisco.meraki_rm.meraki_appliance_static_routes:
+      network_id: N_123456789012345678
+      state: overridden
+      config:
+      - '{{ expected_config }}'
+    register: override_result

@@ -1,0 +1,21 @@
+---
+# Manage Meraki appliance delegated IPv6 prefixes — remove configuration
+
+- name: Define resource to delete
+  ansible.builtin.set_fact:
+    expected_config:
+      static_delegated_prefix_id: example
+
+- name: Delete appliance_prefixes configuration
+  cisco.meraki_rm.meraki_appliance_prefixes:
+    network_id: "N_123456789012345678"
+    state: deleted
+    config:
+      - "{{ expected_config }}"
+  register: delete_result
+
+- name: Assert resource was deleted
+  ansible.builtin.assert:
+    that:
+      - delete_result is changed
+      - delete_result is not failed

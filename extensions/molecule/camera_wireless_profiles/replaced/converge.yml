@@ -1,0 +1,14 @@
+---
+- name: "Converge \u2014 camera_wireless_profiles (replaced)"
+  hosts: localhost
+  gather_facts: false
+  vars_files:
+  - vars.yml
+  tasks:
+  - name: Replace camera_wireless_profiles configuration
+    cisco.meraki_rm.meraki_camera_wireless_profiles:
+      network_id: N_123456789012345678
+      state: replaced
+      config:
+      - '{{ expected_config }}'
+    register: replace_result

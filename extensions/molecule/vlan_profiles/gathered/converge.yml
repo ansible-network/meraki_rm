@@ -1,0 +1,10 @@
+---
+- name: "Converge \u2014 vlan_profiles (gathered)"
+  hosts: localhost
+  gather_facts: false
+  tasks:
+  - name: Gather current vlan_profiles configuration
+    cisco.meraki_rm.meraki_vlan_profiles:
+      network_id: N_123456789012345678
+      state: gathered
+    register: gathered

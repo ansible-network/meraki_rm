@@ -1,0 +1,5 @@
+---
+expected_config:
+  iname: example
+  name: Replaced-Config
+  is_default: true

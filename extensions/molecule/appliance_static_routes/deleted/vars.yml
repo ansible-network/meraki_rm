@@ -1,0 +1,4 @@
+---
+expected_config:
+  static_route_id: example
+  gateway_vlan_id: 1

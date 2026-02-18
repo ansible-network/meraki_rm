@@ -1,0 +1,18 @@
+---
+- name: "Prepare \u2014 organization_policy_objects (gathered)"
+  hosts: localhost
+  gather_facts: false
+  tasks:
+  - name: Seed resource via merged (prerequisite for gathered)
+    cisco.meraki_rm.meraki_organization_policy_objects:
+      organization_id: '123456'
+      state: merged
+      config:
+      - policy_object_id: example
+        name: Test-Config
+        category: adaptivePolicy
+        type: adaptivePolicyIpv4Cidr
+        cidr: 192.168.128.0/24
+        fqdn: example.com
+        ip: 10.0.0.1
+        mask: 24

@@ -1,0 +1,19 @@
+---
+- name: "Prepare \u2014 wireless_air_marshal_rules (overridden)"
+  hosts: localhost
+  gather_facts: false
+  tasks:
+  - name: Seed resource via merged (prerequisite for overridden)
+    cisco.meraki_rm.meraki_wireless_air_marshal_rules:
+      network_id: N_123456789012345678
+      state: merged
+      config:
+      - rule_id: example
+        type: access
+        default_policy: example
+        ssid: example
+      - rule_id: '999'
+        type: access
+        default_policy: example
+        ssid: example
+        name: Extra-To-Delete

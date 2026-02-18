@@ -1,0 +1,12 @@
+---
+- name: "Cleanup \u2014 group_policies (merged)"
+  hosts: localhost
+  gather_facts: false
+  tasks:
+  - name: Remove test resources
+    cisco.meraki_rm.meraki_group_policies:
+      network_id: N_123456789012345678
+      state: deleted
+      config:
+      - group_policy_id: example
+    ignore_errors: true

@@ -1,0 +1,16 @@
+---
+- name: "Verify \u2014 group_policies (deleted)"
+  hosts: localhost
+  gather_facts: false
+  tasks:
+  - name: Gather current configuration
+    cisco.meraki_rm.meraki_group_policies:
+      network_id: N_123456789012345678
+      state: gathered
+    register: gathered
+  - name: Assert no resources remain after delete
+    ansible.builtin.assert:
+      that:
+      - gathered.gathered is defined
+      - gathered.gathered | length == 0
+      fail_msg: Expected empty config after delete, got {{ gathered.gathered }}

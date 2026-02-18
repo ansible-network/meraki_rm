@@ -1,0 +1,14 @@
+---
+- name: "Converge \u2014 appliance_static_routes (deleted)"
+  hosts: localhost
+  gather_facts: false
+  vars_files:
+  - vars.yml
+  tasks:
+  - name: Delete appliance_static_routes configuration
+    cisco.meraki_rm.meraki_appliance_static_routes:
+      network_id: N_123456789012345678
+      state: deleted
+      config:
+      - '{{ expected_config }}'
+    register: delete_result

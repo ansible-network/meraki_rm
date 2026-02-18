@@ -1,0 +1,53 @@
+---
+requires_ansible: ">=2.15.0"
+
+action_groups:
+  meraki:
+    - meraki_appliance_vlans
+    - meraki_appliance_firewall
+    - meraki_appliance_vpn
+    - meraki_appliance_traffic_shaping
+    - meraki_appliance_static_routes
+    - meraki_appliance_port
+    - meraki_appliance_security
+    - meraki_appliance_warm_spare
+    - meraki_appliance_ssid
+    - meraki_appliance_prefixes
+    - meraki_appliance_rf_profiles
+    - meraki_wireless_ssid
+    - meraki_wireless_rf_profiles
+    - meraki_wireless_air_marshal_rules
+    - meraki_wireless_ethernet_port_profiles
+    - meraki_switch_ports
+    - meraki_switch_access_policies
+    - meraki_switch_dhcp_policy
+    - meraki_switch_qos_rules
+    - meraki_switch_routing
+    - meraki_switch_stp
+    - meraki_switch_acl
+    - meraki_switch_stacks
+    - meraki_switch_link_aggregations
+    - meraki_switch_settings
+    - meraki_network_settings
+    - meraki_group_policies
+    - meraki_floor_plans
+    - meraki_firmware_upgrade
+    - meraki_webhooks
+    - meraki_vlan_profiles
+    - meraki_meraki_auth_users
+    - meraki_mqtt_brokers
+    - meraki_camera_quality_retention_profiles
+    - meraki_camera_wireless_profiles
+    - meraki_sensor_alert_profiles
+    - meraki_organization_admins
+    - meraki_organization_saml
+    - meraki_organization_policy_objects
+    - meraki_organization_adaptive_policy
+    - meraki_organization_config_templates
+    - meraki_organization_alert_profiles
+    - meraki_organization_branding_policies
+    - meraki_organization_vpn
+    - meraki_device
+    - meraki_device_management_interface
+    - meraki_device_switch_routes
+    - meraki_facts

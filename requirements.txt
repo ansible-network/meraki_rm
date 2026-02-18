@@ -1,0 +1,2 @@
+# Runtime dependencies for cisco.meraki_rm collection
+requests>=2.31.0

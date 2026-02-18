@@ -1,0 +1,17 @@
+---
+- name: "Prepare \u2014 floor_plans (replaced)"
+  hosts: localhost
+  gather_facts: false
+  tasks:
+  - name: Seed resource via merged (prerequisite for replaced)
+    cisco.meraki_rm.meraki_floor_plans:
+      network_id: N_123456789012345678
+      state: merged
+      config:
+      - floor_plan_id: example
+        name: Test-Config
+        width: 0.0
+        height: 0.0
+        floor_number: 0.0
+        image_contents: example
+        image_extension: example

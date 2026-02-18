@@ -1,0 +1,6 @@
+---
+expected_config:
+  alert_config_id: example
+  type: access
+  enabled: true
+  description: Managed by Ansible

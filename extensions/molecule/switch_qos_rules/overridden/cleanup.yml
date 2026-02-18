@@ -1,0 +1,12 @@
+---
+- name: "Cleanup \u2014 switch_qos_rules (overridden)"
+  hosts: localhost
+  gather_facts: false
+  tasks:
+  - name: Remove test resources
+    cisco.meraki_rm.meraki_switch_qos_rules:
+      network_id: N_123456789012345678
+      state: deleted
+      config:
+      - qos_rule_id: example
+    ignore_errors: true

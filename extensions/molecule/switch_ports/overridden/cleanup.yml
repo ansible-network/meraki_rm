@@ -1,0 +1,13 @@
+---
+- name: "Cleanup \u2014 switch_ports (overridden)"
+  hosts: localhost
+  gather_facts: false
+  tasks:
+  - name: Remove test resources
+    cisco.meraki_rm.meraki_switch_ports:
+      serial: Q2XX-XXXX-XXXX
+      state: deleted
+      config:
+      - port_id: '1'
+        port_schedule_id: example
+    ignore_errors: true

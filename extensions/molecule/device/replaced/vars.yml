@@ -1,0 +1,12 @@
+---
+expected_config:
+  name: Replaced-Config
+  tags:
+  - ansible
+  - replaced
+  lat: 37.7749
+  lng: -122.4194
+  address: 500 Terry Francine Street
+  notes: example
+  move_map_marker: true
+  floor_plan_id: example

@@ -1,0 +1,5 @@
+---
+expected_config:
+  iname: example
+  name: Test-Config
+  is_default: true

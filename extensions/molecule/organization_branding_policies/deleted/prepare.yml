@@ -1,0 +1,13 @@
+---
+- name: "Prepare \u2014 organization_branding_policies (deleted)"
+  hosts: localhost
+  gather_facts: false
+  tasks:
+  - name: Seed resource via merged (prerequisite for deleted)
+    cisco.meraki_rm.meraki_organization_branding_policies:
+      organization_id: '123456'
+      state: merged
+      config:
+      - branding_policy_id: example
+        name: Test-Config
+        enabled: true

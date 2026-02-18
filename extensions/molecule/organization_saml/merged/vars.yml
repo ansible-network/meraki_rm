@@ -1,0 +1,8 @@
+---
+expected_config:
+  enabled: true
+  consumer_url: example
+  slo_logout_url: example
+  sso_login_url: example
+  x509cert_sha1_fingerprint: example
+  vision_consumer_url: example

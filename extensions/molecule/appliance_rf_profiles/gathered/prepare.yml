@@ -1,0 +1,12 @@
+---
+- name: "Prepare \u2014 appliance_rf_profiles (gathered)"
+  hosts: localhost
+  gather_facts: false
+  tasks:
+  - name: Seed resource via merged (prerequisite for gathered)
+    cisco.meraki_rm.meraki_appliance_rf_profiles:
+      network_id: N_123456789012345678
+      state: merged
+      config:
+      - rf_profile_id: example
+        name: Test-Config

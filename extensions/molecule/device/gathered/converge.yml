@@ -1,0 +1,10 @@
+---
+- name: "Converge \u2014 device (gathered)"
+  hosts: localhost
+  gather_facts: false
+  tasks:
+  - name: Gather current device configuration
+    cisco.meraki_rm.meraki_device:
+      serial: Q2XX-XXXX-XXXX
+      state: gathered
+    register: gathered

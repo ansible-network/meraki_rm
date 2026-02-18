@@ -1,0 +1,8 @@
+---
+- name: "Cleanup \u2014 appliance_prefixes (deleted)"
+  hosts: localhost
+  gather_facts: false
+  tasks:
+  - name: "No-op \u2014 resource already deleted by converge"
+    ansible.builtin.debug:
+      msg: Nothing to clean up

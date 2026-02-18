@@ -1,0 +1,8 @@
+---
+# Default scenario: manages mock server lifecycle.
+# Other scenarios run with shared_state against this server.
+
+scenario:
+  test_sequence:
+    - create
+    - destroy

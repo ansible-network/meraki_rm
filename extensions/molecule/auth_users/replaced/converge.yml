@@ -1,0 +1,14 @@
+---
+- name: "Converge \u2014 auth_users (replaced)"
+  hosts: localhost
+  gather_facts: false
+  vars_files:
+  - vars.yml
+  tasks:
+  - name: Replace auth_users configuration
+    cisco.meraki_rm.meraki_meraki_auth_users:
+      network_id: N_123456789012345678
+      state: replaced
+      config:
+      - '{{ expected_config }}'
+    register: replace_result

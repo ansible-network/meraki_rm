@@ -1,0 +1,4 @@
+---
+expected_config:
+  mode: spoke
+  ids_rulesets: example

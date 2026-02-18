@@ -1,0 +1,8 @@
+---
+expected_config:
+  rf_profile_id: example
+  name: Test-Config
+  band_selection_type: example
+  client_balancing_enabled: true
+  is_indoor_default: true
+  is_outdoor_default: true

@@ -1,0 +1,19 @@
+---
+# Manage Meraki MQTT brokers — gather current configuration
+
+- name: Gather current mqtt_brokers configuration
+  cisco.meraki_rm.meraki_mqtt_brokers:
+    network_id: "N_123456789012345678"
+    state: gathered
+  register: gathered
+
+- name: Assert gathered config is not empty
+  ansible.builtin.assert:
+    that:
+      - gathered.config is defined
+      - gathered.config | length > 0
+    fail_msg: "Gathered config is empty — expected at least one resource"
+
+- name: Display gathered configuration
+  ansible.builtin.debug:
+    var: gathered.config

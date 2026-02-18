@@ -1,0 +1,33 @@
+---
+# Shared Molecule configuration for cisco.meraki_rm collection testing.
+# All per-module scenarios inherit this config.
+#
+# With shared_state: true, the default scenario is the lifecycle manager:
+# - default runs create first and destroy last when using molecule test --all
+# - Component scenarios (appliance_vlans, etc.) skip create/destroy and only run
+#   prepare → converge → verify → idempotence → verify → cleanup
+# So the mock server is started once (default create) and stopped once (default destroy).
+# See: https://docs.ansible.com/projects/molecule/getting-started-collections/
+
+ansible:
+  executor:
+    args:
+      ansible_playbook:
+        - --inventory=${MOLECULE_PROJECT_DIRECTORY}/extensions/molecule/inventory.yml
+  env:
+    ANSIBLE_FORCE_COLOR: "true"
+    ANSIBLE_HOST_KEY_CHECKING: "false"
+
+scenario:
+  test_sequence:
+    - prepare
+    - converge
+    - verify
+    - idempotence
+    - verify
+    - cleanup
+
+shared_state: true
+
+verifier:
+  name: ansible

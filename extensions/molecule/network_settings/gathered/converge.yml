@@ -1,0 +1,10 @@
+---
+- name: "Converge \u2014 network_settings (gathered)"
+  hosts: localhost
+  gather_facts: false
+  tasks:
+  - name: Gather current network_settings configuration
+    cisco.meraki_rm.meraki_network_settings:
+      network_id: N_123456789012345678
+      state: gathered
+    register: gathered

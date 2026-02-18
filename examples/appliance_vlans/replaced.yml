@@ -1,0 +1,45 @@
+---
+# Manage Meraki appliance VLANs — full resource replacement
+
+- name: Define replacement configuration
+  ansible.builtin.set_fact:
+    expected_config:
+      vlan_id: "100"
+      name: Replaced-Config
+      subnet: 10.20.0.0/24
+      appliance_ip: 10.20.0.1
+      group_policy_id: example
+      template_vlan_type: unique
+      cidr: 192.168.128.0/24
+      mask: 24
+
+- name: Replace appliance_vlans configuration
+  cisco.meraki_rm.meraki_appliance_vlans:
+    network_id: "N_123456789012345678"
+    state: replaced
+    config:
+      - "{{ expected_config }}"
+  register: replace_result
+
+- name: Assert replace succeeded
+  ansible.builtin.assert:
+    that:
+      - replace_result is not failed
+      - replace_result.after | length > 0
+      - replace_result.before is defined
+
+- name: Compare expected paths to after state (subset check)
+  ansible.builtin.set_fact:
+    path_check: "{{ expected_paths | cisco.meraki_rm.path_contained_in(result_paths) }}"
+  vars:
+    expected_paths: "{{ expected_config | ansible.utils.to_paths }}"
+    result_paths: "{{ replace_result.after[0] | ansible.utils.to_paths }}"
+
+- name: Assert all expected fields are present and match
+  ansible.builtin.assert:
+    that: path_check.contained | bool
+    success_msg: "{{ success_msg }}"
+    fail_msg: "{{ fail_msg }}"
+  vars:
+    success_msg: "All expected fields match. Extras: {{ path_check.extras }}"
+    fail_msg: "Missing or mismatch: {{ path_check.missing }}. Extras: {{ path_check.extras }}"

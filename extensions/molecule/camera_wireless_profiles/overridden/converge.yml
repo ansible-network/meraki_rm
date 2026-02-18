@@ -1,0 +1,14 @@
+---
+- name: "Converge \u2014 camera_wireless_profiles (overridden)"
+  hosts: localhost
+  gather_facts: false
+  vars_files:
+  - vars.yml
+  tasks:
+  - name: "Override all camera_wireless_profiles \u2014 desired state only"
+    cisco.meraki_rm.meraki_camera_wireless_profiles:
+      network_id: N_123456789012345678
+      state: overridden
+      config:
+      - '{{ expected_config }}'
+    register: override_result

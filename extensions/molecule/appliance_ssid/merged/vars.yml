@@ -1,0 +1,10 @@
+---
+expected_config:
+  number: 1
+  name: Test-Config
+  enabled: true
+  auth_mode: open
+  encryption_mode: wpa
+  psk: testpassword123
+  default_vlan_id: 1
+  visible: true

@@ -1,0 +1,12 @@
+---
+- name: "Converge \u2014 device_management_interface (replaced)"
+  hosts: localhost
+  gather_facts: false
+  tasks:
+  - name: Replace device_management_interface configuration
+    cisco.meraki_rm.meraki_device_management_interface:
+      serial: Q2XX-XXXX-XXXX
+      state: replaced
+      config:
+      - '{{ expected_config }}'
+    register: replace_result

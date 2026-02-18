@@ -1,0 +1,14 @@
+---
+- name: "Converge \u2014 organization_config_templates (merged)"
+  hosts: localhost
+  gather_facts: false
+  vars_files:
+  - vars.yml
+  tasks:
+  - name: Create organization_config_templates with merged state
+    cisco.meraki_rm.meraki_organization_config_templates:
+      organization_id: '123456'
+      state: merged
+      config:
+      - '{{ expected_config }}'
+    register: merge_result

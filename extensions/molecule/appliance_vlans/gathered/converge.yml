@@ -1,0 +1,10 @@
+---
+- name: "Converge \u2014 appliance_vlans (gathered)"
+  hosts: localhost
+  gather_facts: false
+  tasks:
+  - name: Gather current appliance_vlans configuration
+    cisco.meraki_rm.meraki_appliance_vlans:
+      network_id: N_123456789012345678
+      state: gathered
+    register: gathered

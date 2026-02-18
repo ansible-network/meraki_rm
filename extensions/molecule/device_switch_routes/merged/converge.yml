@@ -1,0 +1,14 @@
+---
+- name: "Converge \u2014 device_switch_routes (merged)"
+  hosts: localhost
+  gather_facts: false
+  vars_files:
+  - vars.yml
+  tasks:
+  - name: Create device_switch_routes with merged state
+    cisco.meraki_rm.meraki_device_switch_routes:
+      serial: Q2XX-XXXX-XXXX
+      state: merged
+      config:
+      - '{{ expected_config }}'
+    register: merge_result

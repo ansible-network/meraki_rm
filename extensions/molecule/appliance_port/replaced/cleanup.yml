@@ -1,0 +1,8 @@
+---
+- name: "Cleanup \u2014 appliance_port (replaced)"
+  hosts: localhost
+  gather_facts: false
+  tasks:
+  - name: No cleanup configured for singleton resource
+    ansible.builtin.debug:
+      msg: appliance_port does not support delete

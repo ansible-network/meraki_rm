@@ -1,0 +1,25 @@
+---
+# Gather all Meraki facts
+
+- name: Gather all Meraki facts
+  cisco.meraki_rm.meraki_facts:
+    organization_id: "N_123456789012345678"
+    gather_subset:
+      - all
+  register: all_facts
+
+- name: Display gathered facts
+  ansible.builtin.debug:
+    var: all_facts
+
+- name: Gather only organization info
+  cisco.meraki_rm.meraki_facts:
+    organization_id: "N_123456789012345678"
+    gather_subset:
+      - organizations
+
+- name: Gather networks for a specific org
+  cisco.meraki_rm.meraki_facts:
+    organization_id: "N_123456789012345678"
+    gather_subset:
+      - networks

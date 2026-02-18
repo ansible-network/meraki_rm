@@ -1,0 +1,10 @@
+---
+- name: "Converge \u2014 device_management_interface (gathered)"
+  hosts: localhost
+  gather_facts: false
+  tasks:
+  - name: Gather current device_management_interface configuration
+    cisco.meraki_rm.meraki_device_management_interface:
+      serial: Q2XX-XXXX-XXXX
+      state: gathered
+    register: gathered

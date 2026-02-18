@@ -1,0 +1,14 @@
+---
+- name: "Prepare \u2014 switch_stacks (deleted)"
+  hosts: localhost
+  gather_facts: false
+  tasks:
+  - name: Seed resource via merged (prerequisite for deleted)
+    cisco.meraki_rm.meraki_switch_stacks:
+      network_id: N_123456789012345678
+      state: merged
+      config:
+      - switch_stack_id: example
+        name: Test-Config
+        is_monitor_only: true
+        virtual_mac: example

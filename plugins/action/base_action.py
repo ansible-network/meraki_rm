@@ -1,0 +1,636 @@
+"""Base action plugin for Meraki Dashboard resource modules.
+
+Provides a data-driven run() that eliminates per-module boilerplate.
+Each resource action plugin declares class-level attributes and the
+base class handles validation, state dispatch, and manager interaction.
+
+Subclass contract:
+    MODULE_NAME   — resource identifier (e.g. 'vlan')
+    SCOPE_PARAM   — scope kwarg name ('network_id', 'organization_id', 'serial')
+    USER_MODEL    — dotted import path to the User Model dataclass
+    PRIMARY_KEY   — user-model field that distinguishes create vs update (or None)
+    SUPPORTS_DELETE — False for singletons that cannot be removed
+    DOCUMENTATION — imported from the corresponding plugins/modules/ file
+
+For the common case the subclass needs NO run() override at all. Modules
+with custom logic (e.g. meraki_facts) override run() as before.
+"""
+
+from __future__ import annotations
+
+import base64
+import importlib
+import logging
+import secrets
+import tempfile
+import time
+from pathlib import Path
+
+import yaml
+from ansible.errors import AnsibleError
+from ansible.module_utils.common.arg_spec import ArgumentSpecValidator
+from ansible.plugins.action import ActionBase
+
+logger = logging.getLogger(__name__)
+
+
+class BaseResourceActionPlugin(ActionBase):
+    """Data-driven base action plugin for all Meraki resource modules.
+
+    Subclasses declare metadata as class attributes:
+
+        class ActionModule(BaseResourceActionPlugin):
+            MODULE_NAME     = 'vlan'
+            SCOPE_PARAM     = 'network_id'
+            USER_MODEL      = 'plugins.plugin_utils.user_models.vlan.UserVlan'
+            PRIMARY_KEY     = 'vlan_id'
+            SUPPORTS_DELETE  = True
+
+    The base run() validates input, loops over config items, builds User
+    Model instances, and dispatches to the manager.  Only meraki_facts
+    needs a custom run().
+    """
+
+    # --- subclass must set these ----------------------------------------
+    MODULE_NAME: str = None
+    SCOPE_PARAM: str = 'network_id'
+    USER_MODEL: str = None
+    PRIMARY_KEY: str = None
+    SUPPORTS_DELETE: bool = True
+
+    # Canonical resource module states
+    VALID_STATES = frozenset({
+        'merged', 'replaced', 'overridden', 'deleted', 'gathered',
+    })
+
+    # Resolved lazily by _get_user_model_class()
+    _user_model_cls = None
+
+    # ------------------------------------------------------------------ #
+    #  Data-driven run()                                                   #
+    # ------------------------------------------------------------------ #
+
+    @staticmethod
+    def _resolve_plugin_path(dotted_path: str) -> str:
+        """Rewrite a 'plugins.plugin_utils...' path to the real namespace.
+
+        When Ansible loads the collection, the package prefix is
+        'ansible_collections.cisco.meraki_rm.plugins.plugin_utils', not
+        bare 'plugins.plugin_utils'. Detect the correct prefix from
+        this module's own __name__.
+        """
+        _DEV_PREFIX = 'plugins.plugin_utils'
+        if dotted_path.startswith(_DEV_PREFIX):
+            my_name = __name__  # e.g. ansible_collections.cisco.meraki_rm.plugins.action.base_action
+            parts = my_name.split('.')
+            # Walk up from action.base_action → plugins → prepend
+            if 'plugins' in parts:
+                idx = parts.index('plugins')
+                real_prefix = '.'.join(parts[:idx]) + '.' + _DEV_PREFIX
+                return real_prefix + dotted_path[len(_DEV_PREFIX):]
+        return dotted_path
+
+    def _get_user_model_class(self):
+        """Lazily resolve USER_MODEL dotted path to a class object."""
+        if self._user_model_cls is not None:
+            return self._user_model_cls
+
+        if not self.USER_MODEL:
+            raise AnsibleError(
+                f"{type(self).__name__}.USER_MODEL is not set"
+            )
+
+        resolved = self._resolve_plugin_path(self.USER_MODEL)
+        module_path, class_name = resolved.rsplit('.', 1)
+        mod = importlib.import_module(module_path)
+        cls = getattr(mod, class_name)
+        type(self)._user_model_cls = cls
+        return cls
+
+    def _get_documentation(self) -> str:
+        """Auto-discover DOCUMENTATION from the sibling modules/ package.
+
+        Derives the module file name from the action plugin file name
+        (both are always ``meraki_<name>.py``).  Tries a package-relative
+        import first (works in both flat dev layout and installed collection),
+        then falls back to the full collection namespace.
+        """
+        if not self.MODULE_NAME:
+            return ''
+
+        # Derive module name from action plugin filename convention
+        action_mod = type(self).__module__            # e.g. ...plugins.action.meraki_appliance_vlan
+        action_leaf = action_mod.rsplit('.', 1)[-1]   # meraki_appliance_vlan
+        module_leaf = action_leaf                      # same filename in modules/
+
+        # Try relative import (..modules.meraki_appliance_vlan)
+        parent_pkg = action_mod.rsplit('.', 2)[0]     # ...plugins
+        for candidate in (
+            f'{parent_pkg}.modules.{module_leaf}',
+            f'ansible_collections.cisco.meraki_rm.plugins.modules.{module_leaf}',
+        ):
+            try:
+                mod = importlib.import_module(candidate)
+                doc = getattr(mod, 'DOCUMENTATION', None)
+                if doc:
+                    return doc
+            except (ImportError, ModuleNotFoundError):
+                continue
+
+        return ''
+
+    def run(self, tmp=None, task_vars=None):
+        """Data-driven resource module execution.
+
+        Follows the standard Ansible network resource module pattern:
+          1. Gather current state → ``before``
+          2. Apply desired mutations based on ``state``
+          3. Gather resulting state → ``after``
+          4. ``changed = (before != after)``
+
+        Return structure matches cisco.ios / cisco.nxos conventions::
+
+            {
+                "before": [ ... ],   # config before this run
+                "after":  [ ... ],   # config after this run
+                "changed": bool,
+                "gathered": [ ... ], # only for state=gathered
+            }
+
+        Subclasses with truly unique logic (meraki_facts) override this.
+        """
+        super().run(tmp, task_vars)
+        if task_vars is None:
+            task_vars = {}
+
+        args = self._task.args.copy()
+
+        try:
+            doc = self._get_documentation()
+            if doc:
+                argspec = self._build_argspec_from_docs(doc)
+                validated_args = self._validate_data(args, argspec, 'input')
+            else:
+                argspec = None
+                validated_args = args
+
+            state = validated_args.get('state', 'merged')
+            config = validated_args.get('config', [])
+            scope_value = validated_args.get(self.SCOPE_PARAM)
+
+            manager = self._get_or_spawn_manager(task_vars)
+            user_cls = self._get_user_model_class()
+
+            # -- gathered: read-only, no before/after -----------------------
+            if state == 'gathered':
+                gathered = self._do_gathered(
+                    manager, user_cls, scope_value, config,
+                )
+                if argspec and gathered:
+                    gathered = self._validate_output(gathered, argspec)
+                return {
+                    'failed': False,
+                    'changed': False,
+                    'gathered': gathered,
+                    'config': gathered,
+                }
+
+            # -- mutating states: before → apply → after --------------------
+            before = self._do_gathered(
+                manager, user_cls, scope_value, None,
+            )
+            if argspec and before:
+                before = self._validate_output(before, argspec)
+
+            if state == 'deleted' and self.SUPPORTS_DELETE:
+                self._apply_deleted(
+                    manager, user_cls, scope_value, config, before,
+                )
+
+            elif state == 'overridden' and self.SUPPORTS_DELETE:
+                self._apply_overridden(
+                    manager, user_cls, scope_value, config, before,
+                )
+
+            else:  # merged, replaced
+                self._apply_merged_or_replaced(
+                    manager, user_cls, scope_value, config, state, before,
+                )
+
+            after = self._do_gathered(
+                manager, user_cls, scope_value, None,
+            )
+            if argspec and after:
+                after = self._validate_output(after, argspec)
+
+            changed = self._lists_differ(before, after)
+
+            return {
+                'failed': False,
+                'changed': changed,
+                'before': before,
+                'after': after,
+                'config': after,
+            }
+        except Exception as e:
+            return {'failed': True, 'msg': str(e)}
+
+    # ------------------------------------------------------------------ #
+    #  State dispatch helpers                                              #
+    # ------------------------------------------------------------------ #
+
+    def _do_gathered(self, manager, user_cls, scope_value, config):
+        """Gather current resource state (read-only)."""
+        results = []
+        for item in config or [{}]:
+            user_data = user_cls(**{self.SCOPE_PARAM: scope_value}, **item)
+            result = manager.execute('find', self.MODULE_NAME, user_data)
+            if isinstance(result, dict) and 'config' in result:
+                results.extend(result['config'])
+            else:
+                results.append(result)
+        return results
+
+    def _apply_deleted(self, manager, user_cls, scope_value, config, before):
+        """Delete specified resources.
+
+        Skips items whose primary key is not present in ``before``
+        (already absent — nothing to do).
+        """
+        before_keys = set()
+        if self.PRIMARY_KEY:
+            for item in before:
+                k = str(item.get(self.PRIMARY_KEY, ''))
+                if k:
+                    before_keys.add(k)
+
+        for item in config:
+            if self.PRIMARY_KEY and item.get(self.PRIMARY_KEY):
+                if str(item[self.PRIMARY_KEY]) not in before_keys:
+                    continue
+            user_data = user_cls(**{self.SCOPE_PARAM: scope_value}, **item)
+            manager.execute('delete', self.MODULE_NAME, user_data)
+
+    def _apply_merged_or_replaced(self, manager, user_cls, scope_value,
+                                   config, state, before):
+        """Create or update resources, skipping items already at desired state.
+
+        Uses ``before`` to decide create vs update and to skip no-ops.
+        """
+        operation = self._detect_operation({'state': state})
+
+        before_by_key = {}
+        if self.PRIMARY_KEY:
+            for item in before:
+                k = str(item.get(self.PRIMARY_KEY, ''))
+                if k:
+                    before_by_key[k] = item
+
+        for item in config:
+            user_data = user_cls(**{self.SCOPE_PARAM: scope_value}, **item)
+
+            if self.PRIMARY_KEY and item.get(self.PRIMARY_KEY):
+                key = str(item[self.PRIMARY_KEY])
+                current = before_by_key.get(key)
+
+                if current is not None:
+                    if self._config_matches(item, current):
+                        continue
+                    op = 'update' if state == 'merged' else operation
+                else:
+                    op = 'create'
+            elif self.PRIMARY_KEY and not item.get(self.PRIMARY_KEY):
+                op = 'create'
+            else:
+                op = operation
+
+            manager.execute(op, self.MODULE_NAME, user_data)
+
+    def _apply_overridden(self, manager, user_cls, scope_value, config,
+                           before):
+        """Override: delete extras, then replace each desired item.
+
+        Uses ``before`` (already gathered by run()) to determine extras.
+        Skips replace for items already matching desired state.
+        """
+        before_by_key = {}
+        desired_keys = set()
+
+        if self.PRIMARY_KEY:
+            for item in before:
+                k = str(item.get(self.PRIMARY_KEY, ''))
+                if k:
+                    before_by_key[k] = item
+            for item in config:
+                key_val = item.get(self.PRIMARY_KEY)
+                if key_val is not None:
+                    desired_keys.add(str(key_val))
+
+            # Delete extras (current items not in desired set)
+            for current in before:
+                current_key = str(current.get(self.PRIMARY_KEY, ''))
+                if current_key and current_key not in desired_keys:
+                    delete_data = user_cls(
+                        **{self.SCOPE_PARAM: scope_value},
+                        **{self.PRIMARY_KEY: current.get(self.PRIMARY_KEY)},
+                    )
+                    manager.execute('delete', self.MODULE_NAME, delete_data)
+
+        # Replace each desired item (skip no-ops)
+        for item in config:
+            if self.PRIMARY_KEY and item.get(self.PRIMARY_KEY):
+                k = str(item[self.PRIMARY_KEY])
+                existing = before_by_key.get(k)
+                if existing and self._config_matches(item, existing):
+                    continue
+
+            user_data = user_cls(**{self.SCOPE_PARAM: scope_value}, **item)
+            manager.execute('replace', self.MODULE_NAME, user_data)
+
+    @staticmethod
+    def _config_matches(desired: dict, current: dict) -> bool:
+        """Check if every user-supplied field in desired matches current.
+
+        Only compares fields explicitly provided by the user (non-None).
+        Extra fields in current (from API defaults) are ignored.
+        """
+        for key, desired_val in desired.items():
+            if desired_val is None:
+                continue
+            current_val = current.get(key)
+            if str(desired_val) != str(current_val):
+                return False
+        return True
+
+    @staticmethod
+    def _lists_differ(before: list, after: list) -> bool:
+        """Compare two config lists to determine if anything changed.
+
+        Handles None values and type mismatches by normalizing to strings.
+        """
+        if len(before) != len(after):
+            return True
+        for b, a in zip(
+            sorted(before, key=lambda x: str(x)),
+            sorted(after, key=lambda x: str(x)),
+        ):
+            if b != a:
+                return True
+        return False
+
+    # ------------------------------------------------------------------ #
+    #  Manager lifecycle                                                   #
+    # ------------------------------------------------------------------ #
+
+    def _get_or_spawn_manager(self, task_vars: dict):
+        """
+        Get existing manager or spawn new one.
+
+        Checks if a manager is already running (stored in hostvars).
+        If found, connects to it. If not, spawns a new manager process.
+
+        Args:
+            task_vars: Task variables from Ansible
+
+        Returns:
+            ManagerRPCClient instance
+
+        Raises:
+            AnsibleError: If meraki_dashboard_url not configured
+            RuntimeError: If manager fails to start
+        """
+        from ..plugin_utils.manager.rpc_client import ManagerRPCClient
+
+        hostvars = task_vars.get('hostvars', {})
+        inventory_hostname = task_vars.get('inventory_hostname', 'localhost')
+        host_vars = hostvars.get(inventory_hostname, {})
+
+        socket_path = host_vars.get('platform_manager_socket')
+        authkey_b64 = host_vars.get('platform_manager_authkey')
+        meraki_url = host_vars.get('meraki_dashboard_url')
+        meraki_api_key = host_vars.get('meraki_api_key')
+
+        if not meraki_url:
+            raise AnsibleError(
+                "meraki_dashboard_url must be defined in inventory or host_vars"
+            )
+
+        if not meraki_api_key:
+            raise AnsibleError(
+                "meraki_api_key must be defined in inventory or host_vars"
+            )
+
+        if socket_path and authkey_b64 and Path(socket_path).exists():
+            try:
+                authkey = base64.b64decode(authkey_b64)
+                client = ManagerRPCClient(meraki_url, socket_path, authkey)
+                logger.info("Connected to existing manager")
+                return client
+            except Exception as e:
+                logger.warning(
+                    f"Failed to connect to existing manager: {e}. "
+                    f"Spawning new one..."
+                )
+
+        logger.info("Spawning new Platform Manager")
+
+        from ..plugin_utils.manager.platform_manager import (
+            PlatformManager,
+            PlatformService,
+        )
+
+        socket_dir = Path(tempfile.gettempdir()) / 'meraki_rm'
+        socket_dir.mkdir(exist_ok=True)
+        socket_path = str(socket_dir / f'manager_{inventory_hostname}.sock')
+        authkey = secrets.token_bytes(32)
+
+        if Path(socket_path).exists():
+            try:
+                Path(socket_path).unlink()
+            except Exception as e:
+                logger.warning(f"Failed to remove old socket: {e}")
+
+        service = PlatformService(meraki_url, meraki_api_key)
+        PlatformManager.register(
+            'get_platform_service',
+            callable=lambda: service,
+        )
+        manager = PlatformManager(address=socket_path, authkey=authkey)
+        manager.start()
+
+        max_wait = 50
+        for _ in range(max_wait):
+            if Path(socket_path).exists():
+                break
+            time.sleep(0.1)
+        else:
+            raise RuntimeError(
+                f"Manager failed to start within {max_wait * 0.1} seconds"
+            )
+
+        authkey_b64 = base64.b64encode(authkey).decode('utf-8')
+
+        try:
+            self._execute_module(
+                module_name='ansible.builtin.set_fact',
+                module_args={
+                    'platform_manager_socket': socket_path,
+                    'platform_manager_authkey': authkey_b64,
+                    'cacheable': True
+                },
+                task_vars=task_vars
+            )
+        except Exception as e:
+            logger.warning(f"Failed to set facts: {e}")
+
+        client = ManagerRPCClient(meraki_url, socket_path, authkey)
+        logger.info(f"Spawned and connected to new manager at {socket_path}")
+
+        return client
+
+    def _build_argspec_from_docs(self, documentation: str) -> dict:
+        """
+        Build argument spec from DOCUMENTATION string.
+
+        Parses the YAML documentation and extracts the options dict
+        plus any constraint lists (mutually_exclusive, etc.).
+
+        Args:
+            documentation: DOCUMENTATION string from module
+
+        Returns:
+            Dict with 'argument_spec' (param_name -> spec) and
+            constraint keys for ArgumentSpecValidator
+
+        Raises:
+            ValueError: If documentation cannot be parsed
+        """
+        try:
+            doc_data = yaml.safe_load(documentation)
+        except yaml.YAMLError as e:
+            raise ValueError(f"Failed to parse DOCUMENTATION: {e}") from e
+
+        return {
+            'argument_spec': doc_data.get('options', {}),
+            'mutually_exclusive': doc_data.get('mutually_exclusive', []),
+            'required_together': doc_data.get('required_together', []),
+            'required_one_of': doc_data.get('required_one_of', []),
+            'required_if': doc_data.get('required_if', []),
+        }
+
+    def _validate_data(
+        self,
+        data: dict,
+        argspec: dict,
+        direction: str
+    ) -> dict:
+        """
+        Validate data against argument spec.
+
+        Uses Ansible's ArgumentSpecValidator to validate
+        both input (from playbook) and output (from manager).
+
+        Args:
+            data: Data dict to validate
+            argspec: Dict with 'argument_spec' and optional constraint keys
+            direction: 'input' or 'output' (for error messages)
+
+        Returns:
+            Validated and normalized data dict
+
+        Raises:
+            AnsibleError: If validation fails
+        """
+        validator = ArgumentSpecValidator(
+            argspec['argument_spec'],
+            mutually_exclusive=argspec.get('mutually_exclusive', []),
+            required_together=argspec.get('required_together', []),
+            required_one_of=argspec.get('required_one_of', []),
+            required_if=argspec.get('required_if', []),
+        )
+        result = validator.validate(data)
+
+        if result.error_messages:
+            error_msg = (
+                f"{direction.title()} validation failed: " +
+                ", ".join(result.error_messages)
+            )
+            raise AnsibleError(error_msg)
+
+        return result.validated_parameters
+
+    def _validate_output(self, results: list, argspec: dict) -> list:
+        """Validate return data against the config suboptions schema.
+
+        Ensures the contract with the user: what we return in ``config``
+        matches the documented suboptions (field names, types). Items with
+        extra keys not in the schema are filtered out; items missing
+        required keys log a warning but are still returned.
+
+        This catches bugs where the reverse transform (API → User) produces
+        field names or types that don't match the documented interface.
+        """
+        config_spec = argspec.get('argument_spec', {}).get('config', {})
+        suboptions = config_spec.get('suboptions', {})
+
+        if not suboptions:
+            return results
+
+        valid_keys = set(suboptions.keys())
+        validated = []
+
+        for item in results:
+            if not isinstance(item, dict):
+                validated.append(item)
+                continue
+
+            cleaned = {}
+            for key, value in item.items():
+                if key in valid_keys:
+                    cleaned[key] = value
+                else:
+                    logger.debug(
+                        "Output field %r not in config suboptions — "
+                        "stripping from return data", key,
+                    )
+
+            validated.append(cleaned)
+
+        return validated
+
+    def _detect_operation(self, args: dict) -> str:
+        """
+        Map resource module state to API operation.
+
+        State-to-operation mapping for resource modules:
+        - merged   -> 'update' (create if not exists, update if exists)
+        - replaced -> 'replace' (full resource replacement)
+        - overridden -> 'override' (replace all instances of this resource type)
+        - deleted  -> 'delete'
+        - gathered -> 'find'
+        Args:
+            args: Module arguments
+
+        Returns:
+            Operation name
+
+        Raises:
+            AnsibleError: If state is unknown
+        """
+        state = args.get('state', 'merged')
+
+        if state not in self.VALID_STATES:
+            raise AnsibleError(
+                f"Unknown state: {state}. "
+                f"Valid states: {sorted(self.VALID_STATES)}"
+            )
+
+        state_to_operation = {
+            'merged': 'update',
+            'replaced': 'replace',
+            'overridden': 'override',
+            'deleted': 'delete',
+            'gathered': 'find',
+        }
+
+        return state_to_operation[state]

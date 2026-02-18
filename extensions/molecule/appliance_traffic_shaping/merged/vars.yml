@@ -1,0 +1,6 @@
+---
+expected_config:
+  default_rules_enabled: true
+  default_uplink: example
+  load_balancing_enabled: true
+  active_active_auto_vpn_enabled: true

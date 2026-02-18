@@ -1,0 +1,15 @@
+---
+- name: "Prepare \u2014 switch_settings (replaced)"
+  hosts: localhost
+  gather_facts: false
+  tasks:
+  - name: Seed resource via merged (prerequisite for replaced)
+    cisco.meraki_rm.meraki_switch_settings:
+      network_id: N_123456789012345678
+      state: merged
+      config:
+      - default_mtu_size: 1
+        broadcast_threshold: 1
+        multicast_threshold: 1
+        unknown_unicast_threshold: 1
+        use_combined_power: true

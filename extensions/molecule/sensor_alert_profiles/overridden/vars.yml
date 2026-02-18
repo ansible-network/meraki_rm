@@ -1,0 +1,6 @@
+---
+expected_config:
+  id: example
+  name: Replaced-Config
+  message: example
+  include_sensor_url: true

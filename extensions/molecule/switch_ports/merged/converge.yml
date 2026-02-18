@@ -1,0 +1,14 @@
+---
+- name: "Converge \u2014 switch_ports (merged)"
+  hosts: localhost
+  gather_facts: false
+  vars_files:
+  - vars.yml
+  tasks:
+  - name: Create switch_ports with merged state
+    cisco.meraki_rm.meraki_switch_ports:
+      serial: Q2XX-XXXX-XXXX
+      state: merged
+      config:
+      - '{{ expected_config }}'
+    register: merge_result

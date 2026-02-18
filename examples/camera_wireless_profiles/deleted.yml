@@ -1,0 +1,21 @@
+---
+# Manage Meraki camera wireless profiles — remove configuration
+
+- name: Define resource to delete
+  ansible.builtin.set_fact:
+    expected_config:
+      wireless_profile_id: example
+
+- name: Delete camera_wireless_profiles configuration
+  cisco.meraki_rm.meraki_camera_wireless_profiles:
+    network_id: "N_123456789012345678"
+    state: deleted
+    config:
+      - "{{ expected_config }}"
+  register: delete_result
+
+- name: Assert resource was deleted
+  ansible.builtin.assert:
+    that:
+      - delete_result is changed
+      - delete_result is not failed

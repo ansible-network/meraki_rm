@@ -1,0 +1,14 @@
+---
+- name: "Converge \u2014 sensor_alert_profiles (deleted)"
+  hosts: localhost
+  gather_facts: false
+  vars_files:
+  - vars.yml
+  tasks:
+  - name: Delete sensor_alert_profiles configuration
+    cisco.meraki_rm.meraki_sensor_alert_profiles:
+      network_id: N_123456789012345678
+      state: deleted
+      config:
+      - '{{ expected_config }}'
+    register: delete_result

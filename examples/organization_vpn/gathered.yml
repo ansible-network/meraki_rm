@@ -1,0 +1,19 @@
+---
+# Manage Meraki organization third-party VPN peers — gather current configuration
+
+- name: Gather current organization_vpn configuration
+  cisco.meraki_rm.meraki_organization_vpn:
+    organization_id: "123456"
+    state: gathered
+  register: gathered
+
+- name: Assert gathered config is not empty
+  ansible.builtin.assert:
+    that:
+      - gathered.config is defined
+      - gathered.config | length > 0
+    fail_msg: "Gathered config is empty — expected at least one resource"
+
+- name: Display gathered configuration
+  ansible.builtin.debug:
+    var: gathered.config

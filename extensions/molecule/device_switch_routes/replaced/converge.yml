@@ -1,0 +1,14 @@
+---
+- name: "Converge \u2014 device_switch_routes (replaced)"
+  hosts: localhost
+  gather_facts: false
+  vars_files:
+  - vars.yml
+  tasks:
+  - name: Replace device_switch_routes configuration
+    cisco.meraki_rm.meraki_device_switch_routes:
+      serial: Q2XX-XXXX-XXXX
+      state: replaced
+      config:
+      - '{{ expected_config }}'
+    register: replace_result

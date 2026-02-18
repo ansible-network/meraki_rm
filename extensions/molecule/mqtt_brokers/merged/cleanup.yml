@@ -1,0 +1,12 @@
+---
+- name: "Cleanup \u2014 mqtt_brokers (merged)"
+  hosts: localhost
+  gather_facts: false
+  tasks:
+  - name: Remove test resources
+    cisco.meraki_rm.meraki_mqtt_brokers:
+      network_id: N_123456789012345678
+      state: deleted
+      config:
+      - mqtt_broker_id: example
+    ignore_errors: true

@@ -1,0 +1,8 @@
+---
+expected_config:
+  enabled: true
+  spare_serial: Q2XX-SPARE-0001
+  uplink_mode: virtual
+  virtual_ip1: 10.0.0.2
+  virtual_ip2: 10.0.0.3
+  primary_serial: example

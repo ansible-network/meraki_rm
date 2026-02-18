@@ -1,0 +1,12 @@
+---
+expected_config:
+  port_id: '1'
+  name: Replaced-Config
+  tags:
+  - ansible
+  - replaced
+  enabled: false
+  type: trunk
+  vlan: 20
+  voice_vlan: 100
+  allowed_vlans: all

@@ -1,0 +1,12 @@
+---
+- name: "Cleanup \u2014 organization_policy_objects (gathered)"
+  hosts: localhost
+  gather_facts: false
+  tasks:
+  - name: Remove test resources
+    cisco.meraki_rm.meraki_organization_policy_objects:
+      organization_id: '123456'
+      state: deleted
+      config:
+      - policy_object_id: example
+    ignore_errors: true

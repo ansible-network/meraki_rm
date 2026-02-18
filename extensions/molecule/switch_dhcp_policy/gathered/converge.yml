@@ -1,0 +1,10 @@
+---
+- name: "Converge \u2014 switch_dhcp_policy (gathered)"
+  hosts: localhost
+  gather_facts: false
+  tasks:
+  - name: Gather current switch_dhcp_policy configuration
+    cisco.meraki_rm.meraki_switch_dhcp_policy:
+      network_id: N_123456789012345678
+      state: gathered
+    register: gathered

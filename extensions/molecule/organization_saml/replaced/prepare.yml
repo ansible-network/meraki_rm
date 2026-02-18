@@ -1,0 +1,16 @@
+---
+- name: "Prepare \u2014 organization_saml (replaced)"
+  hosts: localhost
+  gather_facts: false
+  tasks:
+  - name: Seed resource via merged (prerequisite for replaced)
+    cisco.meraki_rm.meraki_organization_saml:
+      organization_id: '123456'
+      state: merged
+      config:
+      - enabled: true
+        consumer_url: example
+        slo_logout_url: example
+        sso_login_url: example
+        x509cert_sha1_fingerprint: example
+        vision_consumer_url: example

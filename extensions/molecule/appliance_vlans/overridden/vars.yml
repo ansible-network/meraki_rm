@@ -1,0 +1,10 @@
+---
+expected_config:
+  vlan_id: '100'
+  name: Replaced-Config
+  subnet: 10.20.0.0/24
+  appliance_ip: 10.20.0.1
+  group_policy_id: example
+  template_vlan_type: unique
+  cidr: 192.168.128.0/24
+  mask: 24

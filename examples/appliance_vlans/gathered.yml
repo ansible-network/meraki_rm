@@ -1,0 +1,19 @@
+---
+# Manage Meraki appliance VLANs — gather current configuration
+
+- name: Gather current appliance_vlans configuration
+  cisco.meraki_rm.meraki_appliance_vlans:
+    network_id: "N_123456789012345678"
+    state: gathered
+  register: gathered
+
+- name: Assert gathered config is not empty
+  ansible.builtin.assert:
+    that:
+      - gathered.gathered is defined
+      - gathered.gathered | length > 0
+    fail_msg: "Gathered config is empty — expected at least one resource"
+
+- name: Display gathered configuration
+  ansible.builtin.debug:
+    var: gathered.gathered

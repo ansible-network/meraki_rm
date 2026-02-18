@@ -1,0 +1,14 @@
+---
+- name: "Converge \u2014 floor_plans (deleted)"
+  hosts: localhost
+  gather_facts: false
+  vars_files:
+  - vars.yml
+  tasks:
+  - name: Delete floor_plans configuration
+    cisco.meraki_rm.meraki_floor_plans:
+      network_id: N_123456789012345678
+      state: deleted
+      config:
+      - '{{ expected_config }}'
+    register: delete_result

@@ -1,0 +1,14 @@
+---
+- name: "Converge \u2014 device_switch_routes (overridden)"
+  hosts: localhost
+  gather_facts: false
+  vars_files:
+  - vars.yml
+  tasks:
+  - name: "Override all device_switch_routes \u2014 desired state only"
+    cisco.meraki_rm.meraki_device_switch_routes:
+      serial: Q2XX-XXXX-XXXX
+      state: overridden
+      config:
+      - '{{ expected_config }}'
+    register: override_result

@@ -1,0 +1,40 @@
+---
+# Manage Meraki switch routing (multicast and OSPF) — create or update
+
+- name: Define expected configuration
+  ansible.builtin.set_fact:
+    expected_config:
+      enabled: true
+      hello_timer_in_seconds: 1
+      dead_timer_in_seconds: 1
+      md5_authentication_enabled: true
+
+- name: Create switch_routing with merged state
+  cisco.meraki_rm.meraki_switch_routing:
+    network_id: "N_123456789012345678"
+    state: merged
+    config:
+      - "{{ expected_config }}"
+  register: merge_result
+
+- name: Assert resource was created
+  ansible.builtin.assert:
+    that:
+      - merge_result is changed
+      - merge_result.config | length == 1
+
+- name: Compare expected paths to result (subset check)
+  ansible.builtin.set_fact:
+    path_check: "{{ expected_paths | cisco.meraki_rm.path_contained_in(result_paths) }}"
+  vars:
+    expected_paths: "{{ expected_config | ansible.utils.to_paths }}"
+    result_paths: "{{ merge_result.config[0] | ansible.utils.to_paths }}"
+
+- name: Assert all expected fields are present and match
+  ansible.builtin.assert:
+    that: path_check.contained | bool
+    success_msg: "{{ success_msg }}"
+    fail_msg: "{{ fail_msg }}"
+  vars:
+    success_msg: "All expected fields match. Extras: {{ path_check.extras }}"
+    fail_msg: "Missing or mismatch: {{ path_check.missing }}. Extras: {{ path_check.extras }}"

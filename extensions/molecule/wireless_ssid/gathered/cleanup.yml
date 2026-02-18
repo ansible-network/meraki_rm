@@ -1,0 +1,8 @@
+---
+- name: "Cleanup \u2014 wireless_ssid (gathered)"
+  hosts: localhost
+  gather_facts: false
+  tasks:
+  - name: No cleanup configured for singleton resource
+    ansible.builtin.debug:
+      msg: wireless_ssid does not support delete

@@ -1,0 +1,4 @@
+---
+expected_config:
+  vlan_id: '100'
+  group_policy_id: example

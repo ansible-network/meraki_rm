@@ -1,0 +1,12 @@
+---
+expected_config:
+  port_id: '1'
+  name: Test-Config
+  tags:
+  - ansible
+  - test
+  enabled: true
+  type: access
+  vlan: 1
+  voice_vlan: 100
+  allowed_vlans: all

@@ -1,0 +1,24 @@
+---
+- name: "Prepare \u2014 appliance_static_routes (overridden)"
+  hosts: localhost
+  gather_facts: false
+  tasks:
+  - name: Seed resource via merged (prerequisite for overridden)
+    cisco.meraki_rm.meraki_appliance_static_routes:
+      network_id: N_123456789012345678
+      state: merged
+      config:
+      - static_route_id: example
+        name: Test-Config
+        subnet: 192.168.128.0/24
+        gateway_ip: 10.0.0.1
+        gateway_vlan_id: 1
+        enabled: true
+        ip_version: 1
+      - static_route_id: '999'
+        name: Extra-To-Delete
+        subnet: 192.168.128.0/24
+        gateway_ip: 10.0.0.1
+        gateway_vlan_id: 1
+        enabled: true
+        ip_version: 1
