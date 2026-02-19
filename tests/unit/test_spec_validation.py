@@ -119,11 +119,11 @@ def _build_request_body(api_data_dict: dict, user_data_dict: dict, endpoint_op) 
 # Discovery: vars.yml -> action plugin -> classes + endpoint ops
 # ---------------------------------------------------------------------------
 
-def _discover_fixtures() -> List[Dict[str, Any]]:
-    """Find all merged/vars.yml files and pair with their action plugin metadata."""
+def _discover_fixtures(state: str = "merged") -> List[Dict[str, Any]]:
+    """Find all {state}/vars.yml files and pair with their action plugin metadata."""
     fixtures = []
 
-    for vars_path in sorted(MOLECULE_DIR.glob("*/merged/vars.yml")):
+    for vars_path in sorted(MOLECULE_DIR.glob(f"*/{state}/vars.yml")):
         dir_name = vars_path.parent.parent.name
         plugin_file = ACTION_DIR / f"meraki_{dir_name}.py"
 
@@ -138,10 +138,11 @@ def _discover_fixtures() -> List[Dict[str, Any]]:
             vars_data = yaml.safe_load(f)
 
         expected_config = vars_data.get("expected_config")
-        if not expected_config:
+        if not expected_config or not isinstance(expected_config, dict):
             continue
 
         fixtures.append({
+            "state": state,
             "dir_name": dir_name,
             "module_name": attrs["MODULE_NAME"],
             "attrs": attrs,
@@ -151,8 +152,8 @@ def _discover_fixtures() -> List[Dict[str, Any]]:
     return fixtures
 
 
-_FIXTURES = _discover_fixtures()
-_FIX_IDS = [f["dir_name"] for f in _FIXTURES]
+_FIXTURES = _discover_fixtures("merged") + _discover_fixtures("gathered")
+_FIX_IDS = [f["dir_name"] + "/" + f["state"] for f in _FIXTURES]
 
 
 @pytest.fixture(params=_FIXTURES, ids=_FIX_IDS)
@@ -193,6 +194,7 @@ class TestArgspecValidation:
                 f"{attrs['MODULE_NAME']}: Ansible argspec validation failed:\n"
                 + "\n".join(f"  - {e}" for e in result.error_messages)
             )
+
 
 
 # ===================================================================

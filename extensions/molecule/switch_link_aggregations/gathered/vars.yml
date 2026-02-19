@@ -2,4 +2,4 @@
 expected_config:
   switch_ports:
     - serial: "Q2XX-XXXX-0001"
-      port_id: "1"
+      portId: "2"

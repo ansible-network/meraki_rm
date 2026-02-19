@@ -12,6 +12,7 @@ cd /home/bthornto/github/openapi_module
 source venv/bin/activate
 export MOLECULE_GLOB="extensions/molecule/**/molecule.yml"
 
+molecule reset --all 2>/dev/null || true
 pkill -f "tools.mock_server.server" 2>/dev/null || true
 sleep 1
 rm -rf /run/user/1000/meraki_rm 2>/dev/null || true
