@@ -1,0 +1,4 @@
+---
+expected_config:
+  name: Test-Config Gathered
+  time_zone: example Gathered

@@ -1,0 +1,8 @@
+---
+expected_config:
+  name: Test-Config Gathered
+  max_retention_days: 31
+  motion_based_retention_enabled: false
+  restricted_bandwidth_mode_enabled: false
+  audio_recording_enabled: false
+  cloud_archive_enabled: false

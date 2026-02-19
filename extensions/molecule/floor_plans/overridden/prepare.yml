@@ -1,24 +1,13 @@
 ---
-- name: "Prepare \u2014 floor_plans (overridden)"
+- name: "Prepare — floor_plans (overridden)"
   hosts: localhost
   gather_facts: false
+  vars_files:
+    - ../merged/vars.yml
   tasks:
-  - name: Seed resource via merged (prerequisite for overridden)
-    cisco.meraki_rm.meraki_floor_plans:
-      network_id: N_123456789012345678
-      state: merged
-      config:
-      - floor_plan_id: example
-        name: Test-Config
-        width: 0.0
-        height: 0.0
-        floor_number: 0.0
-        image_contents: example
-        image_extension: example
-      - floor_plan_id: '999'
-        name: Extra-To-Delete
-        width: 0.0
-        height: 0.0
-        floor_number: 0.0
-        image_contents: example
-        image_extension: example
+    - name: Seed resource via merged (prerequisite for overridden)
+      cisco.meraki_rm.meraki_floor_plans:
+        network_id: N_123456789012345678
+        state: merged
+        config:
+          - "{{ expected_config }}"

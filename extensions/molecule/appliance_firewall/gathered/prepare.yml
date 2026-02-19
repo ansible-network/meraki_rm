@@ -1,13 +1,13 @@
 ---
-- name: "Prepare \u2014 appliance_firewall (gathered)"
+- name: "Prepare — appliance_firewall (gathered)"
   hosts: localhost
   gather_facts: false
+  vars_files:
+    - vars.yml
   tasks:
-  - name: Seed resource via merged (prerequisite for gathered)
-    cisco.meraki_rm.meraki_appliance_firewall:
-      network_id: N_123456789012345678
-      state: merged
-      config:
-      - syslog_default_rule: true
-        access: example
-        service: example
+    - name: Seed resource via merged (prerequisite for gathered)
+      cisco.meraki_rm.meraki_appliance_firewall:
+        network_id: N_123456789012345678
+        state: merged
+        config:
+          - "{{ expected_config }}"

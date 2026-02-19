@@ -1,17 +1,13 @@
 ---
-- name: "Prepare \u2014 appliance_port (replaced)"
+- name: "Prepare — appliance_port (replaced)"
   hosts: localhost
   gather_facts: false
+  vars_files:
+    - ../merged/vars.yml
   tasks:
-  - name: Seed resource via merged (prerequisite for replaced)
-    cisco.meraki_rm.meraki_appliance_port:
-      network_id: N_123456789012345678
-      state: merged
-      config:
-      - port_id: '1'
-        enabled: true
-        type: access
-        vlan: 1
-        allowed_vlans: all
-        access_policy: example
-        drop_untagged_traffic: true
+    - name: Seed resource via merged (prerequisite for replaced)
+      cisco.meraki_rm.meraki_appliance_port:
+        network_id: N_123456789012345678
+        state: merged
+        config:
+          - "{{ expected_config }}"

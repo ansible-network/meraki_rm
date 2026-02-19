@@ -1,0 +1,4 @@
+---
+expected_config:
+  name: Test-Config Gathered
+  enabled: false

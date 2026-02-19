@@ -1,0 +1,8 @@
+---
+expected_config:
+  peers:
+    - name: "Gathered peer"
+      publicIp: "192.0.2.2"
+      privateSubnets:
+        - "10.0.1.0/24"
+      secret: "gathered-shared-secret"

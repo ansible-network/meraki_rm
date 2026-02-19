@@ -1,0 +1,7 @@
+---
+expected_config:
+  name: Test-Config Gathered
+  band_selection_type: ap
+  client_balancing_enabled: false
+  is_indoor_default: false
+  is_outdoor_default: false

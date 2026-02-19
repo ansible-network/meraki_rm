@@ -1,0 +1,5 @@
+---
+expected_config:
+  name: Test-Config Gathered
+  url: https://example.com/webhook Gathered
+  shared_secret: example Gathered

@@ -1,0 +1,6 @@
+---
+expected_config:
+  name: Test-Config Gathered
+  category: adaptivePolicy Gathered
+  type: adaptivePolicyIpv4Cidr Gathered
+  cidr: 192.168.128.1/24

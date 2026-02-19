@@ -1,0 +1,5 @@
+---
+expected_config:
+  syslog_default_rule: false
+  access: blocked
+  service: blocked Gathered

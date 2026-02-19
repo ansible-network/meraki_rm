@@ -1,0 +1,10 @@
+---
+expected_config:
+  vlan_id: '101'
+  name: Test-Config Gathered
+  subnet: 192.168.128.1/24
+  appliance_ip: 192.168.128.2
+  group_policy_id: example Gathered
+  template_vlan_type: unique
+  cidr: 192.168.128.1/24
+  mask: 25

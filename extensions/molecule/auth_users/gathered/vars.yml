@@ -1,0 +1,8 @@
+---
+expected_config:
+  name: Test-Config Gathered
+  email: admin+gathered@example.com
+  password: example Gathered
+  account_type: 802.1X
+  is_admin: false
+  email_password_to_user: false

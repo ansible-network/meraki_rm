@@ -1,0 +1,4 @@
+---
+expected_config:
+  prefix: example Gathered
+  description: Managed by Ansible Gathered

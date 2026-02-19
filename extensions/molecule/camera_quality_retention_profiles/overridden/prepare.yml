@@ -1,26 +1,13 @@
 ---
-- name: "Prepare \u2014 camera_quality_retention_profiles (overridden)"
+- name: "Prepare — camera_quality_retention_profiles (overridden)"
   hosts: localhost
   gather_facts: false
+  vars_files:
+    - ../merged/vars.yml
   tasks:
-  - name: Seed resource via merged (prerequisite for overridden)
-    cisco.meraki_rm.meraki_camera_quality_retention_profiles:
-      network_id: N_123456789012345678
-      state: merged
-      config:
-      - quality_retention_profile_id: example
-        name: Test-Config
-        max_retention_days: 30
-        motion_based_retention_enabled: true
-        restricted_bandwidth_mode_enabled: true
-        audio_recording_enabled: true
-        cloud_archive_enabled: true
-        schedule_id: example
-      - quality_retention_profile_id: '999'
-        name: Extra-To-Delete
-        max_retention_days: 30
-        motion_based_retention_enabled: true
-        restricted_bandwidth_mode_enabled: true
-        audio_recording_enabled: true
-        cloud_archive_enabled: true
-        schedule_id: example
+    - name: Seed resource via merged (prerequisite for overridden)
+      cisco.meraki_rm.meraki_camera_quality_retention_profiles:
+        network_id: N_123456789012345678
+        state: merged
+        config:
+          - "{{ expected_config }}"

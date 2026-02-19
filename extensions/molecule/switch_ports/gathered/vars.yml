@@ -1,0 +1,11 @@
+---
+expected_config:
+  name: Test-Config Gathered
+  tags:
+  - ansible-g
+  - test-g
+  enabled: false
+  type: dad
+  vlan: 2
+  voice_vlan: 101
+  allowed_vlans: all

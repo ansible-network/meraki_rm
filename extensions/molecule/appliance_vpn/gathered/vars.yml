@@ -1,0 +1,9 @@
+---
+expected_config:
+  mode: hub
+  subnets:
+  - localSubnet: 192.168.128.0/24
+    useVpn: true
+  enabled: false
+  as_number: 2
+  ibgp_hold_timer: 2

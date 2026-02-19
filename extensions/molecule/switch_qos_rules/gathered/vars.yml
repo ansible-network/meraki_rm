@@ -1,0 +1,9 @@
+---
+expected_config:
+  dscp: 2
+  vlan: 2
+  protocol: ANY
+  src_port: 2
+  dst_port: 2
+  src_port_range: example Gathered
+  dst_port_range: example Gathered
