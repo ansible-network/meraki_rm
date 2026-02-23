@@ -1,9 +1,9 @@
 ---
-- name: "Cleanup — appliance_ssid (merged)"
+- name: "Prepare — appliance_ssid (merged)"
   hosts: localhost
   gather_facts: false
   tasks:
-    - name: Reset SSID 1 to baseline after test
+    - name: Reset SSID 1 to baseline before test
       cisco.meraki_rm.meraki_appliance_ssid:
         network_id: N_123456789012345678
         state: replaced

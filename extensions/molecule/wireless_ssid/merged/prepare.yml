@@ -1,10 +1,10 @@
 ---
-- name: "Cleanup — appliance_ssid (merged)"
+- name: "Prepare — wireless_ssid (merged)"
   hosts: localhost
   gather_facts: false
   tasks:
-    - name: Reset SSID 1 to baseline after test
-      cisco.meraki_rm.meraki_appliance_ssid:
+    - name: Reset SSID 1 to baseline before test
+      cisco.meraki_rm.meraki_wireless_ssid:
         network_id: N_123456789012345678
         state: replaced
         config:
@@ -14,4 +14,5 @@
             auth_mode: open
             encryption_mode: wpa
             psk: ""
-            visible: false
+            wpa_encryption_mode: "WPA2 only"
+            ip_assignment_mode: "NAT mode"
