@@ -1,4 +1,4 @@
----
 expected_config:
   name: Replaced-Config
   rf_profile_id: example
+server_assigned_pk: rf_profile_id

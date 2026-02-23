@@ -1,6 +1,6 @@
----
 expected_config:
   name: Test-Config
   email: admin@example.com
   org_access: full
   admin_id: example
+server_assigned_pk: admin_id

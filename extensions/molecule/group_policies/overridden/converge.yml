@@ -5,10 +5,23 @@
   vars_files:
   - vars.yml
   tasks:
-  - name: "Override all group_policies \u2014 desired state only"
+  - name: Gather current group_policies to get server-assigned IDs
+    cisco.meraki_rm.meraki_group_policies:
+      network_id: N_123456789012345678
+      state: gathered
+    register: current
+
+  - name: Build config with actual server-assigned PK
+    ansible.builtin.set_fact:
+      overridden_config: >-
+        {{ expected_config | combine({'group_policy_id': current.gathered[0].group_policy_id}) }}
+    when: current.gathered | length > 0
+
+  - name: Overridden group_policies configuration
     cisco.meraki_rm.meraki_group_policies:
       network_id: N_123456789012345678
       state: overridden
       config:
-      - '{{ expected_config }}'
-    register: override_result
+      - "{{ overridden_config }}"
+    register: overridden_result
+    when: overridden_config is defined

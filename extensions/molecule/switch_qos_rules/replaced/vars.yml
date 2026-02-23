@@ -1,4 +1,3 @@
----
 expected_config:
   dscp: 1
   vlan: 20
@@ -8,3 +7,4 @@ expected_config:
   src_port_range: example
   dst_port_range: example
   qos_rule_id: example
+server_assigned_pk: qos_rule_id

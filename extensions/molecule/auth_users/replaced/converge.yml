@@ -5,10 +5,23 @@
   vars_files:
   - vars.yml
   tasks:
-  - name: Replace auth_users configuration
+  - name: Gather current auth_users to get server-assigned IDs
+    cisco.meraki_rm.meraki_auth_users:
+      network_id: N_123456789012345678
+      state: gathered
+    register: current
+
+  - name: Build config with actual server-assigned PK
+    ansible.builtin.set_fact:
+      replaced_config: >-
+        {{ expected_config | combine({'meraki_auth_user_id': current.gathered[0].meraki_auth_user_id}) }}
+    when: current.gathered | length > 0
+
+  - name: Replaced auth_users configuration
     cisco.meraki_rm.meraki_auth_users:
       network_id: N_123456789012345678
       state: replaced
       config:
-      - '{{ expected_config }}'
-    register: replace_result
+      - "{{ replaced_config }}"
+    register: replaced_result
+    when: replaced_config is defined

@@ -3,11 +3,16 @@
   hosts: localhost
   gather_facts: false
   tasks:
-  - name: Remove test resources
+  - name: Gather remaining switch_ports resources
+    cisco.meraki_rm.meraki_switch_ports:
+      serial: Q2XX-XXXX-XXXX
+      state: gathered
+    register: current
+
+  - name: Remove all test resources
     cisco.meraki_rm.meraki_switch_ports:
       serial: Q2XX-XXXX-XXXX
       state: deleted
-      config:
-      - port_id: '1'
-        port_schedule_id: example
+      config: "{{ current.gathered }}"
+    when: current.gathered | default([]) | length > 0
     ignore_errors: true

@@ -1,5 +1,5 @@
----
 expected_config:
   static_delegated_prefix_id: example
   prefix: example
   description: Managed by Ansible
+server_assigned_pk: static_delegated_prefix_id

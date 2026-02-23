@@ -3,11 +3,16 @@
   hosts: localhost
   gather_facts: false
   tasks:
-  - name: Remove test resources
+  - name: Gather remaining organization_config_templates resources
+    cisco.meraki_rm.meraki_organization_config_templates:
+      organization_id: '123456'
+      state: gathered
+    register: current
+
+  - name: Remove all test resources
     cisco.meraki_rm.meraki_organization_config_templates:
       organization_id: '123456'
       state: deleted
-      config:
-      - config_template_id: example
-        copy_from_network_id: example
+      config: "{{ current.gathered }}"
+    when: current.gathered | default([]) | length > 0
     ignore_errors: true

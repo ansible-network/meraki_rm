@@ -1,14 +1,18 @@
 ---
-- name: "Converge \u2014 group_policies (deleted)"
+- name: "Converge — group_policies (deleted)"
   hosts: localhost
   gather_facts: false
-  vars_files:
-  - vars.yml
   tasks:
-  - name: Delete group_policies configuration
+  - name: Gather current group_policies to get server-assigned IDs
+    cisco.meraki_rm.meraki_group_policies:
+      network_id: N_123456789012345678
+      state: gathered
+    register: current
+
+  - name: Delete all gathered group_policies
     cisco.meraki_rm.meraki_group_policies:
       network_id: N_123456789012345678
       state: deleted
-      config:
-      - '{{ expected_config }}'
+      config: "{{ current.gathered }}"
     register: delete_result
+    when: current.gathered | length > 0

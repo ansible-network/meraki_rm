@@ -5,10 +5,23 @@
   vars_files:
   - vars.yml
   tasks:
-  - name: Replace vlan_profiles configuration
+  - name: Gather current vlan_profiles to get server-assigned IDs
+    cisco.meraki_rm.meraki_vlan_profiles:
+      network_id: N_123456789012345678
+      state: gathered
+    register: current
+
+  - name: Build config with actual server-assigned PK
+    ansible.builtin.set_fact:
+      replaced_config: >-
+        {{ expected_config | combine({'iname': current.gathered[0].iname}) }}
+    when: current.gathered | length > 0
+
+  - name: Replaced vlan_profiles configuration
     cisco.meraki_rm.meraki_vlan_profiles:
       network_id: N_123456789012345678
       state: replaced
       config:
-      - '{{ expected_config }}'
-    register: replace_result
+      - "{{ replaced_config }}"
+    register: replaced_result
+    when: replaced_config is defined

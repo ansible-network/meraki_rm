@@ -1,14 +1,18 @@
 ---
-- name: "Converge \u2014 switch_ports (deleted)"
+- name: "Converge — switch_ports (deleted)"
   hosts: localhost
   gather_facts: false
-  vars_files:
-  - vars.yml
   tasks:
-  - name: Delete switch_ports configuration
+  - name: Gather current switch_ports to get server-assigned IDs
+    cisco.meraki_rm.meraki_switch_ports:
+      serial: Q2XX-XXXX-XXXX
+      state: gathered
+    register: current
+
+  - name: Delete all gathered switch_ports
     cisco.meraki_rm.meraki_switch_ports:
       serial: Q2XX-XXXX-XXXX
       state: deleted
-      config:
-      - '{{ expected_config }}'
+      config: "{{ current.gathered }}"
     register: delete_result
+    when: current.gathered | length > 0

@@ -5,10 +5,23 @@
   vars_files:
   - vars.yml
   tasks:
-  - name: "Override all switch_stacks \u2014 desired state only"
+  - name: Gather current switch_stacks to get server-assigned IDs
+    cisco.meraki_rm.meraki_switch_stacks:
+      network_id: N_123456789012345678
+      state: gathered
+    register: current
+
+  - name: Build config with actual server-assigned PK
+    ansible.builtin.set_fact:
+      overridden_config: >-
+        {{ expected_config | combine({'switch_stack_id': current.gathered[0].switch_stack_id}) }}
+    when: current.gathered | length > 0
+
+  - name: Overridden switch_stacks configuration
     cisco.meraki_rm.meraki_switch_stacks:
       network_id: N_123456789012345678
       state: overridden
       config:
-      - '{{ expected_config }}'
-    register: override_result
+      - "{{ overridden_config }}"
+    register: overridden_result
+    when: overridden_config is defined

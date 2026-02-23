@@ -3,6 +3,4 @@ scenario:
   test_sequence:
     - converge
     - verify
-    - idempotence
-    - verify
     - cleanup

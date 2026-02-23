@@ -1,4 +1,3 @@
----
 expected_config:
   name: Test-Config
   band_selection_type: ssid
@@ -6,3 +5,4 @@ expected_config:
   is_indoor_default: true
   is_outdoor_default: true
   rf_profile_id: example
+server_assigned_pk: rf_profile_id

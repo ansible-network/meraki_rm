@@ -1,4 +1,3 @@
----
 expected_config:
   name: Test-Config
   max_retention_days: 30
@@ -7,3 +6,4 @@ expected_config:
   audio_recording_enabled: true
   cloud_archive_enabled: true
   quality_retention_profile_id: example
+server_assigned_pk: quality_retention_profile_id
