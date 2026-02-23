@@ -6,3 +6,4 @@ expected_config:
   account_type: example
   is_admin: true
   email_password_to_user: true
+  meraki_auth_user_id: example

@@ -6,3 +6,4 @@ expected_config:
   floor_number: 0.0
   image_contents: example
   image_extension: example
+  floor_plan_id: example

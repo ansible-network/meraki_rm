@@ -1,2 +1,7 @@
 ---
 expected_config:
+  type: allow
+  match:
+    type: bssid
+    string: 00:11:22:33:44:55
+  rule_id: example

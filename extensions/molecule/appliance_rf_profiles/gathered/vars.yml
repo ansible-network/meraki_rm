@@ -1,3 +1,4 @@
 ---
 expected_config:
   name: Test-Config Gathered
+  rf_profile_id: example

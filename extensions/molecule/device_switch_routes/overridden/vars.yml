@@ -1,8 +1,8 @@
 ---
 expected_config:
-  name: Replaced-Config
-  subnet: 10.20.0.0/24
+  name: Test-Config
+  subnet: 192.168.128.0/24
   interface_ip: 10.0.0.1
   default_gateway: 10.0.0.1
-  multicast_routing: example
-  dhcp_mode: example
+  multicast_routing: disabled
+  interface_id: example

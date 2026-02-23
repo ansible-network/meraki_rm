@@ -7,3 +7,4 @@ expected_config:
   dst_port: 2
   src_port_range: example Gathered
   dst_port_range: example Gathered
+  qos_rule_id: example

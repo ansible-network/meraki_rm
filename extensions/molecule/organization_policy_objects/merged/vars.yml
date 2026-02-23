@@ -4,3 +4,4 @@ expected_config:
   category: adaptivePolicy
   type: adaptivePolicyIpv4Cidr
   cidr: 192.168.128.0/24
+  policy_object_id: example

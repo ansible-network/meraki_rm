@@ -1,5 +1,11 @@
 ---
 expected_config:
-  iname: example
-  name: Replaced-Config
+  iname: test-profile
+  name: Test-Config
   is_default: true
+  vlan_names:
+    - name: "data"
+      vlanId: "100"
+  vlan_groups:
+    - name: "default-group"
+      vlanIds: "100"

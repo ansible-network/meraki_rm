@@ -53,6 +53,12 @@ class StateStore:
             key_value = str(uuid.uuid4())[:8]
             data['id'] = key_value
 
+        # Ensure the primary_key alias exists in stored data so it
+        # appears in GET responses (spec requires it, e.g.
+        # staticDelegatedPrefixId alongside id).
+        if primary_key and primary_key not in data:
+            data[primary_key] = key_value
+
         self._store[resource_type][key_value] = copy.deepcopy(data)
         return copy.deepcopy(data)
 

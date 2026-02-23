@@ -5,3 +5,4 @@ expected_config:
   client_balancing_enabled: false
   is_indoor_default: false
   is_outdoor_default: false
+  rf_profile_id: example

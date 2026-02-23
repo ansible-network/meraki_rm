@@ -3,3 +3,4 @@ expected_config:
   type: appOutage
   enabled: false
   description: Managed by Ansible Gathered
+  alert_config_id: example

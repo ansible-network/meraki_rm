@@ -6,3 +6,4 @@ from .base_action import BaseResourceActionPlugin
 class ActionModule(BaseResourceActionPlugin):
     MODULE_NAME = 'prefix'
     USER_MODEL = 'plugins.plugin_utils.user_models.prefix.UserPrefix'
+    PRIMARY_KEY = 'static_delegated_prefix_id'

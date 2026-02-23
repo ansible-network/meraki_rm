@@ -1,2 +1,6 @@
 ---
 expected_config:
+  name: Test-Config
+  url: https://example.com/webhook
+  shared_secret: example
+  http_server_id: example

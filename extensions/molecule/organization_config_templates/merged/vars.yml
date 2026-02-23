@@ -2,3 +2,4 @@
 expected_config:
   name: Test-Config
   time_zone: example
+  config_template_id: example

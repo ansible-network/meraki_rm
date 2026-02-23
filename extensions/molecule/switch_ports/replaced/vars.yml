@@ -9,3 +9,4 @@ expected_config:
   vlan: 20
   voice_vlan: 100
   allowed_vlans: all
+  port_id: '1'

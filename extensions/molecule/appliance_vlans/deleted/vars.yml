@@ -1,4 +1,10 @@
 ---
 expected_config:
   vlan_id: '100'
+  name: Test-Config
+  subnet: 192.168.128.0/24
+  appliance_ip: 192.168.128.1
   group_policy_id: example
+  template_vlan_type: same
+  cidr: 192.168.128.0/24
+  mask: 24

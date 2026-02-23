@@ -3,3 +3,4 @@ expected_config:
   name: Test-Config
   host: mqtt.example.com
   port: 1883
+  mqtt_broker_id: example

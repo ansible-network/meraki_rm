@@ -6,3 +6,4 @@ expected_config:
   floor_number: 0.5
   image_contents: example Gathered
   image_extension: example Gathered
+  floor_plan_id: example

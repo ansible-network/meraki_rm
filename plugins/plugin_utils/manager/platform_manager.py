@@ -511,6 +511,7 @@ class PlatformService:
                     request_data[field_name] = user_data_dict[field_name]
 
             path = endpoint_op.path
+            skip_op = False
             if endpoint_op.path_params:
                 for param in endpoint_op.path_params:
                     val = self._resolve_path_param(
@@ -519,6 +520,13 @@ class PlatformService:
                     )
                     if val is not None:
                         path = path.replace(f'{{{param}}}', str(val))
+                    else:
+                        skip_op = True
+                        break
+
+            if skip_op or '{' in path:
+                logger.debug(f"Skipping {op_name} - missing path params")
+                continue
 
             url = f"{self.base_url}{path}"
 

@@ -6,3 +6,4 @@ expected_config:
   allowed_vlans: all
   access_policy: example
   drop_untagged_traffic: true
+  port_id: '1'

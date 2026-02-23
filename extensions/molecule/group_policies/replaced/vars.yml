@@ -2,3 +2,4 @@
 expected_config:
   name: Replaced-Config
   splash_auth_settings: example
+  group_policy_id: example

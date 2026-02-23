@@ -6,3 +6,4 @@ expected_config:
   restricted_bandwidth_mode_enabled: false
   audio_recording_enabled: false
   cloud_archive_enabled: false
+  quality_retention_profile_id: example

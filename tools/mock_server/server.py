@@ -16,6 +16,7 @@ Usage:
 """
 
 import argparse
+import copy
 import json
 import logging
 import os
@@ -255,6 +256,51 @@ def _register_route(
     )
 
 
+def _enrich_with_path_params(
+    data: Dict[str, Any],
+    kwargs: dict,
+    path_params: list,
+    resp_schema: Optional[Dict[str, Any]],
+    primary_key: Optional[str] = None,
+) -> None:
+    """Store path param values under both their path name and any matching
+    response schema property name.
+
+    Handles cases like portId (path) -> number (schema) where the path
+    parameter name differs from the response property that holds the
+    resource identity.
+
+    Only the primary_key param gets fallback-mapped to an unmatched
+    schema property.  Scope params (networkId, serial, etc.) are stored
+    under their own name only — they must NOT clobber identity fields.
+    """
+    if not resp_schema or resp_schema.get('type') != 'object':
+        for param in path_params:
+            if param in kwargs:
+                data.setdefault(param, kwargs[param])
+        return
+
+    schema_props = resp_schema.get('properties', {})
+
+    # First pass: store every param under its own name
+    for param in path_params:
+        val = kwargs.get(param)
+        if val is None:
+            continue
+        data.setdefault(param, val)
+
+    # Second pass: only the primary key gets the fallback mapping
+    # to a schema property with a different name (e.g. portId -> number)
+    if primary_key and primary_key in kwargs and primary_key not in schema_props:
+        pk_val = kwargs[primary_key]
+        body_keys = set(data.keys())
+        for prop_name in schema_props:
+            if prop_name in body_keys:
+                continue
+            data.setdefault(prop_name, pk_val)
+            break
+
+
 def _handle_get(
     loader: SpecLoader,
     store: StateStore,
@@ -269,6 +315,16 @@ def _handle_get(
     status = loader.get_success_status(api_path, 'get')
     resp_schema = loader.get_response_schema(api_path, 'get', str(status))
 
+    # Determine if this is a true singleton or a collection list endpoint.
+    # Collection list endpoints have a primary_key inferred from a sibling
+    # item path — that key is NOT in our kwargs.  True singletons have
+    # primary_key == a scope param that IS in kwargs (or no PK at all).
+    is_collection_list = (
+        not is_item_endpoint
+        and primary_key is not None
+        and primary_key not in kwargs
+    )
+
     if is_item_endpoint and primary_key and primary_key in kwargs:
         # Single item GET
         key_value = kwargs[primary_key]
@@ -278,6 +334,23 @@ def _handle_get(
             return jsonify({'errors': ['Resource not found']}), 404
 
         if resp_schema and resp_schema.get('type') == 'object':
+            item = merge_with_schema_defaults(item, resp_schema)
+
+        return jsonify(item), status
+
+    elif (not is_item_endpoint
+          and not is_collection_list
+          and resp_schema
+          and resp_schema.get('type') == 'object'):
+        # Singleton GET — response schema is an object, not an array
+        singleton_key = '_'.join(
+            str(kwargs.get(p, '')) for p in path_params
+        ) or '_singleton'
+        item = store.get(resource_type, singleton_key)
+
+        if item is None:
+            item = generate_default_from_schema(resp_schema)
+        else:
             item = merge_with_schema_defaults(item, resp_schema)
 
         return jsonify(item), status
@@ -318,9 +391,7 @@ def _handle_post(
 
     data = request.get_json(silent=True) or {}
 
-    for param in path_params:
-        if param in kwargs:
-            data[param] = kwargs[param]
+    _enrich_with_path_params(data, kwargs, path_params, resp_schema, primary_key)
 
     # When primary_key isn't in the body (e.g. vlanId vs body "id"),
     # copy the body "id" field into the primary_key slot so the store
@@ -329,6 +400,19 @@ def _handle_post(
         data[primary_key] = data['id']
 
     created = store.create(resource_type, primary_key, data)
+
+    # Propagate server-generated ID to the response schema's identity
+    # field when the path parameter name (e.g. "id") doesn't exist as a
+    # response schema property but a suffixed variant does (e.g. "profileId").
+    if resp_schema and 'id' in created:
+        schema_props = resp_schema.get('properties', {})
+        if primary_key and primary_key not in schema_props:
+            generated_key = created['id']
+            for prop_name in schema_props:
+                if prop_name != primary_key and prop_name.lower().endswith(primary_key.lower()):
+                    created[prop_name] = generated_key
+                    store.update(resource_type, generated_key, {prop_name: generated_key})
+                    break
 
     if resp_schema:
         item_schema = unwrap_array_schema(resp_schema) or resp_schema
@@ -365,11 +449,7 @@ def _handle_put(
 
         if updated is None:
             # Auto-create on PUT if not found (upsert semantics)
-            for param in path_params:
-                if param in kwargs:
-                    data[param] = kwargs[param]
-            # Ensure 'id' is set from the primary key value — real APIs
-            # always include the resource identity in the response.
+            _enrich_with_path_params(data, kwargs, path_params, resp_schema, primary_key)
             if 'id' not in data and key_value is not None:
                 data['id'] = key_value
             updated = store.create(resource_type, primary_key, data)
@@ -390,13 +470,13 @@ def _handle_put(
         singleton_key = '_'.join(
             str(kwargs.get(p, '')) for p in path_params
         ) or '_singleton'
+        for param in path_params:
+            if param in kwargs:
+                data[param] = kwargs[param]
         updated = store.update(resource_type, singleton_key, data)
         if updated is None:
-            for param in path_params:
-                if param in kwargs:
-                    data[param] = kwargs[param]
-            updated = store.create(resource_type, None, data)
-            updated = store.update(resource_type, list(store._store.get(resource_type, {}).keys())[-1], data) or updated
+            store._store.setdefault(resource_type, {})[singleton_key] = copy.deepcopy(data)
+            updated = copy.deepcopy(data)
 
         if resp_schema:
             item_schema = unwrap_array_schema(resp_schema) or resp_schema

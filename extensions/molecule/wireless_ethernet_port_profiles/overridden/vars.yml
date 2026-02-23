@@ -1,4 +1,5 @@
 ---
 expected_config:
-  name: Replaced-Config
+  name: Test-Config
   is_default: true
+  profile_id: example

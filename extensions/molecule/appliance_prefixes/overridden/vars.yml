@@ -1,4 +1,5 @@
 ---
 expected_config:
+  static_delegated_prefix_id: example
   prefix: example
-  description: Replaced by Ansible
+  description: Managed by Ansible

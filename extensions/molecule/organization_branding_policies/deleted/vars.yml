@@ -1,3 +1,5 @@
 ---
 expected_config:
+  name: Test-Config
+  enabled: true
   branding_policy_id: example

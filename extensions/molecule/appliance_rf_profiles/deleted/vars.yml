@@ -1,2 +1,4 @@
 ---
 expected_config:
+  name: Test-Config
+  rf_profile_id: example

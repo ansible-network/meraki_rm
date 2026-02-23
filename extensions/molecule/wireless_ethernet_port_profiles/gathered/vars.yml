@@ -2,3 +2,4 @@
 expected_config:
   name: Test-Config Gathered
   is_default: false
+  profile_id: example

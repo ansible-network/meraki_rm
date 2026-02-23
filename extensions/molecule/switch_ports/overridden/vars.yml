@@ -1,11 +1,12 @@
 ---
 expected_config:
-  name: Replaced-Config
+  name: Test-Config
   tags:
   - ansible
-  - replaced
-  enabled: false
-  type: trunk
-  vlan: 20
+  - test
+  enabled: true
+  type: access
+  vlan: 1
   voice_vlan: 100
   allowed_vlans: all
+  port_id: '1'

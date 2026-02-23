@@ -6,3 +6,4 @@ from .base_action import BaseResourceActionPlugin
 class ActionModule(BaseResourceActionPlugin):
     MODULE_NAME = 'ethernet_port_profile'
     USER_MODEL = 'plugins.plugin_utils.user_models.ethernet_port_profile.UserEthernetPortProfile'
+    PRIMARY_KEY = 'profile_id'

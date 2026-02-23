@@ -21,6 +21,7 @@ This document defines the testing architecture for an OpenAPI-driven resource mo
 5. [Unit Tests — Colocated `*_test.py` Files](#section-5-unit-tests--colocated-_testpy-files)
 5a. [Contract Tests — `test_action_contracts.py`](#section-5a-contract-tests--testsunittest_action_contractspy)
 5b. [Full-Flow Spec Validation — `test_spec_validation.py`](#section-5b-full-flow-spec-validation--testsunittest_spec_validationpy)
+5c. [In-Process Integration Tests — `test_integration_flow.py`](#section-5c-in-process-integration-tests--testsunittest_integration_flowpy)
 6. [Adding Tests for a New Module](#section-6-adding-tests-for-a-new-module)
 7. [Running Tests](#section-7-running-tests)
 8. [What Each Layer Catches](#section-8-what-each-layer-catches)
@@ -83,6 +84,9 @@ All three together give confidence: the module speaks the API correctly (Layer 1
                     ├──────────┤  (~45 scenarios, slower ~30s startup)
                     │          │
                ┌────┴──────────┴────┐
+               │  In-Process        │  PlatformService → Flask mock server
+               │  Integration       │  CRUD + OpenAPI validation, no HTTP
+               ├────────────────────┤  (~188 tests, ~10 seconds)
                │  Full-Flow Spec    │  Argspec → transform → validate()
                │  Validation        │  → jsonschema vs spec (tests/unit/)
                ├────────────────────┤  (~138 tests, <3 seconds)
@@ -827,6 +831,113 @@ When a `vars.yml` changes, all three consumers automatically pick up the change.
 
 ---
 
+## SECTION 5c: In-Process Integration Tests — `tests/unit/test_integration_flow.py`
+
+### Purpose
+
+Exercises the full `PlatformService → Mock Server` flow — real CRUD, real OpenAPI validation, real state — without subprocesses or TCP. Uses `requests-flask-adapter` to mount the Flask mock server directly into `PlatformService`'s `requests.Session`, giving HTTP-level fidelity at unit-test speed.
+
+This tier fills the gap between full-flow spec validation (Section 5b), which validates transforms without touching the server, and Molecule (Section 3), which adds Ansible subprocess and HTTP overhead:
+
+- **Full-flow spec validation** validates `vars.yml → UserModel → APIModel → jsonschema` but never calls the server
+- **In-process integration** sends real HTTP calls through PlatformService, hits the mock server's CRUD store, and validates OpenAPI compliance — all in-process (~10 seconds)
+- **Molecule** does the same but through `ansible-playbook` subprocesses over TCP (~30s startup + seconds per module)
+
+### How It Works
+
+```
+┌──────────────────────────────────────────────────────────┐
+│  pytest process (single Python interpreter)              │
+│                                                          │
+│  ┌──────────────┐     requests-flask-adapter    ┌──────┐ │
+│  │ Platform     │ ──── Session.get/put/post ──► │ Flask│ │
+│  │ Service      │     (in-process, no TCP)      │ Mock │ │
+│  │              │ ◄── response dict ─────────── │Server│ │
+│  └──────────────┘                               └──────┘ │
+│         │                                          │     │
+│  UserModel ↔ APIModel                       StateStore   │
+│  transforms + validate()                    + openapi-   │
+│                                              core        │
+└──────────────────────────────────────────────────────────┘
+```
+
+The `requests-flask-adapter` library replaces the TCP transport layer with a direct Python function call, so `session.get("http://mock/api/...")` routes to `app.test_client()` internally. The mock server's `openapi-core` middleware still validates every request and response against the OpenAPI spec.
+
+### Location
+
+```
+tests/unit/
+├── conftest.py                    # Shared discovery helpers
+├── test_action_contracts.py       # Contract validation (Section 5a)
+├── test_spec_validation.py        # Full-flow spec validation (Section 5b)
+└── test_integration_flow.py       # In-process integration (this section)
+```
+
+### Dependencies
+
+```
+requests-flask-adapter>=0.1.0     # added to requirements-dev.txt
+```
+
+### Fixture Setup
+
+A module-scoped `flask_app` fixture creates the mock server app once. A per-test `svc` fixture resets the `StateStore` and wires a fresh `PlatformService` via the adapter:
+
+```python
+@pytest.fixture(scope="module")
+def flask_app():
+    app = create_app(str(SPEC_PATH))
+    FlaskSession.register("http://mock-meraki", app)
+    yield app
+
+@pytest.fixture()
+def svc(flask_app):
+    flask_app.config["STATE_STORE"].clear()
+    return _make_service()
+```
+
+Each test gets a clean state store, preventing cross-test contamination while reusing the (expensive) app and spec parsing.
+
+### Test Classes
+
+**TestWriteThenFind** — Write a resource via PlatformService, then find it back. Asserts that all expected fields from `vars.yml` are present and correct in the returned data. For collection resources (POST create), server-assigned primary keys are excluded from comparison.
+
+**TestIdempotence** — For singleton/update resources, writing the same data twice must produce identical state. Collection resources (POST create) are skipped since create is not idempotent by design.
+
+**TestGatheredRoundTrip** — Write, then find. All expected keys (excluding scope and server-assigned PKs) must appear in the result, validating the full transform roundtrip through the server.
+
+**TestDeleteRemovesResource** — For collection resources with delete endpoints: create a resource, capture the server-assigned ID, delete it, verify the store is empty.
+
+### What This Tier Catches
+
+- **PlatformService dispatch bugs** — wrong HTTP method, malformed URL, missing path parameters
+- **Mock server CRUD bugs** — items not stored, not retrieved, or not deleted correctly
+- **OpenAPI request validation failures** — request body rejected by openapi-core middleware (400)
+- **OpenAPI response validation failures** — response shape doesn't match the spec
+- **Transform + HTTP integration bugs** — field that survives transform but breaks at the wire level
+- **Idempotence at the service level** — update produces different state on second call
+
+### Known Limitations
+
+Some item-level resources (SSIDs, ports) that are addressed by a numeric index in the URL path are marked as `xfail` because the mock server's storage/retrieval logic does not yet fully support path-param-based item lookups for these endpoints. These are tracked in `_MOCK_SERVER_EDGE_CASES` within the test file and will pass once mock server support is added.
+
+### Coverage Comparison
+
+| Validation Point | Full-Flow Spec | In-Process Integration | Molecule |
+|---|---|---|---|
+| Argspec validation | Yes | — | Yes (implicit) |
+| Transform correctness | Yes | Yes (via PlatformService) | Yes |
+| `_FIELD_CONSTRAINTS` / validate() | Yes | Yes (called by transforms) | Yes |
+| jsonschema vs spec | Yes | Yes (openapi-core middleware) | Yes |
+| HTTP dispatch (method, URL, params) | — | Yes | Yes |
+| Stateful CRUD (create/read/update/delete) | — | Yes | Yes |
+| Idempotence (service level) | — | Yes | Yes (Ansible level) |
+| Ansible module execution | — | — | Yes |
+| `changed` / `before` / `after` | — | — | Yes |
+| Playbook-level assertions | — | — | Yes |
+
+---
+
 ## SECTION 6: Adding Tests for a New Module
 
 When adding a new resource module (see [07-adding-resources.md](07-adding-resources.md)), follow this checklist to add tests.
@@ -966,6 +1077,15 @@ wireless_ssid      : actions=6   successful=6
 
 Use `--command-borders` for visual separation and `--report` for a summary table at the end.
 
+### In-Process Integration Tests
+
+```bash
+# Full PlatformService → mock server flow (~188 tests, ~10 seconds)
+pytest tests/unit/test_integration_flow.py -v
+```
+
+This runs the same CRUD lifecycle that Molecule tests but without Ansible or TCP. Each test gets a fresh `StateStore`, writes via PlatformService, and verifies the result. Ideal for rapid iteration on transform or mock server changes.
+
 ### Unit Tests (Fast Feedback — Always Run First)
 
 ```bash
@@ -1026,7 +1146,7 @@ jobs:
       - run: molecule test --all --report
 ```
 
-Unit tests run first (fast gate — ~1200+ tests in <5s across colocated, contract, and spec validation). Integration tests run only if unit tests pass. This prevents wasting CI minutes on Molecule runs that would fail due to a simple field mapping bug, an invalid enum value, or an argspec mismatch.
+Unit tests run first (fast gate — ~1200+ tests in <5s across colocated, contract, and spec validation). In-process integration adds ~10 seconds of PlatformService → mock server CRUD testing. Molecule integration tests run only if both pass. This prevents wasting CI minutes on Molecule runs that would fail due to a simple field mapping bug, an invalid enum value, or an argspec mismatch.
 
 ---
 
@@ -1034,43 +1154,46 @@ Unit tests run first (fast gate — ~1200+ tests in <5s across colocated, contra
 
 ### Bug Category to Test Layer Matrix
 
-| Bug Category | Colocated Unit (Tier) | Contract Tests | Full-Flow Spec | Spec Validation (Mock) | Molecule Behavior | Molecule Idempotence |
+| Bug Category | Colocated Unit (Tier) | Contract Tests | Full-Flow Spec | In-Process Integration | Molecule Behavior | Molecule Idempotence |
 |---|---|---|---|---|---|---|
-| **Wrong camelCase field name** | Tier 1 forward (AttributeError) | — | — | Catches (400) | — | — |
+| **Wrong camelCase field name** | Tier 1 forward (AttributeError) | — | — | Catches (400 from mock) | — | — |
 | **Wrong field mapping** | Tier 1 forward / Tier 2 reverse | — | — | Catches (wrong payload) | — | — |
 | **Scope param leaks into API output** | Tier 1 scope exclusion | — | — | Catches (extra field) | — | — |
-| **Missing required field in request** | — | — | Catches (jsonschema) | Catches (400) | — | — |
-| **Invalid enum value** (e.g., `"example"`) | — | — | Catches (validate() + jsonschema) | Catches (400) | — | — |
-| **Invalid field type** (string where int) | — | — | Catches (argspec + jsonschema) | Catches (400) | — | — |
+| **Missing required field in request** | — | — | Catches (jsonschema) | Catches (400 from mock) | — | — |
+| **Invalid enum value** (e.g., `"example"`) | — | — | Catches (validate() + jsonschema) | Catches (400 from mock) | — | — |
+| **Invalid field type** (string where int) | — | — | Catches (argspec + jsonschema) | Catches (400 from mock) | — | — |
 | **Argspec choices violation** | — | — | Catches (ArgumentSpecValidator) | — | — | — |
-| **Wrong API endpoint path** | Tier 2 endpoint ops | — | — | Catches (404) | — | — |
+| **Wrong API endpoint path** | Tier 2 endpoint ops | — | — | Catches (404 from mock) | — | — |
 | **State has no matching endpoint op** | — | Catches (state routing) | — | — | — | — |
 | **PRIMARY_KEY missing from user model** | — | Catches (identity fields) | — | — | — | — |
 | **Endpoint field not on API class** | — | Catches (endpoint fields) | — | — | — | — |
 | **Broken forward transform** (User → API) | Tier 1 forward + Tier 2 roundtrip | — | Catches (jsonschema) | Catches (invalid payload) | — | — |
-| **Broken reverse transform** (API → User) | Tier 2 reverse + roundtrip | — | Catches (roundtrip) | — | Catches (verify) | — |
+| **Broken reverse transform** (API → User) | Tier 2 reverse + roundtrip | — | Catches (roundtrip) | Catches (find mismatch) | Catches (verify) | — |
 | **Generated dataclass field drift** | Tier 3 spec drift | — | — | — | — | — |
 | **Extra/missing fields on generated dataclass** | Tier 3 field count + inventory | — | — | — | — | — |
-| **BaseTransformMixin field filtering broken** | Tier 4 base_transform | — | — | — | Catches (constructor error) | — |
-| **Module creates wrong resource** | — | — | — | — | Catches (verify) | — |
-| **Module does not create resource** | — | — | — | — | Catches (verify) | — |
-| **Module does not update resource** | — | — | — | — | Catches (verify) | — |
-| **Module does not delete resource** | — | — | — | — | Catches (cleanup) | — |
-| **Module not idempotent** | — | — | — | — | — | Catches (changed: true) |
+| **BaseTransformMixin field filtering broken** | Tier 4 base_transform | — | — | Catches (constructor error) | Catches (constructor error) | — |
+| **PlatformService dispatch bug** | — | — | — | Catches (wrong URL/method) | Catches (wrong URL/method) | — |
+| **CRUD state not persisted** | — | — | — | Catches (find empty after write) | Catches (verify) | — |
+| **Module creates wrong resource** | — | — | — | Catches (field mismatch) | Catches (verify) | — |
+| **Module does not create resource** | — | — | — | Catches (find empty) | Catches (verify) | — |
+| **Module does not update resource** | — | — | — | Catches (find stale) | Catches (verify) | — |
+| **Module does not delete resource** | — | — | — | Catches (find non-empty) | Catches (cleanup) | — |
+| **Service-level idempotence** | — | — | — | Catches (state diff) | — | — |
+| **Module not idempotent (Ansible)** | — | — | — | — | — | Catches (changed: true) |
 | **Spurious diff** | — | — | — | — | — | Catches (changed: true) |
-| **Gathered output ≠ merged input format** | — | — | Catches (roundtrip) | — | Catches (verify) | — |
+| **Gathered output ≠ merged input format** | — | — | Catches (roundtrip) | Catches (key mismatch) | Catches (verify) | — |
 | **Read-only field leaks into write** | — | — | — | Catches (extra field) | — | — |
 | **Name-to-ID transform broken** | Tier 2 roundtrip | — | — | — | Catches (wrong IDs) | — |
 | **Multi-endpoint ordering wrong** | — | — | — | — | Catches (dependent op fails) | — |
-| **vars.yml fixture data invalid** | — | — | Catches (all 3 stages) | — | — | — |
+| **vars.yml fixture data invalid** | — | — | Catches (all 3 stages) | Catches (write fails) | — | — |
 
 ### Reading the Matrix
 
 - **Colocated unit tests (Tiers 1–4)** catch pure-Python data bugs in sub-seconds. No server, no Ansible, no YAML. First line of defense.
 - **Contract tests** catch architectural wiring bugs — state-to-operation mismatches, missing identity fields, broken field lists. Pure Python, ~1 second.
 - **Full-flow spec validation** catches data-level bugs — invalid enums, type mismatches, argspec violations, request schema violations, response roundtrip drift. Uses the same vars.yml fixtures as Molecule but runs in ~2 seconds.
-- **Spec validation (mock server)** catches HTTP contract bugs at runtime. The mock server enforces the spec at the wire level.
-- **Molecule behavior** catches functional bugs. The module must actually do what the user asked.
+- **In-process integration** catches HTTP dispatch and CRUD state bugs by running PlatformService against the real mock server in-process — no TCP, no subprocesses. Validates OpenAPI compliance at the wire level with ~10 second runtime.
+- **Molecule behavior** catches functional bugs at the Ansible level. The module must actually do what the user asked, including `changed`/`before`/`after` semantics.
 - **Molecule idempotence** catches convergence bugs. The module must detect existing state and not act unnecessarily.
 
 No single column covers all rows. All six are needed for confidence. The leftmost columns are the fastest and should be the first gate in CI.
@@ -1084,6 +1207,7 @@ No single column covers all rows. All six are needed for confidence. The leftmos
 | **Colocated Unit Tests** | `plugins/plugin_utils/**/*_test.py` | Transform roundtrips, spec drift, foundation (700+ tests) |
 | **Contract Tests** | `tests/unit/test_action_contracts.py` | Action plugin ↔ endpoint wiring validation (414+ tests) |
 | **Full-Flow Spec Validation** | `tests/unit/test_spec_validation.py` | Argspec + transform + jsonschema validation (138+ tests) |
+| **In-Process Integration** | `tests/unit/test_integration_flow.py` | PlatformService → mock server CRUD + OpenAPI validation (188+ tests) |
 | **Test Generator** | `tools/generate_model_tests.py` | Auto-generates Tier 1–3 `*_test.py` files from dataclass introspection |
 | **Schema Generator** | `tools/generators/extract_meraki_schemas.py` | Generates API dataclasses with `_FIELD_CONSTRAINTS` from spec |
 | **pytest Config** | `pyproject.toml` | Discovers `*_test.py` in both `tests/` and `plugins/` |
@@ -1103,7 +1227,8 @@ No single column covers all rows. All six are needed for confidence. The leftmos
 | `pytest plugins/ -v` | Colocated unit tests (transforms, spec drift, foundation) | <2 seconds |
 | `pytest tests/unit/test_action_contracts.py -v` | Contract tests (action plugin ↔ endpoint wiring) | <2 seconds |
 | `pytest tests/unit/test_spec_validation.py -v` | Full-flow spec validation (argspec + transform + jsonschema) | <3 seconds |
-| `pytest -v` | All unit tests (colocated + contract + spec + mock server) | <5 seconds |
+| `pytest tests/unit/test_integration_flow.py -v` | In-process integration (PlatformService → mock server CRUD) | ~10 seconds |
+| `pytest -v` | All unit tests (colocated + contract + spec + integration + mock server) | ~15 seconds |
 | `molecule test -s {module}` | Single module integration test | ~30 seconds |
 | `molecule test --all --report` | Full integration suite (~48 modules) | Minutes |
 
@@ -1129,4 +1254,4 @@ No single column covers all rows. All six are needed for confidence. The leftmos
 - [09-agent-collaboration.md](09-agent-collaboration.md) — Agent testing workflow (Phase C)
 - [10-case-study-novacom.md](10-case-study-novacom.md) — Module map drives the scenario list
 
-*Document version: 1.3 | OpenAPI Resource Module SDK | Testing Strategy*
+*Document version: 1.4 | OpenAPI Resource Module SDK | Testing Strategy*

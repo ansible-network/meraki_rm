@@ -1,3 +1,4 @@
 ---
 expected_config:
   name: Replaced-Config
+  rf_profile_id: example
