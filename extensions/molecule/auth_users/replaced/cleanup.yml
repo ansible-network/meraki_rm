@@ -8,5 +8,5 @@
       network_id: N_auth_users_replaced
       state: deleted
       config:
-      - meraki_auth_users_id: example
+      - meraki_auth_user_id: example
     ignore_errors: true

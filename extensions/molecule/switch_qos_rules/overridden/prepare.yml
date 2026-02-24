@@ -24,4 +24,3 @@
         dst_port: 1
         src_port_range: example
         dst_port_range: example
-        name: Extra-To-Delete

@@ -225,24 +225,36 @@ def _register_route(
     def route_handler(**kwargs):
         method = request.method.lower()
 
+        # Scope the resource_type by parent path params so resources
+        # under different parents (e.g. different networkIds) don't
+        # collide in the store.
+        scope_parts = [
+            str(kwargs[p]) for p in path_params
+            if p != primary_key and p in kwargs
+        ]
+        scoped_type = (
+            resource_type + ':' + ':'.join(scope_parts)
+            if scope_parts else resource_type
+        )
+
         if method == 'get':
             return _handle_get(
-                loader, store, api_path, resource_type,
+                loader, store, api_path, scoped_type,
                 primary_key, path_params, is_item_endpoint, kwargs,
             )
         elif method == 'post':
             return _handle_post(
-                loader, store, api_path, resource_type,
+                loader, store, api_path, scoped_type,
                 primary_key, path_params, kwargs,
             )
         elif method in ('put', 'patch'):
             return _handle_put(
-                loader, store, api_path, resource_type,
+                loader, store, api_path, scoped_type,
                 primary_key, path_params, is_item_endpoint, kwargs,
             )
         elif method == 'delete':
             return _handle_delete(
-                loader, store, api_path, resource_type,
+                loader, store, api_path, scoped_type,
                 primary_key, path_params, kwargs,
             )
 
@@ -254,6 +266,24 @@ def _register_route(
         view_func=route_handler,
         methods=methods,
     )
+
+
+def _scoped_key(primary_value: str, kwargs: dict, path_params: list,
+                primary_key: Optional[str]) -> str:
+    """Build a scope-aware store key so resources under different parent
+    paths (e.g. different networkIds) don't collide.
+
+    For ``/networks/{networkId}/appliance/vlans/{vlanId}`` with
+    ``networkId=N_merged`` and ``vlanId=100``, the key becomes
+    ``N_merged:100`` instead of just ``100``.
+    """
+    scope_parts = [
+        str(kwargs[p]) for p in path_params
+        if p != primary_key and p in kwargs
+    ]
+    if scope_parts:
+        return ':'.join(scope_parts) + ':' + str(primary_value)
+    return str(primary_value)
 
 
 def _enrich_with_path_params(

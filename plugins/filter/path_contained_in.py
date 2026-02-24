@@ -39,7 +39,10 @@ def path_contained_in(expected: dict, result: dict) -> dict:
         elif _norm(result[key]) != _norm(exp_val):
             missing[key] = exp_val  # expected; could add actual for debugging
 
-    extras = {k: result[k] for k in result if k not in expected}
+    extras = {
+        k: result[k] for k in result
+        if k not in expected and result[k] is not None
+    }
 
     return {
         "contained": len(missing) == 0,

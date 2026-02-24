@@ -385,7 +385,8 @@ def process_module(module_name: str, dry_run: bool = False) -> list[str]:
         module_call_tasks = replace_scope_in_tasks(
             info.get("module_call_tasks", []), scope_param, sid,
         )
-        write_converge(scenario_dir, module_name, state, module_call_tasks, has_vars)
+        vars_file_exists = has_vars or (scenario_dir / "vars.yml").exists()
+        write_converge(scenario_dir, module_name, state, module_call_tasks, vars_file_exists)
 
         if state in STATES_NEEDING_PREPARE and merged_config:
             if state == "overridden" and merged_config:
@@ -393,7 +394,8 @@ def process_module(module_name: str, dry_run: bool = False) -> list[str]:
                 pk = next((k for k in extra_seed if k.endswith("_id") or k == "id"), None)
                 if pk and isinstance(extra_seed.get(pk), str):
                     extra_seed[pk] = "999"
-                    extra_seed["name"] = "Extra-To-Delete"
+                    if "name" in extra_seed:
+                        extra_seed["name"] = "Extra-To-Delete"
                     seed_config = [merged_config, extra_seed]
                 else:
                     seed_config = merged_config

@@ -1,6 +1,0 @@
----
-expected_config:
-  rule_id: example
-  type: access
-  default_policy: example
-  ssid: example

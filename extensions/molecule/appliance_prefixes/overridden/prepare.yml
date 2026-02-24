@@ -14,4 +14,3 @@
       - static_delegated_prefix_id: '999'
         prefix: example
         description: Managed by Ansible
-        name: Extra-To-Delete

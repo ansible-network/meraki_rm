@@ -19,6 +19,7 @@ with custom logic (e.g. meraki_facts) override run() as before.
 from __future__ import annotations
 
 import base64
+import fcntl
 import importlib
 import logging
 import os
@@ -222,16 +223,20 @@ class BaseResourceActionPlugin(ActionBase):
                     before=before, after=after, config=after,
                 )
 
-            if state == 'deleted' and self.SUPPORTS_DELETE:
+            if state in ('deleted', 'overridden') and not self.SUPPORTS_DELETE:
+                raise AnsibleError(
+                    f"State '{state}' requires delete capability, but "
+                    f"{self.__class__.__name__} has SUPPORTS_DELETE=False."
+                )
+
+            if state == 'deleted':
                 self._apply_deleted(
                     manager, user_cls, scope_value, config, before,
                 )
-
-            elif state == 'overridden' and self.SUPPORTS_DELETE:
+            elif state == 'overridden':
                 self._apply_overridden(
                     manager, user_cls, scope_value, config, before,
                 )
-
             else:  # merged, replaced
                 self._apply_merged_or_replaced(
                     manager, user_cls, scope_value, config, state, before,
@@ -569,6 +574,9 @@ class BaseResourceActionPlugin(ActionBase):
         2. **socket + keyfile** — the manager from a prior task/playbook
            is still alive on disk.
 
+        A filelock serializes spawn-or-connect across parallel worker
+        processes so only one process spawns and the others connect.
+
         Returns:
             ManagerRPCClient instance
         """
@@ -609,87 +617,100 @@ class BaseResourceActionPlugin(ActionBase):
             except Exception as e:
                 display.v(f"Platform Manager: Tier-1 reconnect failed: {e}")
 
-        # ── Tier 2: socket + keyfile on disk ──────────────────────────
-        if Path(socket_path).exists() and keyfile.exists():
-            try:
-                authkey = keyfile.read_bytes()
-                client = ManagerRPCClient(meraki_url, socket_path, authkey)
-                display.v(
-                    f"Platform Manager: Tier-2 reconnect via keyfile "
-                    f"at {socket_path}"
-                )
-                return client
-            except Exception as e:
-                display.v(
-                    f"Platform Manager: Tier-2 reconnect failed (stale): {e}"
-                )
-                Path(socket_path).unlink(missing_ok=True)
-                keyfile.unlink(missing_ok=True)
-                pidfile.unlink(missing_ok=True)
+        # ── Tier 2+Spawn under filelock ────────────────────────────────
+        # Serialize across parallel worker processes so exactly one
+        # spawns the manager and the rest connect via Tier 2.
+        lockfile_path = runtime / f'{stem}.lock'
+        lockfile = open(lockfile_path, 'w')
+        try:
+            fcntl.flock(lockfile, fcntl.LOCK_EX)
 
-        # ── Spawn a new manager ───────────────────────────────────────
-        survive = (runtime / f'{stem}.survive').exists()
-        display.v(
-            f"Platform Manager: spawning new instance (survive={survive})"
-        )
+            # Re-check Tier 2 after acquiring lock — another process
+            # may have spawned the manager while we waited.
+            if Path(socket_path).exists() and keyfile.exists():
+                try:
+                    authkey = keyfile.read_bytes()
+                    client = ManagerRPCClient(meraki_url, socket_path, authkey)
+                    display.v(
+                        f"Platform Manager: Tier-2 reconnect via keyfile "
+                        f"at {socket_path}"
+                    )
+                    return client
+                except Exception as e:
+                    display.v(
+                        f"Platform Manager: Tier-2 reconnect failed "
+                        f"(stale): {e}"
+                    )
+                    Path(socket_path).unlink(missing_ok=True)
+                    keyfile.unlink(missing_ok=True)
+                    pidfile.unlink(missing_ok=True)
 
-        from ..plugin_utils.manager.platform_manager import (
-            PlatformManager,
-            PlatformService,
-        )
-
-        authkey = secrets.token_bytes(32)
-
-        service = PlatformService(meraki_url, meraki_api_key)
-        PlatformManager.register(
-            'get_platform_service',
-            callable=lambda: service,
-        )
-
-        manager = PlatformManager(address=socket_path, authkey=authkey)
-        manager.start()
-
-        # Always detach from Python's atexit so the server survives
-        # fork-worker exits.  Three mechanisms would otherwise kill it:
-        #   1. atexit joins/terminates active _children
-        #   2. BaseManager._finalize_manager sends shutdown RPC
-        #   3. Process-group signals (os.setsid in server handles #3)
-        import multiprocessing.process
-        from multiprocessing.util import _finalizer_registry
-        multiprocessing.process._children.discard(manager._process)
-        fin = manager.shutdown
-        if hasattr(fin, '_key') and fin._key in _finalizer_registry:
-            del _finalizer_registry[fin._key]
-
-        max_wait = 50
-        for _ in range(max_wait):
-            if Path(socket_path).exists():
-                break
-            time.sleep(0.1)
-        else:
-            raise RuntimeError(
-                f"Manager socket not ready after {max_wait * 0.1}s"
+            # ── Spawn a new manager ───────────────────────────────────
+            survive = (runtime / f'{stem}.survive').exists()
+            display.v(
+                f"Platform Manager: spawning new instance "
+                f"(survive={survive})"
             )
 
-        # Always persist runtime files for Tier-2 reconnection.
-        old_umask = os.umask(0o177)
-        try:
-            keyfile.write_bytes(authkey)
+            from ..plugin_utils.manager.platform_manager import (
+                PlatformManager,
+                PlatformService,
+            )
+
+            authkey = secrets.token_bytes(32)
+
+            service = PlatformService(meraki_url, meraki_api_key)
+            PlatformManager.register(
+                'get_platform_service',
+                callable=lambda: service,
+            )
+
+            manager = PlatformManager(address=socket_path, authkey=authkey)
+            manager.start()
+
+            # Detach from Python's atexit so the server survives
+            # fork-worker exits.
+            import multiprocessing.process
+            from multiprocessing.util import _finalizer_registry
+            multiprocessing.process._children.discard(manager._process)
+            fin = manager.shutdown
+            if hasattr(fin, '_key') and fin._key in _finalizer_registry:
+                del _finalizer_registry[fin._key]
+
+            max_wait = 50
+            for _ in range(max_wait):
+                if Path(socket_path).exists():
+                    break
+                time.sleep(0.1)
+            else:
+                raise RuntimeError(
+                    f"Manager socket not ready after {max_wait * 0.1}s"
+                )
+
+            # Persist runtime files for Tier-2 reconnection.
+            old_umask = os.umask(0o177)
+            try:
+                keyfile.write_bytes(authkey)
+            finally:
+                os.umask(old_umask)
+            pidfile.write_text(str(manager._process.pid))
+
+            display.v(
+                f"Platform Manager: spawned PID {manager._process.pid} "
+                f"at {socket_path}"
+            )
+
+            client = ManagerRPCClient(meraki_url, socket_path, authkey)
+
+            self._manager_socket = socket_path
+            self._manager_authkey_b64 = base64.b64encode(
+                authkey,
+            ).decode('utf-8')
+
+            return client
         finally:
-            os.umask(old_umask)
-        pidfile.write_text(str(manager._process.pid))
-
-        display.v(
-            f"Platform Manager: spawned PID {manager._process.pid} "
-            f"at {socket_path}"
-        )
-
-        client = ManagerRPCClient(meraki_url, socket_path, authkey)
-
-        self._manager_socket = socket_path
-        self._manager_authkey_b64 = base64.b64encode(authkey).decode('utf-8')
-
-        return client
+            fcntl.flock(lockfile, fcntl.LOCK_UN)
+            lockfile.close()
 
     def _build_argspec_from_docs(self, documentation: str) -> dict:
         """
@@ -789,13 +810,15 @@ class BaseResourceActionPlugin(ActionBase):
 
             cleaned = {}
             for key, value in item.items():
-                if key in valid_keys:
-                    cleaned[key] = value
-                else:
+                if key not in valid_keys:
                     logger.debug(
                         "Output field %r not in config suboptions — "
                         "stripping from return data", key,
                     )
+                elif value is None:
+                    continue
+                else:
+                    cleaned[key] = value
 
             validated.append(cleaned)
 

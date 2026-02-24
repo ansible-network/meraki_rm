@@ -10,4 +10,3 @@
       config:
       - link_aggregation_id: example
       - link_aggregation_id: '999'
-        name: Extra-To-Delete
