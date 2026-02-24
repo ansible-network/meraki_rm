@@ -25,6 +25,7 @@ This document defines the testing architecture for an OpenAPI-driven resource mo
 6. [Adding Tests for a New Module](#section-6-adding-tests-for-a-new-module)
 7. [Running Tests](#section-7-running-tests)
 8. [What Each Layer Catches](#section-8-what-each-layer-catches)
+9. [Molecule Scenario Coverage](#section-9-molecule-scenario-coverage)
 
 ---
 
@@ -1200,6 +1201,104 @@ No single column covers all rows. All six are needed for confidence. The leftmos
 
 ---
 
+## SECTION 9: Molecule Scenario Coverage
+
+178 active Molecule scenarios across 48 modules. The table below shows which resource module states have Molecule scenario coverage and why certain states are absent.
+
+### Coverage Legend
+
+| Symbol | Meaning |
+|--------|---------|
+| :white_check_mark: | Scenario exists and passes |
+| — | State not supported by this module |
+| :x: _reason_ | State is valid but scenario is missing |
+
+### Full Coverage (all valid states have scenarios)
+
+These modules have a Molecule scenario for every state they support.
+
+| Module | gathered | merged | replaced | deleted | overridden | Scope |
+|--------|:--------:|:------:|:--------:|:-------:|:----------:|-------|
+| `appliance_prefixes` | :white_check_mark: | :white_check_mark: | :white_check_mark: | :white_check_mark: | :white_check_mark: | network |
+| `appliance_rf_profiles` | :white_check_mark: | :white_check_mark: | :white_check_mark: | :white_check_mark: | :white_check_mark: | network |
+| `appliance_static_routes` | :white_check_mark: | :white_check_mark: | :white_check_mark: | :white_check_mark: | :white_check_mark: | network |
+| `appliance_vlans` | :white_check_mark: | :white_check_mark: | :white_check_mark: | :white_check_mark: | :white_check_mark: | network |
+| `auth_users` | :white_check_mark: | :white_check_mark: | :white_check_mark: | :white_check_mark: | :white_check_mark: | network |
+| `camera_quality_retention_profiles` | :white_check_mark: | :white_check_mark: | :white_check_mark: | :white_check_mark: | :white_check_mark: | network |
+| `camera_wireless_profiles` | :white_check_mark: | :white_check_mark: | :white_check_mark: | :white_check_mark: | :white_check_mark: | network |
+| `device_switch_routes` | :white_check_mark: | :white_check_mark: | :white_check_mark: | :white_check_mark: | :white_check_mark: | serial |
+| `floor_plans` | :white_check_mark: | :white_check_mark: | :white_check_mark: | :white_check_mark: | :white_check_mark: | network |
+| `group_policies` | :white_check_mark: | :white_check_mark: | :white_check_mark: | :white_check_mark: | :white_check_mark: | network |
+| `mqtt_brokers` | :white_check_mark: | :white_check_mark: | :white_check_mark: | :white_check_mark: | :white_check_mark: | network |
+| `sensor_alert_profiles` | :white_check_mark: | :white_check_mark: | :white_check_mark: | :white_check_mark: | :white_check_mark: | network |
+| `switch_access_policies` | :white_check_mark: | :white_check_mark: | :white_check_mark: | :white_check_mark: | :white_check_mark: | network |
+| `switch_link_aggregations` | :white_check_mark: | :white_check_mark: | :white_check_mark: | :white_check_mark: | :white_check_mark: | network |
+| `switch_qos_rules` | :white_check_mark: | :white_check_mark: | :white_check_mark: | :white_check_mark: | :white_check_mark: | network |
+| `vlan_profiles` | :white_check_mark: | :white_check_mark: | :white_check_mark: | :white_check_mark: | :white_check_mark: | network |
+| `webhooks` | :white_check_mark: | :white_check_mark: | :white_check_mark: | :white_check_mark: | :white_check_mark: | network |
+| `wireless_ethernet_port_profiles` | :white_check_mark: | :white_check_mark: | :white_check_mark: | :white_check_mark: | :white_check_mark: | network |
+| `wireless_rf_profiles` | :white_check_mark: | :white_check_mark: | :white_check_mark: | :white_check_mark: | :white_check_mark: | network |
+
+### Singleton Resources (no delete — `SUPPORTS_DELETE = False`)
+
+These resources represent device/network configuration that always exists. They cannot be deleted, only reconfigured. Valid states: `gathered`, `merged`, `replaced`.
+
+| Module | gathered | merged | replaced | Scope |
+|--------|:--------:|:------:|:--------:|-------|
+| `appliance_firewall` | :white_check_mark: | :white_check_mark: | :white_check_mark: | network |
+| `appliance_port` | :white_check_mark: | :white_check_mark: | :white_check_mark: | network |
+| `appliance_security` | :white_check_mark: | :white_check_mark: | :white_check_mark: | network |
+| `appliance_ssid` | :white_check_mark: | :white_check_mark: | :white_check_mark: | network |
+| `appliance_traffic_shaping` | :white_check_mark: | :white_check_mark: | :white_check_mark: | network |
+| `appliance_vpn` | :white_check_mark: | :white_check_mark: | :white_check_mark: | network |
+| `appliance_warm_spare` | :white_check_mark: | :white_check_mark: | :white_check_mark: | network |
+| `device` | :white_check_mark: | :white_check_mark: | :white_check_mark: | serial |
+| `device_management_interface` | :white_check_mark: | :white_check_mark: | :white_check_mark: | serial |
+| `firmware_upgrade` | :white_check_mark: | :white_check_mark: | :white_check_mark: | network |
+| `network_settings` | :white_check_mark: | :white_check_mark: | :white_check_mark: | network |
+| `organization_adaptive_policy` | :white_check_mark: | :white_check_mark: | :white_check_mark: | organization |
+| `organization_saml` | :white_check_mark: | :white_check_mark: | :white_check_mark: | organization |
+| `organization_vpn` | :white_check_mark: | :white_check_mark: | :white_check_mark: | organization |
+| `switch_acl` | :white_check_mark: | :white_check_mark: | :white_check_mark: | network |
+| `switch_dhcp_policy` | :white_check_mark: | :white_check_mark: | :white_check_mark: | network |
+| `switch_ports` | :white_check_mark: | :white_check_mark: | :white_check_mark: | serial |
+| `switch_routing` | :white_check_mark: | :white_check_mark: | :white_check_mark: | network |
+| `switch_settings` | :white_check_mark: | :white_check_mark: | :white_check_mark: | network |
+| `switch_stp` | :white_check_mark: | :white_check_mark: | :white_check_mark: | network |
+| `wireless_ssid` | :white_check_mark: | :white_check_mark: | :white_check_mark: | network |
+
+### Special / Custom State Modules
+
+| Module | gathered | merged | replaced | deleted | overridden | Notes |
+|--------|:--------:|:------:|:--------:|:-------:|:----------:|-------|
+| `facts` | :white_check_mark: | — | — | — | — | Facts-only module; uses `gather_subset`, not resource states |
+| `switch_stacks` | :white_check_mark: | :white_check_mark: | — | :white_check_mark: | — | Custom `VALID_STATES`; API does not support `replaced` or `overridden` |
+| `wireless_air_marshal_rules` | — | — | — | :white_check_mark: | — | No network-level GET endpoint; `merged`/`replaced` create resources but cannot verify via `gathered` |
+
+### Organization-Scoped Collections (missing `replaced` / `overridden`)
+
+These modules support all five standard states but `replaced` and `overridden` scenarios have not yet been authored. The `merged`, `gathered`, and `deleted` scenarios provide baseline CRUD coverage. Adding `replaced` and `overridden` scenarios is a future improvement.
+
+| Module | gathered | merged | replaced | deleted | overridden | Scope |
+|--------|:--------:|:------:|:--------:|:-------:|:----------:|-------|
+| `organization_admins` | :white_check_mark: | :white_check_mark: | :x: todo | :white_check_mark: | :x: todo | organization |
+| `organization_alert_profiles` | :white_check_mark: | :white_check_mark: | :x: todo | :white_check_mark: | :x: todo | organization |
+| `organization_branding_policies` | :white_check_mark: | :white_check_mark: | :x: todo | :white_check_mark: | :x: todo | organization |
+| `organization_config_templates` | :white_check_mark: | :white_check_mark: | :x: todo | :white_check_mark: | :x: todo | organization |
+| `organization_policy_objects` | :white_check_mark: | :white_check_mark: | :x: todo | :white_check_mark: | :x: todo | organization |
+
+### Coverage Summary
+
+| Category | Modules | Scenarios |
+|----------|---------|-----------|
+| Full coverage (all valid states) | 19 | 95 |
+| Singleton (all valid states) | 21 | 63 |
+| Special / custom states | 3 | 5 |
+| Partial coverage (missing `replaced`/`overridden`) | 5 | 15 |
+| **Total** | **48** | **178** |
+
+---
+
 ## Summary
 
 | Component | Location | Purpose |
@@ -1230,7 +1329,7 @@ No single column covers all rows. All six are needed for confidence. The leftmos
 | `pytest tests/unit/test_integration_flow.py -v` | In-process integration (PlatformService → mock server CRUD) | ~10 seconds |
 | `pytest -v` | All unit tests (colocated + contract + spec + integration + mock server) | ~15 seconds |
 | `molecule test -s {module}` | Single module integration test | ~30 seconds |
-| `molecule test --all --report` | Full integration suite (~48 modules) | Minutes |
+| `molecule test --all --report` | Full integration suite (48 modules, 178 scenarios) | Minutes |
 
 **Tooling commands:**
 
@@ -1254,4 +1353,4 @@ No single column covers all rows. All six are needed for confidence. The leftmos
 - [09-agent-collaboration.md](09-agent-collaboration.md) — Agent testing workflow (Phase C)
 - [10-case-study-novacom.md](10-case-study-novacom.md) — Module map drives the scenario list
 
-*Document version: 1.4 | OpenAPI Resource Module SDK | Testing Strategy*
+*Document version: 1.5 | OpenAPI Resource Module SDK | Testing Strategy*

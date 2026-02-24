@@ -421,6 +421,9 @@ class PlatformService:
                 result_data = self._paginated_get(url)
             else:
                 response = self._api_call(endpoint_op.method, url)
+                if response.status_code == 404:
+                    logger.debug(f"Resource not found (404) for {op_name}")
+                    continue
                 response.raise_for_status()
                 result_data = response.json()
 

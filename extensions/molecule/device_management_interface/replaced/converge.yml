@@ -1,7 +1,9 @@
 ---
-- name: "Converge \u2014 device_management_interface (replaced)"
+- name: "Converge — device_management_interface (replaced)"
   hosts: localhost
   gather_facts: false
+  vars_files:
+  - vars.yml
   tasks:
   - name: Replace device_management_interface configuration
     cisco.meraki_rm.meraki_device_management_interface:

@@ -209,6 +209,65 @@ The output shows the exact JSON payloads that would be sent to the NovaCom API. 
 
 Given raw API response data, the module converts it to the same structured format used by `config` and `gathered`. Useful for migrating from manual API usage or importing configs from another source.
 
+### Why These States: Set Theory as the Foundation
+
+The five operational states are not arbitrary design choices — they are the natural set operations on a keyed collection of configuration records. Understanding this makes the state model self-evident rather than something to memorize.
+
+**The model.** A resource module manages a collection **S** of configuration records, each identified by a primary key (e.g., `vlan_id`, `admin_id`, `number`). The user provides a desired set **D**. The device holds a current set **C**. Each state defines a set operation that produces the next state **C′**.
+
+#### Formal Definitions
+
+| State | Set Operation | Description |
+|-------|---------------|-------------|
+| **`gathered`** | **C** (read only) | Return the current set. No mutation. |
+| **`merged`** | **C′ = C ∪ D** | Union. Items in **D** are added or updated in **C**. Items in **C** not mentioned in **D** are untouched. Additive only — nothing is ever removed. |
+| **`replaced`** | **C′ = (C \ K(D)) ∪ D** | For each key **k** in **D**, remove the old record for **k** from **C** and insert the new one from **D**. Items in **C** whose keys are not in **D** are untouched. This is item-level replacement: omitted fields revert to defaults. |
+| **`overridden`** | **C′ = D** | Set equality. The result is exactly **D** — no more, no less. Items in **C \ D** (by key) are deleted. Items in **D \ C** are created. Items in **D ∩ C** are replaced. |
+| **`deleted`** | **C′ = C \ D** | Set difference. Remove items whose keys appear in **D**. If **D** is empty, **C′ = ∅** (delete all). |
+
+Where **K(D)** denotes the set of primary keys present in **D**.
+
+#### The Lattice of Destructiveness
+
+The states form a natural ordering from least to most destructive:
+
+```
+gathered  →  merged  →  replaced  →  overridden  →  deleted
+(read)      (additive)  (item-level)  (set-level)    (removal)
+             never       resets        deletes         deletes
+             removes     fields to     unlisted        listed
+             anything    defaults      items           items
+```
+
+- **`merged`** is the safest mutating state. It can only add or update. It never removes a field or a record.
+- **`replaced`** is more aggressive per-item: it resets omitted fields to defaults. But it only touches items you name.
+- **`overridden`** is the most aggressive: it enforces **set equality**. Anything not in your declaration is deleted. This is why it is the compliance state — it guarantees the device matches the playbook exactly.
+- **`deleted`** is explicit removal. You name what goes away.
+
+#### Why This is Exactly Five States
+
+These five operations exhaust the useful set-theoretic operations on a keyed collection:
+
+1. **Read** the set → `gathered`
+2. **Add to / update within** the set → `merged` (union)
+3. **Replace specific items** in the set → `replaced` (keyed replacement)
+4. **Make the set exactly this** → `overridden` (set equality / assignment)
+5. **Remove from** the set → `deleted` (set difference)
+
+There is no sixth operation. Any desired behavior can be composed from these five. This is why the resource module pattern has exactly these states — not because of convention, but because set theory has exactly these operations on keyed collections.
+
+#### Why the Base Class Implements Them Generically
+
+Because these operations are defined purely in terms of sets and keys, the implementation is **module-agnostic**. The base action plugin needs only three things from a subclass:
+
+1. **A primary key** — to identify records across sets (e.g., `vlan_id`, `admin_id`)
+2. **CRUD endpoints** — `create`, `find`/`find_all`, `update`, `delete`
+3. **`SUPPORTS_DELETE`** — whether the resource type permits removal (physical ports cannot be deleted, only reconfigured)
+
+Given these, the base class implements all five states as generic set operations. No module-specific logic is required for state handling. The `_apply_merged_or_replaced()` method handles both `merged` and `replaced` because they differ only in whether omitted fields are preserved (merge) or reset (replace). The `_apply_overridden()` method computes **C \ D** for deletions, then applies replacements — pure set arithmetic.
+
+This is why adding `replaced` and `overridden` support to a module that already has `merged` and `deleted` is a one-line argspec change, not a feature implementation. The set theory is already in the base class.
+
 ---
 
 ## Section 3: Entities vs. Endpoints

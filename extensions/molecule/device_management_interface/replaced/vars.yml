@@ -1,0 +1,9 @@
+---
+expected_config:
+  wan1:
+    wanEnabled: "not configured"
+    usingStaticIp: true
+    staticIp: "192.168.1.100"
+    staticSubnetMask: "255.255.255.0"
+    staticGatewayIp: "192.168.1.1"
+    vlan: 10

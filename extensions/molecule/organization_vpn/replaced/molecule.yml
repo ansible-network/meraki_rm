@@ -1,2 +1,9 @@
 ---
-# Inherits shared config from ../../config.yml
+scenario:
+  test_sequence:
+    - prepare
+    - converge
+    - verify
+    - idempotence
+    - verify
+    - cleanup

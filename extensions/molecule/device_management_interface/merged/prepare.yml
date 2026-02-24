@@ -1,9 +1,9 @@
 ---
-- name: "Cleanup — device_management_interface (replaced)"
+- name: "Prepare — device_management_interface (merged)"
   hosts: localhost
   gather_facts: false
   tasks:
-    - name: Reset management interface to baseline after test
+    - name: Set management interface to baseline before test
       cisco.meraki_rm.meraki_device_management_interface:
         serial: Q2XX-XXXX-XXXX
         state: replaced

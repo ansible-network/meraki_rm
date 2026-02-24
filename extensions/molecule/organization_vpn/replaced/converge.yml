@@ -1,11 +1,13 @@
 ---
-- name: "Converge \u2014 organization_vpn (replaced)"
+- name: "Converge — organization_vpn (replaced)"
   hosts: localhost
   gather_facts: false
+  vars_files:
+  - vars.yml
   tasks:
   - name: Replace organization_vpn configuration
     cisco.meraki_rm.meraki_organization_vpn:
-      organization_id: '123456'
+      organization_id: "123456"
       state: replaced
       config:
       - '{{ expected_config }}'

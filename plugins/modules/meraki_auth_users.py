@@ -40,7 +40,7 @@ options:
     type: list
     elements: dict
     suboptions:
-      meraki_auth_users_id:
+      meraki_auth_user_id:
         description: Meraki auth user ID. Required for merged, replaced, deleted.
         type: str
 
@@ -81,7 +81,7 @@ EXAMPLES = r'''
 - name: Define expected configuration
   ansible.builtin.set_fact:
     expected_config:
-      meraki_auth_users_id: example
+      meraki_auth_user_id: example
       name: Test-Config
       email: "admin@example.com"
       password: example
@@ -124,7 +124,7 @@ EXAMPLES = r'''
 - name: Define replacement configuration
   ansible.builtin.set_fact:
     expected_config:
-      meraki_auth_users_id: example
+      meraki_auth_user_id: example
       name: Replaced-Config
       email: "replaced-admin@example.com"
       password: example
@@ -168,7 +168,7 @@ EXAMPLES = r'''
 - name: Define desired-state configuration
   ansible.builtin.set_fact:
     expected_config:
-      meraki_auth_users_id: example
+      meraki_auth_user_id: example
       name: Replaced-Config
       email: "replaced-admin@example.com"
       password: example
@@ -230,7 +230,7 @@ EXAMPLES = r'''
 - name: Define resource to delete
   ansible.builtin.set_fact:
     expected_config:
-      meraki_auth_users_id: example
+      meraki_auth_user_id: example
 
 - name: Delete auth_users configuration
   cisco.meraki_rm.meraki_auth_users:

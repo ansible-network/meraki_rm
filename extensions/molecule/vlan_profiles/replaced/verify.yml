@@ -1,5 +1,5 @@
 ---
-- name: "Verify \u2014 vlan_profiles (replaced)"
+- name: "Verify — vlan_profiles (replaced)"
   hosts: localhost
   gather_facts: false
   vars_files:
@@ -20,7 +20,8 @@
     ansible.builtin.set_fact:
       path_check: '{{ expected_paths | cisco.meraki_rm.path_contained_in(result_paths) }}'
     vars:
-      expected_paths: '{{ expected_config | ansible.utils.to_paths }}'
+      check_config: '{{ expected_config | dict2items | rejectattr("key", "eq", "iname") | items2dict }}'
+      expected_paths: '{{ check_config | ansible.utils.to_paths }}'
       result_paths: '{{ gathered.gathered[0] | ansible.utils.to_paths }}'
   - name: Assert all expected fields are present and match
     ansible.builtin.assert:

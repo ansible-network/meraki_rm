@@ -1,7 +1,0 @@
-expected_config:
-  name: Test-Config
-  serials:
-  - Q2XX-XXXX-0001
-  - Q2XX-XXXX-0002
-  switch_stack_id: example
-server_assigned_pk: switch_stack_id
