@@ -1,0 +1,10 @@
+---
+- name: "Converge \u2014 wireless_air_marshal_rules (gathered)"
+  hosts: localhost
+  gather_facts: false
+  tasks:
+  - name: Gather current wireless_air_marshal_rules configuration
+    cisco.meraki_rm.meraki_wireless_air_marshal_rules:
+      network_id: N_wireless_air_marshal_rules_gathered
+      state: gathered
+    register: gathered

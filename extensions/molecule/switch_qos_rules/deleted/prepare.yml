@@ -5,7 +5,7 @@
   tasks:
   - name: Seed resource via merged (prerequisite for deleted)
     cisco.meraki_rm.meraki_switch_qos_rules:
-      network_id: N_123456789012345678
+      network_id: N_switch_qos_rules_deleted
       state: merged
       config:
       - qos_rule_id: example

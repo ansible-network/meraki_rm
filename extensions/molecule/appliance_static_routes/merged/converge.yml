@@ -7,7 +7,7 @@
   tasks:
   - name: Create appliance_static_routes with merged state
     cisco.meraki_rm.meraki_appliance_static_routes:
-      network_id: N_123456789012345678
+      network_id: N_appliance_static_routes_merged
       state: merged
       config:
       - '{{ expected_config }}'

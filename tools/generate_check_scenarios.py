@@ -32,11 +32,18 @@ ACTION_DIR = ROOT / "plugins" / "action"
 
 SKIP_MODULES = {"default", "facts", "wireless_air_marshal_rules"}
 
-SCOPE_VALUES = {
-    "network_id": "N_123456789012345678",
-    "organization_id": "123456",
-    "serial": "Q2XX-XXXX-XXXX",
+_SCOPE_PREFIXES = {
+    "network_id": "N",
+    "organization_id": "org",
+    "serial": "Q2XX",
 }
+
+
+def make_scope_id(scope_param: str, module_name: str, state: str = "check") -> str:
+    """Generate a deterministic, collision-free scope value for a scenario."""
+    prefix = _SCOPE_PREFIXES.get(scope_param, "N")
+    sep = "-" if scope_param == "serial" else "_"
+    return f"{prefix}{sep}{module_name}{sep}{state}"
 
 
 def yaml_dump(data: object) -> str:
@@ -366,7 +373,7 @@ def generate_check_scenario(module_name: str, dry_run: bool = False) -> list[str
 
     is_singleton = attrs["PRIMARY_KEY"] is None
     scope_param = attrs["SCOPE_PARAM"]
-    scope_value = SCOPE_VALUES.get(scope_param, "N_123456789012345678")
+    scope_value = make_scope_id(scope_param, module_name, "check")
 
     gathered_vars = None
     if is_singleton:

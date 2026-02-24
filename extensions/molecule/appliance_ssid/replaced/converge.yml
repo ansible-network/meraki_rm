@@ -7,7 +7,7 @@
   tasks:
   - name: Replace appliance_ssid configuration
     cisco.meraki_rm.meraki_appliance_ssid:
-      network_id: N_123456789012345678
+      network_id: N_appliance_ssid_replaced
       state: replaced
       config:
       - '{{ expected_config }}'

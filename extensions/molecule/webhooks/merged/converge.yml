@@ -7,7 +7,7 @@
   tasks:
   - name: Create webhooks with merged state
     cisco.meraki_rm.meraki_webhooks:
-      network_id: N_123456789012345678
+      network_id: N_webhooks_merged
       state: merged
       config:
       - '{{ expected_config }}'

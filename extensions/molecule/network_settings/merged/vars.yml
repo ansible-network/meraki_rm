@@ -3,4 +3,4 @@ expected_config:
   local_status_page_enabled: true
   remote_status_page_enabled: true
   reporting_enabled: true
-  mode: disabled
+  mode: none

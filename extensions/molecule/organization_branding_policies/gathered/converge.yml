@@ -5,6 +5,6 @@
   tasks:
   - name: Gather current organization_branding_policies configuration
     cisco.meraki_rm.meraki_organization_branding_policies:
-      organization_id: '123456'
+      organization_id: org_organization_branding_policies_gathered
       state: gathered
     register: gathered

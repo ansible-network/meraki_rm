@@ -7,7 +7,7 @@
   tasks:
   - name: Gather current organization_admins to get server-assigned IDs
     cisco.meraki_rm.meraki_organization_admins:
-      organization_id: '123456'
+      organization_id: 'org_organization_admins_overridden'
       state: gathered
     register: current
 
@@ -19,7 +19,7 @@
 
   - name: Override organization_admins configuration
     cisco.meraki_rm.meraki_organization_admins:
-      organization_id: '123456'
+      organization_id: 'org_organization_admins_overridden'
       state: overridden
       config:
       - "{{ overridden_config }}"

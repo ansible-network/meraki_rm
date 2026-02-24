@@ -7,7 +7,7 @@
   tasks:
   - name: Seed singleton baseline via merged
     cisco.meraki_rm.meraki_device:
-      serial: Q2XX-XXXX-XXXX
+      serial: Q2XX-device-check
       state: merged
       config:
       - '{{ prepare_config }}'

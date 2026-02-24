@@ -1,18 +1,14 @@
 ---
-- name: "Converge — floor_plans (deleted)"
+- name: "Converge \u2014 floor_plans (deleted)"
   hosts: localhost
   gather_facts: false
+  vars_files:
+  - vars.yml
   tasks:
-  - name: Gather current floor_plans to get server-assigned IDs
+  - name: Delete floor_plans configuration
     cisco.meraki_rm.meraki_floor_plans:
-      network_id: N_123456789012345678
-      state: gathered
-    register: current
-
-  - name: Delete all gathered floor_plans
-    cisco.meraki_rm.meraki_floor_plans:
-      network_id: N_123456789012345678
+      network_id: N_floor_plans_deleted
       state: deleted
-      config: "{{ current.gathered }}"
+      config:
+      - '{{ expected_config }}'
     register: delete_result
-    when: current.gathered | length > 0

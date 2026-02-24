@@ -5,7 +5,7 @@
   tasks:
     - name: Set VPN config to baseline before test
       cisco.meraki_rm.meraki_organization_vpn:
-        organization_id: "123456"
+        organization_id: "org_organization_vpn_merged"
         state: replaced
         config:
           - peers:

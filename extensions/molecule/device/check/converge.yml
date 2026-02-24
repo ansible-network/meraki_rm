@@ -7,7 +7,7 @@
   tasks:
   - name: Run module in check mode (predict change, do not apply)
     cisco.meraki_rm.meraki_device:
-      serial: Q2XX-XXXX-XXXX
+      serial: Q2XX-device-check
       state: merged
       config:
       - '{{ expected_config }}'

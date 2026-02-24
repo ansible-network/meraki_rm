@@ -5,7 +5,7 @@
   tasks:
   - name: Seed resource via merged (prerequisite for deleted)
     cisco.meraki_rm.meraki_organization_config_templates:
-      organization_id: '123456'
+      organization_id: org_organization_config_templates_deleted
       state: merged
       config:
       - config_template_id: example

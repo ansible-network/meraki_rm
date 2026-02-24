@@ -5,6 +5,6 @@
   tasks:
   - name: Gather current switch_acl configuration
     cisco.meraki_rm.meraki_switch_acl:
-      network_id: N_123456789012345678
+      network_id: N_switch_acl_gathered
       state: gathered
     register: gathered

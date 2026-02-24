@@ -5,23 +5,10 @@
   vars_files:
   - vars.yml
   tasks:
-  - name: Gather current appliance_prefixes to get server-assigned IDs
+  - name: Replace appliance_prefixes configuration
     cisco.meraki_rm.meraki_appliance_prefixes:
-      network_id: N_123456789012345678
-      state: gathered
-    register: current
-
-  - name: Build config with actual server-assigned PK
-    ansible.builtin.set_fact:
-      replaced_config: >-
-        {{ expected_config | combine({'static_delegated_prefix_id': current.gathered[0].static_delegated_prefix_id}) }}
-    when: current.gathered | length > 0
-
-  - name: Replaced appliance_prefixes configuration
-    cisco.meraki_rm.meraki_appliance_prefixes:
-      network_id: N_123456789012345678
+      network_id: N_appliance_prefixes_replaced
       state: replaced
       config:
-      - "{{ replaced_config }}"
-    register: replaced_result
-    when: replaced_config is defined
+      - '{{ expected_config }}'
+    register: replace_result

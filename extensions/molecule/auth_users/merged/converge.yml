@@ -7,7 +7,7 @@
   tasks:
   - name: Create auth_users with merged state
     cisco.meraki_rm.meraki_auth_users:
-      network_id: N_123456789012345678
+      network_id: N_auth_users_merged
       state: merged
       config:
       - '{{ expected_config }}'

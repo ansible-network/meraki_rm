@@ -7,7 +7,7 @@
   tasks:
   - name: Gather current configuration
     cisco.meraki_rm.meraki_device:
-      serial: Q2XX-XXXX-XXXX
+      serial: Q2XX-device-merged
       state: gathered
     register: gathered
   - name: Assert configuration exists after merged

@@ -5,23 +5,10 @@
   vars_files:
   - vars.yml
   tasks:
-  - name: Gather current switch_link_aggregations to get server-assigned IDs
+  - name: "Override all switch_link_aggregations \u2014 desired state only"
     cisco.meraki_rm.meraki_switch_link_aggregations:
-      network_id: N_123456789012345678
-      state: gathered
-    register: current
-
-  - name: Build config with actual server-assigned PK
-    ansible.builtin.set_fact:
-      overridden_config: >-
-        {{ expected_config | combine({'link_aggregation_id': current.gathered[0].link_aggregation_id}) }}
-    when: current.gathered | length > 0
-
-  - name: Overridden switch_link_aggregations configuration
-    cisco.meraki_rm.meraki_switch_link_aggregations:
-      network_id: N_123456789012345678
+      network_id: N_switch_link_aggregations_overridden
       state: overridden
       config:
-      - "{{ overridden_config }}"
-    register: overridden_result
-    when: overridden_config is defined
+      - '{{ expected_config }}'
+    register: override_result

@@ -7,7 +7,7 @@
   tasks:
   - name: Gather current configuration
     cisco.meraki_rm.meraki_mqtt_brokers:
-      network_id: N_123456789012345678
+      network_id: N_mqtt_brokers_replaced
       state: gathered
     register: gathered
   - name: Assert configuration exists after replaced
@@ -20,12 +20,7 @@
     ansible.builtin.set_fact:
       path_check: '{{ expected_paths | cisco.meraki_rm.path_contained_in(result_paths) }}'
     vars:
-      _exclude_pk: "{{ server_assigned_pk | default('') }}"
-      _verify_config: >-
-        {{ expected_config | dict2items
-           | rejectattr('key', 'equalto', _exclude_pk)
-           | items2dict }}
-      expected_paths: '{{ _verify_config | ansible.utils.to_paths }}'
+      expected_paths: '{{ expected_config | ansible.utils.to_paths }}'
       result_paths: '{{ gathered.gathered[0] | ansible.utils.to_paths }}'
   - name: Assert all expected fields are present and match
     ansible.builtin.assert:

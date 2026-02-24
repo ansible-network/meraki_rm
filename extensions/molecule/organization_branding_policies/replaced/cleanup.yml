@@ -5,13 +5,13 @@
   tasks:
   - name: Gather remaining organization_branding_policies resources
     cisco.meraki_rm.meraki_organization_branding_policies:
-      organization_id: '123456'
+      organization_id: 'org_organization_branding_policies_replaced'
       state: gathered
     register: current
 
   - name: Remove all test resources
     cisco.meraki_rm.meraki_organization_branding_policies:
-      organization_id: '123456'
+      organization_id: 'org_organization_branding_policies_replaced'
       state: deleted
       config: "{{ current.gathered }}"
     when: current.gathered | default([]) | length > 0

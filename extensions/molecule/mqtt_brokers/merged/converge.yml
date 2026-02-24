@@ -7,7 +7,7 @@
   tasks:
   - name: Create mqtt_brokers with merged state
     cisco.meraki_rm.meraki_mqtt_brokers:
-      network_id: N_123456789012345678
+      network_id: N_mqtt_brokers_merged
       state: merged
       config:
       - '{{ expected_config }}'

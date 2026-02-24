@@ -5,6 +5,6 @@
   tasks:
   - name: Gather current appliance_prefixes configuration
     cisco.meraki_rm.meraki_appliance_prefixes:
-      network_id: N_123456789012345678
+      network_id: N_appliance_prefixes_gathered
       state: gathered
     register: gathered

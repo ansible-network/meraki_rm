@@ -543,6 +543,10 @@ def main() -> None:
         '--list-entities', action='store_true',
         help='List all discovered entities and exit',
     )
+    parser.add_argument(
+        '--check', action='store_true',
+        help='Dry-run: report what would be generated without writing files',
+    )
     args = parser.parse_args()
 
     spec_path = Path(args.spec)
@@ -570,6 +574,8 @@ def main() -> None:
 
     output_dir = Path(args.output)
 
+    verb = 'Would write' if args.check else 'Wrote'
+
     if args.entity:
         if args.entity not in entities:
             print(
@@ -579,15 +585,24 @@ def main() -> None:
             )
             sys.exit(1)
         entity = entities[args.entity]
-        filepath = write_entity(entity, output_dir)
-        print(f"Wrote {filepath} ({len(entity.fields)} fields)")
+        if args.check:
+            filepath = output_dir / f'{entity.entity_name}.py'
+            print(f"{verb} {filepath} ({len(entity.fields)} fields)")
+        else:
+            filepath = write_entity(entity, output_dir)
+            print(f"{verb} {filepath} ({len(entity.fields)} fields)")
     else:
         for name, entity in sorted(entities.items()):
-            filepath = write_entity(entity, output_dir)
-            print(f"  {filepath} ({len(entity.fields)} fields)")
+            if args.check:
+                filepath = output_dir / f'{entity.entity_name}.py'
+                print(f"  {filepath} ({len(entity.fields)} fields)")
+            else:
+                filepath = write_entity(entity, output_dir)
+                print(f"  {filepath} ({len(entity.fields)} fields)")
 
-        write_init(entities, output_dir)
-        print(f"\nWrote {len(entities)} entity files to {output_dir}/")
+        if not args.check:
+            write_init(entities, output_dir)
+        print(f"\n{verb} {len(entities)} entity files to {output_dir}/")
 
 
 if __name__ == '__main__':

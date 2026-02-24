@@ -1,3 +1,4 @@
+---
 expected_config:
   vlan_id: '100'
   name: Replaced-Config
@@ -7,4 +8,3 @@ expected_config:
   template_vlan_type: unique
   cidr: 192.168.128.0/24
   mask: 24
-server_assigned_pk: vlan_id

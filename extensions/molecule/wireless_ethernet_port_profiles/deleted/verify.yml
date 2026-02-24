@@ -5,7 +5,7 @@
   tasks:
   - name: Gather current configuration
     cisco.meraki_rm.meraki_wireless_ethernet_port_profiles:
-      network_id: N_123456789012345678
+      network_id: N_wireless_ethernet_port_profiles_deleted
       state: gathered
     register: gathered
   - name: Assert no resources remain after delete

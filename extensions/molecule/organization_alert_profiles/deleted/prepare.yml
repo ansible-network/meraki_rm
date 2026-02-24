@@ -5,7 +5,7 @@
   tasks:
   - name: Seed resource via merged (prerequisite for deleted)
     cisco.meraki_rm.meraki_organization_alert_profiles:
-      organization_id: '123456'
+      organization_id: org_organization_alert_profiles_deleted
       state: merged
       config:
       - alert_config_id: example

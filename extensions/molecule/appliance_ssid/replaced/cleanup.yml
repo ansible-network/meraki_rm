@@ -1,17 +1,8 @@
 ---
-- name: "Cleanup — appliance_ssid (replaced)"
+- name: "Cleanup \u2014 appliance_ssid (replaced)"
   hosts: localhost
   gather_facts: false
   tasks:
-    - name: Reset SSID 1 to baseline after test
-      cisco.meraki_rm.meraki_appliance_ssid:
-        network_id: N_123456789012345678
-        state: replaced
-        config:
-          - number: 1
-            name: "Unconfigured SSID 1"
-            enabled: false
-            auth_mode: open
-            encryption_mode: wpa
-            psk: ""
-            visible: false
+  - name: No cleanup configured for singleton resource
+    ansible.builtin.debug:
+      msg: appliance_ssid does not support delete

@@ -5,23 +5,10 @@
   vars_files:
   - vars.yml
   tasks:
-  - name: Gather current wireless_rf_profiles to get server-assigned IDs
+  - name: "Override all wireless_rf_profiles \u2014 desired state only"
     cisco.meraki_rm.meraki_wireless_rf_profiles:
-      network_id: N_123456789012345678
-      state: gathered
-    register: current
-
-  - name: Build config with actual server-assigned PK
-    ansible.builtin.set_fact:
-      overridden_config: >-
-        {{ expected_config | combine({'rf_profile_id': current.gathered[0].rf_profile_id}) }}
-    when: current.gathered | length > 0
-
-  - name: Overridden wireless_rf_profiles configuration
-    cisco.meraki_rm.meraki_wireless_rf_profiles:
-      network_id: N_123456789012345678
+      network_id: N_wireless_rf_profiles_overridden
       state: overridden
       config:
-      - "{{ overridden_config }}"
-    register: overridden_result
-    when: overridden_config is defined
+      - '{{ expected_config }}'
+    register: override_result

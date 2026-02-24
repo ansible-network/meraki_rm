@@ -5,23 +5,10 @@
   vars_files:
   - vars.yml
   tasks:
-  - name: Gather current mqtt_brokers to get server-assigned IDs
+  - name: "Override all mqtt_brokers \u2014 desired state only"
     cisco.meraki_rm.meraki_mqtt_brokers:
-      network_id: N_123456789012345678
-      state: gathered
-    register: current
-
-  - name: Build config with actual server-assigned PK
-    ansible.builtin.set_fact:
-      overridden_config: >-
-        {{ expected_config | combine({'mqtt_broker_id': current.gathered[0].mqtt_broker_id}) }}
-    when: current.gathered | length > 0
-
-  - name: Overridden mqtt_brokers configuration
-    cisco.meraki_rm.meraki_mqtt_brokers:
-      network_id: N_123456789012345678
+      network_id: N_mqtt_brokers_overridden
       state: overridden
       config:
-      - "{{ overridden_config }}"
-    register: overridden_result
-    when: overridden_config is defined
+      - '{{ expected_config }}'
+    register: override_result

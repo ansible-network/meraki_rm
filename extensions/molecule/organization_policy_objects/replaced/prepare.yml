@@ -7,7 +7,7 @@
   tasks:
     - name: Seed resource via merged (prerequisite for replaced)
       cisco.meraki_rm.meraki_organization_policy_objects:
-        organization_id: '123456'
+        organization_id: 'org_organization_policy_objects_replaced'
         state: merged
         config:
           - "{{ expected_config }}"

@@ -1,13 +1,20 @@
 ---
-- name: "Prepare — switch_ports (replaced)"
+- name: "Prepare \u2014 switch_ports (replaced)"
   hosts: localhost
   gather_facts: false
-  vars_files:
-    - ../merged/vars.yml
   tasks:
-    - name: Seed resource via merged (prerequisite for replaced)
-      cisco.meraki_rm.meraki_switch_ports:
-        serial: Q2XX-XXXX-XXXX
-        state: merged
-        config:
-          - "{{ expected_config }}"
+  - name: Seed resource via merged (prerequisite for replaced)
+    cisco.meraki_rm.meraki_switch_ports:
+      serial: Q2XX-switch_ports-replaced
+      state: merged
+      config:
+      - port_id: '1'
+        name: Test-Config
+        tags:
+        - ansible
+        - test
+        enabled: true
+        type: access
+        vlan: 1
+        voice_vlan: 100
+        allowed_vlans: all

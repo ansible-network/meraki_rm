@@ -5,23 +5,10 @@
   vars_files:
   - vars.yml
   tasks:
-  - name: Gather current floor_plans to get server-assigned IDs
+  - name: "Override all floor_plans \u2014 desired state only"
     cisco.meraki_rm.meraki_floor_plans:
-      network_id: N_123456789012345678
-      state: gathered
-    register: current
-
-  - name: Build config with actual server-assigned PK
-    ansible.builtin.set_fact:
-      overridden_config: >-
-        {{ expected_config | combine({'floor_plan_id': current.gathered[0].floor_plan_id}) }}
-    when: current.gathered | length > 0
-
-  - name: Overridden floor_plans configuration
-    cisco.meraki_rm.meraki_floor_plans:
-      network_id: N_123456789012345678
+      network_id: N_floor_plans_overridden
       state: overridden
       config:
-      - "{{ overridden_config }}"
-    register: overridden_result
-    when: overridden_config is defined
+      - '{{ expected_config }}'
+    register: override_result

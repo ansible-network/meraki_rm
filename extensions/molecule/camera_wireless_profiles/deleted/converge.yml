@@ -1,18 +1,14 @@
 ---
-- name: "Converge — camera_wireless_profiles (deleted)"
+- name: "Converge \u2014 camera_wireless_profiles (deleted)"
   hosts: localhost
   gather_facts: false
+  vars_files:
+  - vars.yml
   tasks:
-  - name: Gather current camera_wireless_profiles to get server-assigned IDs
+  - name: Delete camera_wireless_profiles configuration
     cisco.meraki_rm.meraki_camera_wireless_profiles:
-      network_id: N_123456789012345678
-      state: gathered
-    register: current
-
-  - name: Delete all gathered camera_wireless_profiles
-    cisco.meraki_rm.meraki_camera_wireless_profiles:
-      network_id: N_123456789012345678
+      network_id: N_camera_wireless_profiles_deleted
       state: deleted
-      config: "{{ current.gathered }}"
+      config:
+      - '{{ expected_config }}'
     register: delete_result
-    when: current.gathered | length > 0

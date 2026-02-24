@@ -7,7 +7,7 @@
   tasks:
   - name: Run module in check mode (predict change, do not apply)
     cisco.meraki_rm.meraki_switch_dhcp_policy:
-      network_id: N_123456789012345678
+      network_id: N_switch_dhcp_policy_check
       state: merged
       config:
       - '{{ expected_config }}'

@@ -7,7 +7,7 @@
   tasks:
   - name: Replace switch_settings configuration
     cisco.meraki_rm.meraki_switch_settings:
-      network_id: N_123456789012345678
+      network_id: N_switch_settings_replaced
       state: replaced
       config:
       - '{{ expected_config }}'

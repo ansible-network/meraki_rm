@@ -5,23 +5,10 @@
   vars_files:
   - vars.yml
   tasks:
-  - name: Gather current device_switch_routes to get server-assigned IDs
+  - name: "Override all device_switch_routes \u2014 desired state only"
     cisco.meraki_rm.meraki_device_switch_routes:
-      serial: Q2XX-XXXX-XXXX
-      state: gathered
-    register: current
-
-  - name: Build config with actual server-assigned PK
-    ansible.builtin.set_fact:
-      overridden_config: >-
-        {{ expected_config | combine({'interface_id': current.gathered[0].interface_id}) }}
-    when: current.gathered | length > 0
-
-  - name: Overridden device_switch_routes configuration
-    cisco.meraki_rm.meraki_device_switch_routes:
-      serial: Q2XX-XXXX-XXXX
+      serial: Q2XX-device_switch_routes-overridden
       state: overridden
       config:
-      - "{{ overridden_config }}"
-    register: overridden_result
-    when: overridden_config is defined
+      - '{{ expected_config }}'
+    register: override_result

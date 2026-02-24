@@ -3,16 +3,10 @@
   hosts: localhost
   gather_facts: false
   tasks:
-  - name: Gather remaining organization_policy_objects resources
+  - name: Remove test resources
     cisco.meraki_rm.meraki_organization_policy_objects:
-      organization_id: '123456'
-      state: gathered
-    register: current
-
-  - name: Remove all test resources
-    cisco.meraki_rm.meraki_organization_policy_objects:
-      organization_id: '123456'
+      organization_id: org_organization_policy_objects_gathered
       state: deleted
-      config: "{{ current.gathered }}"
-    when: current.gathered | default([]) | length > 0
+      config:
+      - policy_object_id: example
     ignore_errors: true

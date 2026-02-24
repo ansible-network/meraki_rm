@@ -7,7 +7,7 @@
   tasks:
   - name: Create switch_routing with merged state
     cisco.meraki_rm.meraki_switch_routing:
-      network_id: N_123456789012345678
+      network_id: N_switch_routing_merged
       state: merged
       config:
       - '{{ expected_config }}'

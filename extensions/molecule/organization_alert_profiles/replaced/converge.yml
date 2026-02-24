@@ -7,7 +7,7 @@
   tasks:
   - name: Gather current organization_alert_profiles to get server-assigned IDs
     cisco.meraki_rm.meraki_organization_alert_profiles:
-      organization_id: '123456'
+      organization_id: 'org_organization_alert_profiles_replaced'
       state: gathered
     register: current
 
@@ -19,7 +19,7 @@
 
   - name: Replace organization_alert_profiles configuration
     cisco.meraki_rm.meraki_organization_alert_profiles:
-      organization_id: '123456'
+      organization_id: 'org_organization_alert_profiles_replaced'
       state: replaced
       config:
       - "{{ replaced_config }}"

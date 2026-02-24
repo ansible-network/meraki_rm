@@ -5,7 +5,7 @@
   tasks:
   - name: Seed resource via merged (prerequisite for deleted)
     cisco.meraki_rm.meraki_organization_branding_policies:
-      organization_id: '123456'
+      organization_id: org_organization_branding_policies_deleted
       state: merged
       config:
       - branding_policy_id: example

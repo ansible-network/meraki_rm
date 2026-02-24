@@ -5,17 +5,17 @@
   tasks:
   - name: Gather all Meraki facts
     cisco.meraki_rm.meraki_facts:
-      organization_id: N_123456789012345678
+      organization_id: org_facts_gathered
       gather_subset:
       - all
     register: all_facts
   - name: Gather only organization info
     cisco.meraki_rm.meraki_facts:
-      organization_id: N_123456789012345678
+      organization_id: org_facts_gathered
       gather_subset:
       - organizations
   - name: Gather networks for a specific org
     cisco.meraki_rm.meraki_facts:
-      organization_id: N_123456789012345678
+      organization_id: org_facts_gathered
       gather_subset:
       - networks

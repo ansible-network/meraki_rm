@@ -5,6 +5,6 @@
   tasks:
   - name: Gather current device configuration
     cisco.meraki_rm.meraki_device:
-      serial: Q2XX-XXXX-XXXX
+      serial: Q2XX-device-gathered
       state: gathered
     register: gathered

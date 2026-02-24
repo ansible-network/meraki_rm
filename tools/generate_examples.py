@@ -472,6 +472,16 @@ STATE_GENERATORS = {
 
 
 def main():
+    import argparse
+    parser = argparse.ArgumentParser(description=__doc__,
+                                     formatter_class=argparse.RawDescriptionHelpFormatter)
+    parser.add_argument('--check', action='store_true',
+                        help='Dry-run: report what would be generated without writing files')
+    args = parser.parse_args()
+
+    dry_run = args.check
+    prefix = 'DRY RUN — ' if dry_run else ''
+
     module_files = sorted(MODULES_DIR.glob('meraki_*.py'))
     created = 0
     modules = 0
@@ -485,13 +495,15 @@ def main():
 
         dir_name = mf.stem.replace('meraki_', '')
         module_dir = EXAMPLES_DIR / dir_name
-        module_dir.mkdir(parents=True, exist_ok=True)
+        if not dry_run:
+            module_dir.mkdir(parents=True, exist_ok=True)
         modules += 1
 
         if meta['is_facts']:
             files = gen_facts(meta)
             for state_name, content in files.items():
-                (module_dir / f'{state_name}.yml').write_text(content)
+                if not dry_run:
+                    (module_dir / f'{state_name}.yml').write_text(content)
                 created += 1
             print(f'  OK {dir_name}/ (gathered)')
             continue
@@ -503,14 +515,16 @@ def main():
             if state in states:
                 gen_fn = STATE_GENERATORS[state]
                 content = gen_fn(meta)
-                (module_dir / f'{state}.yml').write_text(content)
+                if not dry_run:
+                    (module_dir / f'{state}.yml').write_text(content)
                 created += 1
                 generated_states.append(state)
 
         print(f'  OK {dir_name}/ ({", ".join(generated_states)})')
 
     print(f'\n{"="*60}')
-    print(f'Created: {created} state files across {modules} modules')
+    verb = 'Would create' if dry_run else 'Created'
+    print(f'{prefix}{verb}: {created} state files across {modules} modules')
     if errors:
         print(f'\nErrors ({len(errors)}):')
         for e in errors:

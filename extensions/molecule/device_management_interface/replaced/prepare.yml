@@ -5,7 +5,7 @@
   tasks:
     - name: Set management interface to baseline before test
       cisco.meraki_rm.meraki_device_management_interface:
-        serial: Q2XX-XXXX-XXXX
+        serial: Q2XX-device_management_interface-replaced
         state: replaced
         config:
           - wan1:

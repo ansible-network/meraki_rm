@@ -5,7 +5,7 @@
   tasks:
   - name: Seed resource via merged (prerequisite for deleted)
     cisco.meraki_rm.meraki_device_switch_routes:
-      serial: Q2XX-XXXX-XXXX
+      serial: Q2XX-device_switch_routes-deleted
       state: merged
       config:
       - interface_id: example

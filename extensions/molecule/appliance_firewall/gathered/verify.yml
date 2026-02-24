@@ -5,7 +5,7 @@
   tasks:
   - name: Gather current configuration
     cisco.meraki_rm.meraki_appliance_firewall:
-      network_id: N_123456789012345678
+      network_id: N_appliance_firewall_gathered
       state: gathered
     register: gathered
   - name: Assert gathered configuration is not empty

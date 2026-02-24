@@ -5,23 +5,10 @@
   vars_files:
   - vars.yml
   tasks:
-  - name: Gather current appliance_static_routes to get server-assigned IDs
+  - name: "Override all appliance_static_routes \u2014 desired state only"
     cisco.meraki_rm.meraki_appliance_static_routes:
-      network_id: N_123456789012345678
-      state: gathered
-    register: current
-
-  - name: Build config with actual server-assigned PK
-    ansible.builtin.set_fact:
-      overridden_config: >-
-        {{ expected_config | combine({'static_route_id': current.gathered[0].static_route_id}) }}
-    when: current.gathered | length > 0
-
-  - name: Overridden appliance_static_routes configuration
-    cisco.meraki_rm.meraki_appliance_static_routes:
-      network_id: N_123456789012345678
+      network_id: N_appliance_static_routes_overridden
       state: overridden
       config:
-      - "{{ overridden_config }}"
-    register: overridden_result
-    when: overridden_config is defined
+      - '{{ expected_config }}'
+    register: override_result

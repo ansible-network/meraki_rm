@@ -1,4 +1,6 @@
+---
 expected_config:
-  name: Test-Config
   id: example
-server_assigned_pk: id
+  name: Replaced-Config
+  message: example
+  include_sensor_url: true

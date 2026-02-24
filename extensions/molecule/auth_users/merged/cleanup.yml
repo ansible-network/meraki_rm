@@ -3,16 +3,10 @@
   hosts: localhost
   gather_facts: false
   tasks:
-  - name: Gather remaining auth_users resources
+  - name: Remove test resources
     cisco.meraki_rm.meraki_auth_users:
-      network_id: N_123456789012345678
-      state: gathered
-    register: current
-
-  - name: Remove all test resources
-    cisco.meraki_rm.meraki_auth_users:
-      network_id: N_123456789012345678
+      network_id: N_auth_users_merged
       state: deleted
-      config: "{{ current.gathered }}"
-    when: current.gathered | default([]) | length > 0
+      config:
+      - meraki_auth_users_id: example
     ignore_errors: true

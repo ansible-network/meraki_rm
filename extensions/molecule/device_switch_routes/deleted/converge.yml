@@ -1,18 +1,14 @@
 ---
-- name: "Converge — device_switch_routes (deleted)"
+- name: "Converge \u2014 device_switch_routes (deleted)"
   hosts: localhost
   gather_facts: false
+  vars_files:
+  - vars.yml
   tasks:
-  - name: Gather current device_switch_routes to get server-assigned IDs
+  - name: Delete device_switch_routes configuration
     cisco.meraki_rm.meraki_device_switch_routes:
-      serial: Q2XX-XXXX-XXXX
-      state: gathered
-    register: current
-
-  - name: Delete all gathered device_switch_routes
-    cisco.meraki_rm.meraki_device_switch_routes:
-      serial: Q2XX-XXXX-XXXX
+      serial: Q2XX-device_switch_routes-deleted
       state: deleted
-      config: "{{ current.gathered }}"
+      config:
+      - '{{ expected_config }}'
     register: delete_result
-    when: current.gathered | length > 0

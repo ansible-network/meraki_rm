@@ -1,4 +1,6 @@
+---
 expected_config:
+  qos_rule_id: example
   dscp: 1
   vlan: 1
   protocol: TCP
@@ -6,5 +8,3 @@ expected_config:
   dst_port: 1
   src_port_range: example
   dst_port_range: example
-  qos_rule_id: example
-server_assigned_pk: qos_rule_id

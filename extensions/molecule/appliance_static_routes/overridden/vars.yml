@@ -1,8 +1,9 @@
+---
 expected_config:
-  name: Test-Config
-  subnet: 192.168.128.0/24
-  gateway_ip: 10.0.0.1
-  enabled: true
-  ip_version: 1
   static_route_id: example
-server_assigned_pk: static_route_id
+  name: Replaced-Config
+  subnet: 10.20.0.0/24
+  gateway_ip: 10.0.0.1
+  gateway_vlan_id: 1
+  enabled: false
+  ip_version: 1

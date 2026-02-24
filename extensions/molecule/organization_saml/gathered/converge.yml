@@ -5,6 +5,6 @@
   tasks:
   - name: Gather current organization_saml configuration
     cisco.meraki_rm.meraki_organization_saml:
-      organization_id: '123456'
+      organization_id: org_organization_saml_gathered
       state: gathered
     register: gathered

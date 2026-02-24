@@ -1,18 +1,14 @@
 ---
-- name: "Converge — mqtt_brokers (deleted)"
+- name: "Converge \u2014 mqtt_brokers (deleted)"
   hosts: localhost
   gather_facts: false
+  vars_files:
+  - vars.yml
   tasks:
-  - name: Gather current mqtt_brokers to get server-assigned IDs
+  - name: Delete mqtt_brokers configuration
     cisco.meraki_rm.meraki_mqtt_brokers:
-      network_id: N_123456789012345678
-      state: gathered
-    register: current
-
-  - name: Delete all gathered mqtt_brokers
-    cisco.meraki_rm.meraki_mqtt_brokers:
-      network_id: N_123456789012345678
+      network_id: N_mqtt_brokers_deleted
       state: deleted
-      config: "{{ current.gathered }}"
+      config:
+      - '{{ expected_config }}'
     register: delete_result
-    when: current.gathered | length > 0

@@ -1,13 +1,18 @@
 ---
-- name: "Prepare — device_switch_routes (gathered)"
+- name: "Prepare \u2014 device_switch_routes (gathered)"
   hosts: localhost
   gather_facts: false
-  vars_files:
-    - vars.yml
   tasks:
-    - name: Seed resource via merged (prerequisite for gathered)
-      cisco.meraki_rm.meraki_device_switch_routes:
-        serial: Q2XX-XXXX-XXXX
-        state: merged
-        config:
-          - "{{ expected_config }}"
+  - name: Seed resource via merged (prerequisite for gathered)
+    cisco.meraki_rm.meraki_device_switch_routes:
+      serial: Q2XX-device_switch_routes-gathered
+      state: merged
+      config:
+      - interface_id: example
+        name: Test-Config
+        subnet: 192.168.128.0/24
+        interface_ip: 10.0.0.1
+        default_gateway: 10.0.0.1
+        vlan_id: '100'
+        multicast_routing: example
+        dhcp_mode: example

@@ -1,18 +1,14 @@
 ---
-- name: "Converge — wireless_rf_profiles (deleted)"
+- name: "Converge \u2014 wireless_rf_profiles (deleted)"
   hosts: localhost
   gather_facts: false
+  vars_files:
+  - vars.yml
   tasks:
-  - name: Gather current wireless_rf_profiles to get server-assigned IDs
+  - name: Delete wireless_rf_profiles configuration
     cisco.meraki_rm.meraki_wireless_rf_profiles:
-      network_id: N_123456789012345678
-      state: gathered
-    register: current
-
-  - name: Delete all gathered wireless_rf_profiles
-    cisco.meraki_rm.meraki_wireless_rf_profiles:
-      network_id: N_123456789012345678
+      network_id: N_wireless_rf_profiles_deleted
       state: deleted
-      config: "{{ current.gathered }}"
+      config:
+      - '{{ expected_config }}'
     register: delete_result
-    when: current.gathered | length > 0

@@ -5,10 +5,10 @@
   tasks:
   - name: Seed resource via merged (prerequisite for deleted)
     cisco.meraki_rm.meraki_auth_users:
-      network_id: N_123456789012345678
+      network_id: N_auth_users_deleted
       state: merged
       config:
-      - meraki_auth_user_id: example
+      - meraki_auth_users_id: example
         name: Test-Config
         email: admin@example.com
         password: example

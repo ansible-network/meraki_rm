@@ -5,7 +5,7 @@
   tasks:
   - name: Gather current configuration
     cisco.meraki_rm.meraki_device_switch_routes:
-      serial: Q2XX-XXXX-XXXX
+      serial: Q2XX-device_switch_routes-deleted
       state: gathered
     register: gathered
   - name: Assert no resources remain after delete

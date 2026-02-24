@@ -7,7 +7,7 @@
   tasks:
   - name: Replace switch_ports configuration
     cisco.meraki_rm.meraki_switch_ports:
-      serial: Q2XX-XXXX-XXXX
+      serial: Q2XX-switch_ports-replaced
       state: replaced
       config:
       - '{{ expected_config }}'

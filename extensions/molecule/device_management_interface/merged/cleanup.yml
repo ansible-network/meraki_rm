@@ -1,17 +1,8 @@
 ---
-- name: "Cleanup — device_management_interface (merged)"
+- name: "Cleanup \u2014 device_management_interface (merged)"
   hosts: localhost
   gather_facts: false
   tasks:
-    - name: Reset management interface to baseline after test
-      cisco.meraki_rm.meraki_device_management_interface:
-        serial: Q2XX-XXXX-XXXX
-        state: replaced
-        config:
-          - wan1:
-              wanEnabled: "not configured"
-              usingStaticIp: false
-              staticIp: "10.0.0.1"
-              staticSubnetMask: "255.255.255.0"
-              staticGatewayIp: "10.0.0.1"
-              vlan: 1
+  - name: No cleanup configured for singleton resource
+    ansible.builtin.debug:
+      msg: device_management_interface does not support delete

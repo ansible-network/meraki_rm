@@ -5,7 +5,7 @@
   tasks:
   - name: Seed resource via merged (prerequisite for deleted)
     cisco.meraki_rm.meraki_organization_policy_objects:
-      organization_id: '123456'
+      organization_id: org_organization_policy_objects_deleted
       state: merged
       config:
       - policy_object_id: example

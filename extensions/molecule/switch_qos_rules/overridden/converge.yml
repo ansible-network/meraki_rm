@@ -5,23 +5,10 @@
   vars_files:
   - vars.yml
   tasks:
-  - name: Gather current switch_qos_rules to get server-assigned IDs
+  - name: "Override all switch_qos_rules \u2014 desired state only"
     cisco.meraki_rm.meraki_switch_qos_rules:
-      network_id: N_123456789012345678
-      state: gathered
-    register: current
-
-  - name: Build config with actual server-assigned PK
-    ansible.builtin.set_fact:
-      overridden_config: >-
-        {{ expected_config | combine({'qos_rule_id': current.gathered[0].qos_rule_id}) }}
-    when: current.gathered | length > 0
-
-  - name: Overridden switch_qos_rules configuration
-    cisco.meraki_rm.meraki_switch_qos_rules:
-      network_id: N_123456789012345678
+      network_id: N_switch_qos_rules_overridden
       state: overridden
       config:
-      - "{{ overridden_config }}"
-    register: overridden_result
-    when: overridden_config is defined
+      - '{{ expected_config }}'
+    register: override_result

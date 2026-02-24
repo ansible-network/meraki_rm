@@ -5,12 +5,12 @@
   tasks:
   - name: Gather remaining floor_plans resources
     cisco.meraki_rm.meraki_floor_plans:
-      network_id: N_123456789012345678
+      network_id: N_floor_plans_check
       state: gathered
     register: current
   - name: Remove all test resources
     cisco.meraki_rm.meraki_floor_plans:
-      network_id: N_123456789012345678
+      network_id: N_floor_plans_check
       state: deleted
       config: '{{ current.gathered }}'
     when: current.gathered | default([]) | length > 0

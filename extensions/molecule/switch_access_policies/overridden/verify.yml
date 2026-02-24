@@ -7,7 +7,7 @@
   tasks:
   - name: Gather current configuration
     cisco.meraki_rm.meraki_switch_access_policies:
-      network_id: N_123456789012345678
+      network_id: N_switch_access_policies_overridden
       state: gathered
     register: gathered
   - name: Assert configuration exists after overridden

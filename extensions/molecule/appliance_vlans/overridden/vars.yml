@@ -1,10 +1,10 @@
+---
 expected_config:
   vlan_id: '100'
-  name: Test-Config
-  subnet: 192.168.128.0/24
-  appliance_ip: 192.168.128.1
+  name: Replaced-Config
+  subnet: 10.20.0.0/24
+  appliance_ip: 10.20.0.1
   group_policy_id: example
-  template_vlan_type: same
+  template_vlan_type: unique
   cidr: 192.168.128.0/24
   mask: 24
-server_assigned_pk: vlan_id

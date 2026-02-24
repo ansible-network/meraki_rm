@@ -7,7 +7,7 @@
   tasks:
   - name: Seed singleton baseline via merged
     cisco.meraki_rm.meraki_appliance_warm_spare:
-      network_id: N_123456789012345678
+      network_id: N_appliance_warm_spare_check
       state: merged
       config:
       - '{{ prepare_config }}'

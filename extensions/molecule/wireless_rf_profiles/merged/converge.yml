@@ -7,7 +7,7 @@
   tasks:
   - name: Create wireless_rf_profiles with merged state
     cisco.meraki_rm.meraki_wireless_rf_profiles:
-      network_id: N_123456789012345678
+      network_id: N_wireless_rf_profiles_merged
       state: merged
       config:
       - '{{ expected_config }}'

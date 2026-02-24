@@ -5,12 +5,10 @@
   vars_files:
   - vars.yml
   tasks:
-  - name: Gather current configuration for specific SSID
+  - name: Gather current configuration
     cisco.meraki_rm.meraki_wireless_ssid:
-      network_id: N_123456789012345678
+      network_id: N_wireless_ssid_merged
       state: gathered
-      config:
-        - number: "{{ expected_config.number }}"
     register: gathered
   - name: Assert configuration exists after merged
     ansible.builtin.assert:

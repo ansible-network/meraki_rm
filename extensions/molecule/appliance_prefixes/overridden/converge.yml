@@ -5,23 +5,10 @@
   vars_files:
   - vars.yml
   tasks:
-  - name: Gather current appliance_prefixes to get server-assigned IDs
+  - name: "Override all appliance_prefixes \u2014 desired state only"
     cisco.meraki_rm.meraki_appliance_prefixes:
-      network_id: N_123456789012345678
-      state: gathered
-    register: current
-
-  - name: Build config with actual server-assigned PK
-    ansible.builtin.set_fact:
-      overridden_config: >-
-        {{ expected_config | combine({'static_delegated_prefix_id': current.gathered[0].static_delegated_prefix_id}) }}
-    when: current.gathered | length > 0
-
-  - name: Overridden appliance_prefixes configuration
-    cisco.meraki_rm.meraki_appliance_prefixes:
-      network_id: N_123456789012345678
+      network_id: N_appliance_prefixes_overridden
       state: overridden
       config:
-      - "{{ overridden_config }}"
-    register: overridden_result
-    when: overridden_config is defined
+      - '{{ expected_config }}'
+    register: override_result

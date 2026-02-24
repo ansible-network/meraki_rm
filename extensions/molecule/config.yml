@@ -32,6 +32,7 @@ scenario:
     - cleanup
 
 shared_state: true
+prerun: false
 
 verifier:
   name: ansible

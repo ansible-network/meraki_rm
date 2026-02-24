@@ -5,6 +5,6 @@
   tasks:
   - name: Gather current organization_admins configuration
     cisco.meraki_rm.meraki_organization_admins:
-      organization_id: '123456'
+      organization_id: org_organization_admins_gathered
       state: gathered
     register: gathered

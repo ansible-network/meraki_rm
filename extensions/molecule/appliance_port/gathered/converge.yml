@@ -5,6 +5,6 @@
   tasks:
   - name: Gather current appliance_port configuration
     cisco.meraki_rm.meraki_appliance_port:
-      network_id: N_123456789012345678
+      network_id: N_appliance_port_gathered
       state: gathered
     register: gathered

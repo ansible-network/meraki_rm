@@ -1,18 +1,14 @@
 ---
-- name: "Converge — organization_alert_profiles (deleted)"
+- name: "Converge \u2014 organization_alert_profiles (deleted)"
   hosts: localhost
   gather_facts: false
+  vars_files:
+  - vars.yml
   tasks:
-  - name: Gather current organization_alert_profiles to get server-assigned IDs
+  - name: Delete organization_alert_profiles configuration
     cisco.meraki_rm.meraki_organization_alert_profiles:
-      organization_id: '123456'
-      state: gathered
-    register: current
-
-  - name: Delete all gathered organization_alert_profiles
-    cisco.meraki_rm.meraki_organization_alert_profiles:
-      organization_id: '123456'
+      organization_id: org_organization_alert_profiles_deleted
       state: deleted
-      config: "{{ current.gathered }}"
+      config:
+      - '{{ expected_config }}'
     register: delete_result
-    when: current.gathered | length > 0

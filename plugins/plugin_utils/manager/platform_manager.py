@@ -64,6 +64,7 @@ class PlatformService:
         """
         self.base_url = base_url.rstrip('/')
         self.api_key = api_key
+        self._session_lock = threading.Lock()
 
         self.session = requests.Session()
         self.session.headers.update({
@@ -111,6 +112,10 @@ class PlatformService:
         """
         Make API call with rate limit retry.
 
+        Thread-safe: PlatformManager uses ThreadingMixIn so multiple worker
+        connections are served concurrently.  requests.Session is not
+        thread-safe, so all HTTP I/O is serialized through _session_lock.
+
         Args:
             method: HTTP method
             url: Full URL
@@ -123,7 +128,8 @@ class PlatformService:
             RuntimeError: If rate limit exceeded after max retries
         """
         for attempt in range(_DEFAULT_MAX_RETRIES):
-            response = self.session.request(method, url, **kwargs)
+            with self._session_lock:
+                response = self.session.request(method, url, **kwargs)
             if not self._handle_rate_limit(response):
                 return response
         raise RuntimeError(

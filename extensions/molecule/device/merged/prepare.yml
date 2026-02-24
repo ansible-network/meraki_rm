@@ -7,7 +7,7 @@
   tasks:
   - name: Seed device via PUT (upsert)
     ansible.builtin.uri:
-      url: "{{ meraki_dashboard_url }}/devices/Q2XX-XXXX-XXXX"
+      url: "{{ meraki_dashboard_url }}/devices/Q2XX-device-merged"
       method: PUT
       body_format: json
       body:

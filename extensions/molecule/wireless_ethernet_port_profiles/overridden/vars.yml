@@ -1,5 +1,5 @@
+---
 expected_config:
-  name: Test-Config
-  is_default: true
   profile_id: example
-server_assigned_pk: profile_id
+  name: Replaced-Config
+  is_default: true

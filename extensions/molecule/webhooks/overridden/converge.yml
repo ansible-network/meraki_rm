@@ -5,23 +5,10 @@
   vars_files:
   - vars.yml
   tasks:
-  - name: Gather current webhooks to get server-assigned IDs
+  - name: "Override all webhooks \u2014 desired state only"
     cisco.meraki_rm.meraki_webhooks:
-      network_id: N_123456789012345678
-      state: gathered
-    register: current
-
-  - name: Build config with actual server-assigned PK
-    ansible.builtin.set_fact:
-      overridden_config: >-
-        {{ expected_config | combine({'http_server_id': current.gathered[0].http_server_id}) }}
-    when: current.gathered | length > 0
-
-  - name: Overridden webhooks configuration
-    cisco.meraki_rm.meraki_webhooks:
-      network_id: N_123456789012345678
+      network_id: N_webhooks_overridden
       state: overridden
       config:
-      - "{{ overridden_config }}"
-    register: overridden_result
-    when: overridden_config is defined
+      - '{{ expected_config }}'
+    register: override_result

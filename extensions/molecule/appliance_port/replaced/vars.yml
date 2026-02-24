@@ -1,9 +1,9 @@
 ---
 expected_config:
+  port_id: '1'
   enabled: false
   type: trunk
   vlan: 20
   allowed_vlans: all
   access_policy: example
   drop_untagged_traffic: true
-  port_id: '1'

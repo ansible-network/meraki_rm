@@ -5,7 +5,7 @@
   tasks:
   - name: Seed resource via merged (prerequisite for deleted)
     cisco.meraki_rm.meraki_mqtt_brokers:
-      network_id: N_123456789012345678
+      network_id: N_mqtt_brokers_deleted
       state: merged
       config:
       - mqtt_broker_id: example

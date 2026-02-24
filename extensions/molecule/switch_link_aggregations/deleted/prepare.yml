@@ -5,7 +5,7 @@
   tasks:
   - name: Seed resource via merged (prerequisite for deleted)
     cisco.meraki_rm.meraki_switch_link_aggregations:
-      network_id: N_123456789012345678
+      network_id: N_switch_link_aggregations_deleted
       state: merged
       config:
       - link_aggregation_id: example

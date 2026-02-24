@@ -5,6 +5,6 @@
   tasks:
   - name: Gather current organization_adaptive_policy configuration
     cisco.meraki_rm.meraki_organization_adaptive_policy:
-      organization_id: '123456'
+      organization_id: org_organization_adaptive_policy_gathered
       state: gathered
     register: gathered

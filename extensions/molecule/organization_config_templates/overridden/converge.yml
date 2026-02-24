@@ -7,7 +7,7 @@
   tasks:
   - name: Gather current organization_config_templates to get server-assigned IDs
     cisco.meraki_rm.meraki_organization_config_templates:
-      organization_id: '123456'
+      organization_id: 'org_organization_config_templates_overridden'
       state: gathered
     register: current
 
@@ -19,7 +19,7 @@
 
   - name: Override organization_config_templates configuration
     cisco.meraki_rm.meraki_organization_config_templates:
-      organization_id: '123456'
+      organization_id: 'org_organization_config_templates_overridden'
       state: overridden
       config:
       - "{{ overridden_config }}"

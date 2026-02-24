@@ -1,18 +1,14 @@
 ---
-- name: "Converge — organization_branding_policies (deleted)"
+- name: "Converge \u2014 organization_branding_policies (deleted)"
   hosts: localhost
   gather_facts: false
+  vars_files:
+  - vars.yml
   tasks:
-  - name: Gather current organization_branding_policies to get server-assigned IDs
+  - name: Delete organization_branding_policies configuration
     cisco.meraki_rm.meraki_organization_branding_policies:
-      organization_id: '123456'
-      state: gathered
-    register: current
-
-  - name: Delete all gathered organization_branding_policies
-    cisco.meraki_rm.meraki_organization_branding_policies:
-      organization_id: '123456'
+      organization_id: org_organization_branding_policies_deleted
       state: deleted
-      config: "{{ current.gathered }}"
+      config:
+      - '{{ expected_config }}'
     register: delete_result
-    when: current.gathered | length > 0

@@ -7,7 +7,7 @@
   tasks:
   - name: Replace appliance_security configuration
     cisco.meraki_rm.meraki_appliance_security:
-      network_id: N_123456789012345678
+      network_id: N_appliance_security_replaced
       state: replaced
       config:
       - '{{ expected_config }}'

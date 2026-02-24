@@ -7,7 +7,7 @@
   tasks:
   - name: Replace firmware_upgrade configuration
     cisco.meraki_rm.meraki_firmware_upgrade:
-      network_id: N_123456789012345678
+      network_id: N_firmware_upgrade_replaced
       state: replaced
       config:
       - '{{ expected_config }}'

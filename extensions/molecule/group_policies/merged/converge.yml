@@ -7,7 +7,7 @@
   tasks:
   - name: Create group_policies with merged state
     cisco.meraki_rm.meraki_group_policies:
-      network_id: N_123456789012345678
+      network_id: N_group_policies_merged
       state: merged
       config:
       - '{{ expected_config }}'

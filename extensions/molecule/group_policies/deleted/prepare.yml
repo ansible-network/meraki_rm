@@ -5,7 +5,7 @@
   tasks:
   - name: Seed resource via merged (prerequisite for deleted)
     cisco.meraki_rm.meraki_group_policies:
-      network_id: N_123456789012345678
+      network_id: N_group_policies_deleted
       state: merged
       config:
       - group_policy_id: example

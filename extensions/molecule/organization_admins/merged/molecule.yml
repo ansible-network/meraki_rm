@@ -1,6 +1,2 @@
 ---
-scenario:
-  test_sequence:
-    - converge
-    - verify
-    - cleanup
+# Inherits shared config from ../../config.yml

@@ -7,7 +7,7 @@
   tasks:
   - name: Gather current configuration
     cisco.meraki_rm.meraki_appliance_port:
-      network_id: N_123456789012345678
+      network_id: N_appliance_port_replaced
       state: gathered
     register: gathered
   - name: Assert configuration exists after replaced

@@ -5,7 +5,7 @@
   tasks:
   - name: Gather actual state (should be unchanged)
     cisco.meraki_rm.meraki_camera_wireless_profiles:
-      network_id: N_123456789012345678
+      network_id: N_camera_wireless_profiles_check
       state: gathered
     register: actual
   - name: Assert no resources were created (check mode is dry-run)

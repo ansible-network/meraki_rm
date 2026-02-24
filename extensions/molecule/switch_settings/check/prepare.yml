@@ -7,7 +7,7 @@
   tasks:
   - name: Seed singleton baseline via merged
     cisco.meraki_rm.meraki_switch_settings:
-      network_id: N_123456789012345678
+      network_id: N_switch_settings_check
       state: merged
       config:
       - '{{ prepare_config }}'

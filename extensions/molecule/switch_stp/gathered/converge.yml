@@ -5,6 +5,6 @@
   tasks:
   - name: Gather current switch_stp configuration
     cisco.meraki_rm.meraki_switch_stp:
-      network_id: N_123456789012345678
+      network_id: N_switch_stp_gathered
       state: gathered
     register: gathered

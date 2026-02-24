@@ -250,7 +250,8 @@ class BaseResourceActionPlugin(ActionBase):
                 before=before, after=after, config=after,
             )
         except Exception as e:
-            return self._build_result(failed=True, msg=str(e))
+            msg = str(e) or f"{type(e).__name__} (no message)"
+            return self._build_result(failed=True, msg=msg)
 
     def _build_result(self, **kwargs):
         """Build result dict, injecting ansible_facts and optional diff."""

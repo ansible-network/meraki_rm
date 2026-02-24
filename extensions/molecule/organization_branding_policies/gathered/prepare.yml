@@ -1,13 +1,13 @@
 ---
-- name: "Prepare — organization_branding_policies (gathered)"
+- name: "Prepare \u2014 organization_branding_policies (gathered)"
   hosts: localhost
   gather_facts: false
-  vars_files:
-    - vars.yml
   tasks:
-    - name: Seed resource via merged (prerequisite for gathered)
-      cisco.meraki_rm.meraki_organization_branding_policies:
-        organization_id: '123456'
-        state: merged
-        config:
-          - "{{ expected_config }}"
+  - name: Seed resource via merged (prerequisite for gathered)
+    cisco.meraki_rm.meraki_organization_branding_policies:
+      organization_id: org_organization_branding_policies_gathered
+      state: merged
+      config:
+      - branding_policy_id: example
+        name: Test-Config
+        enabled: true

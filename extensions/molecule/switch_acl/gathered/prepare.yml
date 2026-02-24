@@ -7,7 +7,7 @@
   tasks:
     - name: Seed resource via merged (prerequisite for gathered)
       cisco.meraki_rm.meraki_switch_acl:
-        network_id: N_123456789012345678
+        network_id: N_switch_acl_gathered
         state: merged
         config:
           - "{{ expected_config }}"

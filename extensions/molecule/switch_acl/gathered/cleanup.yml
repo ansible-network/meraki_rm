@@ -1,20 +1,8 @@
 ---
-- name: "Cleanup — switch_acl (gathered)"
+- name: "Cleanup \u2014 switch_acl (gathered)"
   hosts: localhost
   gather_facts: false
   tasks:
-    - name: Reset ACL rules to baseline after test
-      cisco.meraki_rm.meraki_switch_acl:
-        network_id: N_123456789012345678
-        state: replaced
-        config:
-          - rules:
-              - comment: "Baseline rule"
-                policy: allow
-                ipVersion: ipv4
-                protocol: any
-                srcCidr: "any"
-                srcPort: "any"
-                dstCidr: "any"
-                dstPort: "any"
-                vlan: "1"
+  - name: No cleanup configured for singleton resource
+    ansible.builtin.debug:
+      msg: switch_acl does not support delete

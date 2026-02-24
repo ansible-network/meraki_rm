@@ -7,11 +7,11 @@ DOCUMENTATION YAML string that defines the Ansible module's argument spec.
 
 Usage:
     python -m tools.generators.generate_user_dataclasses \\
-        --docs-dir plugins/plugin_utils/docs/ \\
+        --modules-dir plugins/modules/ \\
         --output plugins/plugin_utils/user_models/
 
     python -m tools.generators.generate_user_dataclasses \\
-        --docs-dir plugins/plugin_utils/docs/ \\
+        --modules-dir plugins/modules/ \\
         --output plugins/plugin_utils/user_models/ \\
         --module vlan
 """
@@ -196,11 +196,11 @@ def main() -> None:
         description='Generate User Model dataclasses from DOCUMENTATION strings'
     )
     parser.add_argument(
-        '--docs-dir', required=True,
-        help='Directory containing module doc files with DOCUMENTATION strings',
+        '--modules-dir', default='plugins/modules/',
+        help='Directory containing Ansible module files with DOCUMENTATION strings',
     )
     parser.add_argument(
-        '--output', required=True,
+        '--output', default='plugins/plugin_utils/user_models/',
         help='Output directory for generated User Model files',
     )
     parser.add_argument(
@@ -209,17 +209,17 @@ def main() -> None:
     )
     args = parser.parse_args()
 
-    docs_dir = Path(args.docs_dir)
+    docs_dir = Path(args.modules_dir)
     output_dir = Path(args.output)
     output_dir.mkdir(parents=True, exist_ok=True)
 
     if not docs_dir.exists():
-        print(f"Error: docs directory not found: {docs_dir}", file=sys.stderr)
+        print(f"Error: modules directory not found: {docs_dir}", file=sys.stderr)
         sys.exit(1)
 
-    doc_files = sorted(docs_dir.glob('*.py'))
+    doc_files = sorted(docs_dir.glob('meraki_*.py'))
     if args.module:
-        doc_files = [f for f in doc_files if f.stem == args.module]
+        doc_files = [f for f in doc_files if args.module in f.stem]
 
     if not doc_files:
         print("No documentation files found.", file=sys.stderr)
@@ -229,7 +229,7 @@ def main() -> None:
         if doc_file.name.startswith('_'):
             continue
 
-        module_name = doc_file.stem
+        module_name = doc_file.stem.removeprefix('meraki_')
         print(f"Processing {module_name}...")
 
         documentation = _extract_documentation(doc_file)

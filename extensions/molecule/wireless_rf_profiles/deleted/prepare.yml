@@ -5,7 +5,7 @@
   tasks:
   - name: Seed resource via merged (prerequisite for deleted)
     cisco.meraki_rm.meraki_wireless_rf_profiles:
-      network_id: N_123456789012345678
+      network_id: N_wireless_rf_profiles_deleted
       state: merged
       config:
       - rf_profile_id: example

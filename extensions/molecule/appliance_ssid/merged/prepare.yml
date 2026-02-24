@@ -5,7 +5,7 @@
   tasks:
     - name: Reset SSID 1 to baseline before test
       cisco.meraki_rm.meraki_appliance_ssid:
-        network_id: N_123456789012345678
+        network_id: N_appliance_ssid_merged
         state: replaced
         config:
           - number: 1

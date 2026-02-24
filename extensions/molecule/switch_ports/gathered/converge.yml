@@ -5,6 +5,6 @@
   tasks:
   - name: Gather current switch_ports configuration
     cisco.meraki_rm.meraki_switch_ports:
-      serial: Q2XX-XXXX-XXXX
+      serial: Q2XX-switch_ports-gathered
       state: gathered
     register: gathered

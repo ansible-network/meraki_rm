@@ -7,7 +7,7 @@
   tasks:
   - name: Create network_settings with merged state
     cisco.meraki_rm.meraki_network_settings:
-      network_id: N_123456789012345678
+      network_id: N_network_settings_merged
       state: merged
       config:
       - '{{ expected_config }}'

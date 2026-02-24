@@ -5,6 +5,6 @@
   tasks:
   - name: Gather current camera_quality_retention_profiles configuration
     cisco.meraki_rm.meraki_camera_quality_retention_profiles:
-      network_id: N_123456789012345678
+      network_id: N_camera_quality_retention_profiles_gathered
       state: gathered
     register: gathered

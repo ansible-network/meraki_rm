@@ -5,12 +5,12 @@
   tasks:
   - name: Gather remaining switch_qos_rules resources
     cisco.meraki_rm.meraki_switch_qos_rules:
-      network_id: N_123456789012345678
+      network_id: N_switch_qos_rules_check
       state: gathered
     register: current
   - name: Remove all test resources
     cisco.meraki_rm.meraki_switch_qos_rules:
-      network_id: N_123456789012345678
+      network_id: N_switch_qos_rules_check
       state: deleted
       config: '{{ current.gathered }}'
     when: current.gathered | default([]) | length > 0

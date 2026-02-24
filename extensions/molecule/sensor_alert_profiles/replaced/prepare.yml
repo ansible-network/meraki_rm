@@ -1,13 +1,14 @@
 ---
-- name: "Prepare — sensor_alert_profiles (replaced)"
+- name: "Prepare \u2014 sensor_alert_profiles (replaced)"
   hosts: localhost
   gather_facts: false
-  vars_files:
-    - ../merged/vars.yml
   tasks:
-    - name: Seed resource via merged (prerequisite for replaced)
-      cisco.meraki_rm.meraki_sensor_alert_profiles:
-        network_id: N_123456789012345678
-        state: merged
-        config:
-          - "{{ expected_config }}"
+  - name: Seed resource via merged (prerequisite for replaced)
+    cisco.meraki_rm.meraki_sensor_alert_profiles:
+      network_id: N_sensor_alert_profiles_replaced
+      state: merged
+      config:
+      - id: example
+        name: Test-Config
+        message: example
+        include_sensor_url: true

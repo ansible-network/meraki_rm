@@ -1,9 +1,9 @@
+---
 expected_config:
+  meraki_auth_users_id: example
   name: Test-Config
   email: admin@example.com
   password: example
-  account_type: Guest
+  account_type: example
   is_admin: true
   email_password_to_user: true
-  meraki_auth_user_id: example
-server_assigned_pk: meraki_auth_user_id

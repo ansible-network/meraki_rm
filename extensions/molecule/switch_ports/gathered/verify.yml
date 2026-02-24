@@ -5,7 +5,7 @@
   tasks:
   - name: Gather current configuration
     cisco.meraki_rm.meraki_switch_ports:
-      serial: Q2XX-XXXX-XXXX
+      serial: Q2XX-switch_ports-gathered
       state: gathered
     register: gathered
   - name: Assert gathered configuration is not empty

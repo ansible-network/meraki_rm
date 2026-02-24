@@ -7,7 +7,7 @@
   tasks:
   - name: Gather actual state (should match prepare baseline)
     cisco.meraki_rm.meraki_device_management_interface:
-      serial: Q2XX-XXXX-XXXX
+      serial: Q2XX-device_management_interface-check
       state: gathered
     register: actual
   - name: Assert gathered state is not empty

@@ -7,7 +7,7 @@
   tasks:
   - name: Gather current configuration
     cisco.meraki_rm.meraki_firmware_upgrade:
-      network_id: N_123456789012345678
+      network_id: N_firmware_upgrade_merged
       state: gathered
     register: gathered
   - name: Assert configuration exists after merged

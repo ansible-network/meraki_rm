@@ -5,7 +5,7 @@
   tasks:
   - name: Gather current configuration
     cisco.meraki_rm.meraki_organization_config_templates:
-      organization_id: '123456'
+      organization_id: org_organization_config_templates_gathered
       state: gathered
     register: gathered
   - name: Assert gathered configuration is not empty

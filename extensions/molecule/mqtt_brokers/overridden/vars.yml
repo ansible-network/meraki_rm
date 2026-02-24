@@ -1,6 +1,6 @@
+---
 expected_config:
-  name: Test-Config
+  mqtt_broker_id: example
+  name: Replaced-Config
   host: mqtt.example.com
   port: 1883
-  mqtt_broker_id: example
-server_assigned_pk: mqtt_broker_id

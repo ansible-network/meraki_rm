@@ -5,12 +5,12 @@
   tasks:
   - name: Gather remaining appliance_static_routes resources
     cisco.meraki_rm.meraki_appliance_static_routes:
-      network_id: N_123456789012345678
+      network_id: N_appliance_static_routes_check
       state: gathered
     register: current
   - name: Remove all test resources
     cisco.meraki_rm.meraki_appliance_static_routes:
-      network_id: N_123456789012345678
+      network_id: N_appliance_static_routes_check
       state: deleted
       config: '{{ current.gathered }}'
     when: current.gathered | default([]) | length > 0

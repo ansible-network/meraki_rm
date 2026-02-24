@@ -5,6 +5,6 @@
   tasks:
   - name: Gather current vlan_profiles configuration
     cisco.meraki_rm.meraki_vlan_profiles:
-      network_id: N_123456789012345678
+      network_id: N_vlan_profiles_gathered
       state: gathered
     register: gathered

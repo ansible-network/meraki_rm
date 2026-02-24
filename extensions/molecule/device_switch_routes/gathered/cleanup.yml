@@ -3,16 +3,11 @@
   hosts: localhost
   gather_facts: false
   tasks:
-  - name: Gather remaining device_switch_routes resources
+  - name: Remove test resources
     cisco.meraki_rm.meraki_device_switch_routes:
-      serial: Q2XX-XXXX-XXXX
-      state: gathered
-    register: current
-
-  - name: Remove all test resources
-    cisco.meraki_rm.meraki_device_switch_routes:
-      serial: Q2XX-XXXX-XXXX
+      serial: Q2XX-device_switch_routes-gathered
       state: deleted
-      config: "{{ current.gathered }}"
-    when: current.gathered | default([]) | length > 0
+      config:
+      - interface_id: example
+        vlan_id: '100'
     ignore_errors: true

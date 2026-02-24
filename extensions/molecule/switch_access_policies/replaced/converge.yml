@@ -5,23 +5,10 @@
   vars_files:
   - vars.yml
   tasks:
-  - name: Gather current switch_access_policies to get server-assigned IDs
+  - name: Replace switch_access_policies configuration
     cisco.meraki_rm.meraki_switch_access_policies:
-      network_id: N_123456789012345678
-      state: gathered
-    register: current
-
-  - name: Build config with actual server-assigned PK
-    ansible.builtin.set_fact:
-      replaced_config: >-
-        {{ expected_config | combine({'access_policy_number': current.gathered[0].access_policy_number}) }}
-    when: current.gathered | length > 0
-
-  - name: Replaced switch_access_policies configuration
-    cisco.meraki_rm.meraki_switch_access_policies:
-      network_id: N_123456789012345678
+      network_id: N_switch_access_policies_replaced
       state: replaced
       config:
-      - "{{ replaced_config }}"
-    register: replaced_result
-    when: replaced_config is defined
+      - '{{ expected_config }}'
+    register: replace_result

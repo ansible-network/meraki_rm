@@ -5,7 +5,7 @@
   tasks:
     - name: Set ACL rules to baseline before test
       cisco.meraki_rm.meraki_switch_acl:
-        network_id: N_123456789012345678
+        network_id: N_switch_acl_replaced
         state: replaced
         config:
           - rules:

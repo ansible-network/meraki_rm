@@ -7,7 +7,7 @@
   tasks:
   - name: Seed singleton baseline via merged
     cisco.meraki_rm.meraki_organization_saml:
-      organization_id: '123456'
+      organization_id: 'org_organization_saml_check'
       state: merged
       config:
       - '{{ prepare_config }}'

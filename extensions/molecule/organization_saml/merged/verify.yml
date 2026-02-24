@@ -7,7 +7,7 @@
   tasks:
   - name: Gather current configuration
     cisco.meraki_rm.meraki_organization_saml:
-      organization_id: '123456'
+      organization_id: org_organization_saml_merged
       state: gathered
     register: gathered
   - name: Assert configuration exists after merged

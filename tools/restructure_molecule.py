@@ -30,6 +30,23 @@ STATES_NEEDING_PREPARE = {"replaced", "overridden", "deleted"}
 STATES_NEEDING_CLEANUP = {"merged", "replaced", "overridden"}
 STATES_WITH_PATH_CHECK = {"merged", "replaced", "overridden"}
 
+_SCOPE_PREFIXES = {
+    "network_id": "N",
+    "organization_id": "org",
+    "serial": "Q2XX",
+}
+
+
+def make_scope_id(scope_param: str, module_name: str, state: str) -> str:
+    """Generate a deterministic, collision-free scope value for a scenario.
+
+    Each module/state combination gets its own scope namespace so that
+    parallel execution (molecule --workers) never causes state contention.
+    """
+    prefix = _SCOPE_PREFIXES.get(scope_param, "N")
+    sep = "-" if scope_param == "serial" else "_"
+    return f"{prefix}{sep}{module_name}{sep}{state}"
+
 
 def parse_example(filepath: Path) -> dict:
     """Parse an example YAML task file, extracting module info and expected config."""
@@ -81,6 +98,21 @@ def parse_example(filepath: Path) -> dict:
         "module_call_tasks": module_call_tasks,
         "raw": raw,
     }
+
+
+def replace_scope_in_tasks(tasks: list, scope_param: str, new_value: str) -> list:
+    """Replace the scope parameter value in module call tasks."""
+    import copy
+    tasks = copy.deepcopy(tasks)
+    for task in tasks:
+        if not isinstance(task, dict):
+            continue
+        for key in task:
+            if key.startswith("cisco.meraki_rm.meraki_"):
+                params = task[key]
+                if isinstance(params, dict) and scope_param in params:
+                    params[scope_param] = new_value
+    return tasks
 
 
 def get_merged_config(module_dir: Path) -> dict | None:
@@ -334,7 +366,8 @@ def process_module(module_name: str, dry_run: bool = False) -> list[str]:
             continue
 
         scenario_dir = MOLECULE_DIR / module_name / state
-        actions.append(f"CREATE {scenario_dir}")
+        sid = make_scope_id(scope_param, module_name, state)
+        actions.append(f"CREATE {scenario_dir}  (scope: {sid})")
 
         if dry_run:
             continue
@@ -349,7 +382,9 @@ def process_module(module_name: str, dry_run: bool = False) -> list[str]:
         if has_vars:
             write_vars_yml(scenario_dir, expected_config)
 
-        module_call_tasks = info.get("module_call_tasks", [])
+        module_call_tasks = replace_scope_in_tasks(
+            info.get("module_call_tasks", []), scope_param, sid,
+        )
         write_converge(scenario_dir, module_name, state, module_call_tasks, has_vars)
 
         if state in STATES_NEEDING_PREPARE and merged_config:
@@ -365,11 +400,11 @@ def process_module(module_name: str, dry_run: bool = False) -> list[str]:
             else:
                 seed_config = merged_config
             write_prepare(scenario_dir, module_name, state, module_fqcn,
-                          scope_param, scope_value, seed_config)
+                          scope_param, sid, seed_config)
 
         if state == "gathered" and merged_config:
             write_prepare(scenario_dir, module_name, state, module_fqcn,
-                          scope_param, scope_value, merged_config)
+                          scope_param, sid, merged_config)
 
         extra_assert = None
         if state == "overridden":
@@ -383,7 +418,7 @@ def process_module(module_name: str, dry_run: bool = False) -> list[str]:
 
         write_verify(
             scenario_dir, module_name, state,
-            module_fqcn, scope_param, scope_value,
+            module_fqcn, scope_param, sid,
             has_vars=has_vars,
             extra_assertions=extra_assert,
         )
@@ -391,10 +426,10 @@ def process_module(module_name: str, dry_run: bool = False) -> list[str]:
         if state in STATES_NEEDING_CLEANUP:
             if has_delete and delete_config:
                 write_cleanup(scenario_dir, module_name, state,
-                              module_fqcn, scope_param, scope_value, delete_config)
+                              module_fqcn, scope_param, sid, delete_config)
             elif has_delete and merged_config:
                 write_cleanup(scenario_dir, module_name, state,
-                              module_fqcn, scope_param, scope_value, merged_config)
+                              module_fqcn, scope_param, sid, merged_config)
             else:
                 write_cleanup(scenario_dir, module_name, state)
         elif state == "deleted":
@@ -402,7 +437,7 @@ def process_module(module_name: str, dry_run: bool = False) -> list[str]:
         elif state == "gathered":
             if has_delete and delete_config:
                 write_cleanup(scenario_dir, module_name, state,
-                              module_fqcn, scope_param, scope_value, delete_config)
+                              module_fqcn, scope_param, sid, delete_config)
             else:
                 write_cleanup(scenario_dir, module_name, state)
 

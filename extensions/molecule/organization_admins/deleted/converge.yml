@@ -1,18 +1,14 @@
 ---
-- name: "Converge — organization_admins (deleted)"
+- name: "Converge \u2014 organization_admins (deleted)"
   hosts: localhost
   gather_facts: false
+  vars_files:
+  - vars.yml
   tasks:
-  - name: Gather current organization_admins to get server-assigned IDs
+  - name: Delete organization_admins configuration
     cisco.meraki_rm.meraki_organization_admins:
-      organization_id: '123456'
-      state: gathered
-    register: current
-
-  - name: Delete all gathered organization_admins
-    cisco.meraki_rm.meraki_organization_admins:
-      organization_id: '123456'
+      organization_id: org_organization_admins_deleted
       state: deleted
-      config: "{{ current.gathered }}"
+      config:
+      - '{{ expected_config }}'
     register: delete_result
-    when: current.gathered | length > 0

@@ -1,27 +1,16 @@
 ---
-- name: "Verify — facts (gathered)"
+- name: "Verify \u2014 facts (gathered)"
   hosts: localhost
   gather_facts: false
   tasks:
-  - name: Gather all Meraki facts
+  - name: Gather current configuration
     cisco.meraki_rm.meraki_facts:
-      organization_id: N_123456789012345678
-      gather_subset:
-      - all
-    register: facts_result
-
-  - name: Assert facts module returned successfully
+      organization_id: org_facts_gathered
+      state: gathered
+    register: gathered
+  - name: Assert gathered configuration is not empty
     ansible.builtin.assert:
       that:
-      - facts_result is not failed
-      - facts_result.ansible_facts is defined
-      fail_msg: "Facts module did not return ansible_facts"
-
-  - name: Assert expected fact keys are present
-    ansible.builtin.assert:
-      that:
-      - "'meraki_organizations' in facts_result.ansible_facts"
-      - "'meraki_networks' in facts_result.ansible_facts"
-      - "'meraki_devices' in facts_result.ansible_facts"
-      - "'meraki_inventory' in facts_result.ansible_facts"
-      fail_msg: "Missing expected keys in ansible_facts"
+      - gathered.gathered is defined
+      - gathered.gathered | length > 0
+      fail_msg: "Gathered config is empty \u2014 expected at least one resource"

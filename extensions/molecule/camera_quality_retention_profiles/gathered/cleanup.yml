@@ -3,16 +3,11 @@
   hosts: localhost
   gather_facts: false
   tasks:
-  - name: Gather remaining camera_quality_retention_profiles resources
+  - name: Remove test resources
     cisco.meraki_rm.meraki_camera_quality_retention_profiles:
-      network_id: N_123456789012345678
-      state: gathered
-    register: current
-
-  - name: Remove all test resources
-    cisco.meraki_rm.meraki_camera_quality_retention_profiles:
-      network_id: N_123456789012345678
+      network_id: N_camera_quality_retention_profiles_gathered
       state: deleted
-      config: "{{ current.gathered }}"
-    when: current.gathered | default([]) | length > 0
+      config:
+      - quality_retention_profile_id: example
+        schedule_id: example
     ignore_errors: true

@@ -1,5 +1,6 @@
+---
 expected_config:
+  config_template_id: example
   name: Test-Config
   time_zone: example
-  config_template_id: example
-server_assigned_pk: config_template_id
+  copy_from_network_id: example

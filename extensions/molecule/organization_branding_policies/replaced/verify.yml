@@ -7,7 +7,7 @@
   tasks:
   - name: Gather current configuration
     cisco.meraki_rm.meraki_organization_branding_policies:
-      organization_id: '123456'
+      organization_id: 'org_organization_branding_policies_replaced'
       state: gathered
     register: gathered
   - name: Assert configuration exists after replaced

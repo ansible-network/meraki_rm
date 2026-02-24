@@ -1,4 +1,4 @@
+---
 expected_config:
-  name: Replaced-Config
   wireless_profile_id: example
-server_assigned_pk: wireless_profile_id
+  name: Replaced-Config
