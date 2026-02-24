@@ -1,0 +1,7 @@
+---
+scenario:
+  test_sequence:
+    - prepare
+    - converge
+    - verify
+    - cleanup

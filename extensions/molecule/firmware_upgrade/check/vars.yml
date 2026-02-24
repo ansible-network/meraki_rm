@@ -1,0 +1,5 @@
+---
+expected_config:
+  timezone: America/Los_Angeles
+prepare_config:
+  timezone: America/Los_Angeles Gathered

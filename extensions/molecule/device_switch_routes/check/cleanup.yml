@@ -1,0 +1,17 @@
+---
+- name: "Cleanup \u2014 device_switch_routes (check)"
+  hosts: localhost
+  gather_facts: false
+  tasks:
+  - name: Gather remaining device_switch_routes resources
+    cisco.meraki_rm.meraki_device_switch_routes:
+      serial: Q2XX-XXXX-XXXX
+      state: gathered
+    register: current
+  - name: Remove all test resources
+    cisco.meraki_rm.meraki_device_switch_routes:
+      serial: Q2XX-XXXX-XXXX
+      state: deleted
+      config: '{{ current.gathered }}'
+    when: current.gathered | default([]) | length > 0
+    ignore_errors: true

@@ -918,9 +918,13 @@ Each test gets a clean state store, preventing cross-test contamination while re
 - **Transform + HTTP integration bugs** — field that survives transform but breaks at the wire level
 - **Idempotence at the service level** — update produces different state on second call
 
-### Known Limitations
+### Skip Lists
 
-Some item-level resources (SSIDs, ports) that are addressed by a numeric index in the URL path are marked as `xfail` because the mock server's storage/retrieval logic does not yet fully support path-param-based item lookups for these endpoints. These are tracked in `_MOCK_SERVER_EDGE_CASES` within the test file and will pass once mock server support is added.
+Some modules are structurally inapplicable for certain tests. These are skipped via per-test-class skip lists in `test_integration_flow.py`:
+
+- **`_WRITE_FIND_SKIP`** — modules with no find endpoint (e.g., `wireless_air_marshal_rules` has only create/update/delete ops, so write-then-find cannot run)
+- **`_ROUNDTRIP_SKIP`** — modules where roundtrip validation is structurally inapplicable (e.g., no find endpoint, or spec response schema omits keys that the user model expects)
+- **`_DELETE_SKIP`** — modules where the delete test is structurally inapplicable (beyond the built-in guards for `SUPPORTS_DELETE`, `has_delete`, and `is_collection`; e.g., singleton resources or modules with no delete endpoint). Currently empty.
 
 ### Coverage Comparison
 

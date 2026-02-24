@@ -1,0 +1,13 @@
+---
+- name: "Prepare \u2014 switch_ports (check)"
+  hosts: localhost
+  gather_facts: false
+  vars_files:
+  - vars.yml
+  tasks:
+  - name: Seed singleton baseline via merged
+    cisco.meraki_rm.meraki_switch_ports:
+      serial: Q2XX-XXXX-XXXX
+      state: merged
+      config:
+      - '{{ prepare_config }}'

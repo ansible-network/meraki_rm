@@ -1,0 +1,5 @@
+---
+expected_config:
+  name: Test-Config
+  profile_id: example
+server_assigned_pk: profile_id

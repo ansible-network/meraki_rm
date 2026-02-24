@@ -1,0 +1,5 @@
+---
+expected_config:
+  last_entry_rule: allow
+prepare_config:
+  last_entry_rule: default

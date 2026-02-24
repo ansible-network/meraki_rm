@@ -1,0 +1,5 @@
+---
+expected_config:
+  rstp_enabled: true
+prepare_config:
+  rstp_enabled: false

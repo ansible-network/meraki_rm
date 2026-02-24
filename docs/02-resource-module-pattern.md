@@ -421,6 +421,67 @@ the module can perform a proper diff. Same field names, same structure, same voc
 
 A module that cannot do this loop is not a resource module. It is an API client with YAML syntax. The convergence contract is what separates infrastructure automation from imperative scripting.
 
+### Check Mode: The Convergence Loop Without Side Effects
+
+Ansible's `--check` flag asks modules to predict what *would* change without actually changing anything. Because resource modules are built on set theory, check mode is not a simulation — it is a **computation**.
+
+The convergence loop becomes:
+
+```
+1. GATHER:  Read current config from device → before
+2. PREDICT: Compute after from set theory (no API calls)
+3. REPORT:  Return changed=(before != after), before/after state
+```
+
+Step 2 does not contact the device. The set operations are pure functions:
+
+- **`merged`**: predict `after` by merging desired fields onto `before`
+- **`replaced`**: predict `after` by replacing matched items entirely
+- **`overridden`**: predict `after = desired` (by definition — C' = D)
+- **`deleted`**: predict `after` by removing items whose keys match
+
+This is why `overridden` with `--check` is the **compliance audit**: "run the playbook in check mode. If `changed: true`, the device has drifted from the declared state." No changes are made. The report tells you exactly what would be brought into compliance.
+
+```yaml
+- name: Audit VLAN compliance
+  novacom.dashboard.novacom_appliance_vlan:
+    network_id: "N_12345"
+    config:
+      - vlan_id: 100
+        name: Engineering
+        subnet: 10.100.0.0/24
+      - vlan_id: 200
+        name: Guest
+        subnet: 10.200.0.0/24
+    state: overridden
+  check_mode: true
+  register: audit
+
+- name: Report drift
+  ansible.builtin.debug:
+    msg: "Drift detected — {{ audit.before | length }} current vs {{ audit.after | length }} desired"
+  when: audit is changed
+```
+
+### Diff Mode: Seeing What Changed
+
+Ansible's `--diff` flag asks modules to show what changed (or what would change in check mode). Resource modules return structured `before`/`after` state, which Ansible renders as a unified diff.
+
+Because `gathered` output uses the same schema as `config` input, the diff compares **like with like** — snake_case field names, normalized values, human-readable structure. No vendor-internal camelCase or nested API payloads.
+
+```
+TASK [Ensure engineering VLAN exists] ****
+--- before
++++ after
+@@ -1,3 +1,3 @@
+ - name: Engineering
+-  subnet: 10.100.0.0/24
++  subnet: 10.100.0.0/16
+   vlan_id: '100'
+```
+
+Check mode and diff mode compose naturally: `--check --diff` shows what *would* change without changing anything. This is the standard pre-deployment review workflow for production infrastructure.
+
 ---
 
 ## Section 6: Why This Matters for NovaCom

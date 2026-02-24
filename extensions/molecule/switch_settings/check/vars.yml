@@ -1,0 +1,13 @@
+---
+expected_config:
+  default_mtu_size: 1
+  broadcast_threshold: 1
+  multicast_threshold: 1
+  unknown_unicast_threshold: 1
+  use_combined_power: true
+prepare_config:
+  default_mtu_size: 2
+  broadcast_threshold: 2
+  multicast_threshold: 2
+  unknown_unicast_threshold: 2
+  use_combined_power: false

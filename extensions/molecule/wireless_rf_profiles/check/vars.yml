@@ -1,0 +1,7 @@
+---
+expected_config:
+  name: Test-Config
+  band_selection_type: ssid
+  client_balancing_enabled: true
+  rf_profile_id: example
+server_assigned_pk: rf_profile_id

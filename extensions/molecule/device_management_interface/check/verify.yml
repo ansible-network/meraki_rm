@@ -1,0 +1,29 @@
+---
+- name: "Verify \u2014 device_management_interface (check)"
+  hosts: localhost
+  gather_facts: false
+  vars_files:
+  - vars.yml
+  tasks:
+  - name: Gather actual state (should match prepare baseline)
+    cisco.meraki_rm.meraki_device_management_interface:
+      serial: Q2XX-XXXX-XXXX
+      state: gathered
+    register: actual
+  - name: Assert gathered state is not empty
+    ansible.builtin.assert:
+      that:
+      - actual.gathered is defined
+      - actual.gathered | length > 0
+      fail_msg: Gathered config is empty after check mode
+  - name: Compare prepare baseline to gathered state (subset check)
+    ansible.builtin.set_fact:
+      path_check: '{{ expected_paths | cisco.meraki_rm.path_contained_in(result_paths) }}'
+    vars:
+      expected_paths: '{{ prepare_config | ansible.utils.to_paths }}'
+      result_paths: '{{ actual.gathered[0] | ansible.utils.to_paths }}'
+  - name: Assert check mode did not alter the baseline
+    ansible.builtin.assert:
+      that: path_check.contained | bool
+      success_msg: 'Baseline intact. Extras: {{ path_check.extras }}'
+      fail_msg: 'Baseline changed! Missing: {{ path_check.missing }}. Extras: {{ path_check.extras }}'

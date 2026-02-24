@@ -1,0 +1,8 @@
+---
+- name: "Prepare \u2014 sensor_alert_profiles (check)"
+  hosts: localhost
+  gather_facts: false
+  tasks:
+  - name: "No-op \u2014 collection starts from empty state"
+    ansible.builtin.debug:
+      msg: Empty baseline for check mode test

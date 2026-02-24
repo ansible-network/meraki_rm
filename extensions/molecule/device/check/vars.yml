@@ -1,0 +1,21 @@
+---
+expected_config:
+  name: Test-Config
+  tags:
+  - ansible
+  - test
+  lat: 37.7749
+  lng: -122.4194
+  address: 500 Terry Francine Street
+  notes: example
+  move_map_marker: true
+prepare_config:
+  name: Test-Config Gathered
+  tags:
+  - ansible-g
+  - test-g
+  lat: 38.2749
+  lng: -121.9194
+  address: 500 Terry Francine Street Gathered
+  notes: example Gathered
+  move_map_marker: false

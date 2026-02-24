@@ -1,0 +1,13 @@
+---
+- name: "Prepare \u2014 organization_saml (check)"
+  hosts: localhost
+  gather_facts: false
+  vars_files:
+  - vars.yml
+  tasks:
+  - name: Seed singleton baseline via merged
+    cisco.meraki_rm.meraki_organization_saml:
+      organization_id: '123456'
+      state: merged
+      config:
+      - '{{ prepare_config }}'

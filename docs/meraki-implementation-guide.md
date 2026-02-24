@@ -360,7 +360,7 @@ These modules prove the full pattern end-to-end: foundation, generators, transfo
 | Switching | `access_policy`, `dhcp_policy`, `qos_rule`, `routing`, `stp`, `acl`, `stack`, `link_aggregation`, `settings` |
 | Wireless | `rf_profile`, `air_marshal`, `ethernet_port_profile` |
 
-### Sprint 4: Remaining (13 modules)
+### Sprint 4: Remaining (13 modules) — Complete
 
 | Domain | Modules |
 |---|---|
@@ -381,7 +381,7 @@ These modules prove the full pattern end-to-end: foundation, generators, transfo
 
 Meraki enforces 10 requests/second per organization. On rate limit, the API returns HTTP 429 with a `Retry-After` header.
 
-PlatformService must implement:
+PlatformService implements:
 
 ```python
 def _handle_rate_limit(self, response):
@@ -406,6 +406,8 @@ def _api_call(self, method, url, **kwargs):
             return response
     raise RuntimeError(f"Rate limit exceeded after {max_retries} retries")
 ```
+
+Implementation: `plugins/plugin_utils/manager/platform_manager.py` — methods `_handle_rate_limit()` and `_api_call()`.
 
 ### Action Batch Support
 
@@ -452,7 +454,7 @@ Meraki list endpoints paginate with `Link` headers:
 Link: <https://api.meraki.com/api/v1/networks/N_123/appliance/vlans?startingAfter=100>; rel=next
 ```
 
-PlatformService must auto-paginate for `gather` operations:
+PlatformService auto-paginates for `gather` operations:
 
 ```python
 def _paginated_get(self, url, **kwargs):
@@ -466,6 +468,8 @@ def _paginated_get(self, url, **kwargs):
         url = self._parse_next_link(response.headers.get('Link'))
     return results
 ```
+
+Implementation: `plugins/plugin_utils/manager/platform_manager.py` — methods `_paginated_get()` and `_parse_next_link()`.
 
 ### Version Detection
 

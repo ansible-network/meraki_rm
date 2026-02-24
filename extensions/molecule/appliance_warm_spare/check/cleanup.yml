@@ -1,0 +1,8 @@
+---
+- name: "Cleanup \u2014 appliance_warm_spare (check)"
+  hosts: localhost
+  gather_facts: false
+  tasks:
+  - name: No cleanup needed for singleton resource
+    ansible.builtin.debug:
+      msg: appliance_warm_spare does not support delete

@@ -150,6 +150,13 @@ class BaseResourceActionPlugin(ActionBase):
           3. Gather resulting state → ``after``
           4. ``changed = (before != after)``
 
+        Supports ``--check`` (dry-run) and ``--diff`` modes:
+
+        - **Check mode**: gathers ``before``, predicts ``after`` from set
+          theory without making API calls, reports ``changed`` accurately.
+        - **Diff mode**: attaches a YAML-formatted ``diff`` to the result
+          showing ``before`` vs ``after`` state.
+
         Return structure matches cisco.ios / cisco.nxos conventions::
 
             {
@@ -157,6 +164,7 @@ class BaseResourceActionPlugin(ActionBase):
                 "after":  [ ... ],   # config after this run
                 "changed": bool,
                 "gathered": [ ... ], # only for state=gathered
+                "diff": { ... },     # only when --diff is active
             }
 
         Subclasses with truly unique logic (meraki_facts) override this.
@@ -205,6 +213,15 @@ class BaseResourceActionPlugin(ActionBase):
             if argspec and before:
                 before = self._validate_output(before, argspec)
 
+            # -- check mode: predict after without applying -----------------
+            if self._task.check_mode:
+                after = self._predict_after(state, before, config)
+                changed = self._lists_differ(before, after)
+                return self._build_result(
+                    failed=False, changed=changed,
+                    before=before, after=after, config=after,
+                )
+
             if state == 'deleted' and self.SUPPORTS_DELETE:
                 self._apply_deleted(
                     manager, user_cls, scope_value, config, before,
@@ -236,12 +253,24 @@ class BaseResourceActionPlugin(ActionBase):
             return self._build_result(failed=True, msg=str(e))
 
     def _build_result(self, **kwargs):
-        """Build result dict, injecting ansible_facts for manager reuse."""
+        """Build result dict, injecting ansible_facts and optional diff."""
         result = dict(kwargs)
         if self._manager_socket and self._manager_authkey_b64:
             result['ansible_facts'] = {
                 'platform_manager_socket': self._manager_socket,
                 'platform_manager_authkey': self._manager_authkey_b64,
+            }
+        if (getattr(self._task, 'diff', False)
+                and 'before' in result and 'after' in result
+                and result.get('before') is not None
+                and result.get('after') is not None):
+            result['diff'] = {
+                'before': yaml.dump(
+                    result['before'], default_flow_style=False, sort_keys=True,
+                ),
+                'after': yaml.dump(
+                    result['after'], default_flow_style=False, sort_keys=True,
+                ),
             }
         return result
 
@@ -389,6 +418,113 @@ class BaseResourceActionPlugin(ActionBase):
             if b != a:
                 return True
         return False
+
+    # ------------------------------------------------------------------ #
+    #  Check mode: predict after state from set theory                     #
+    # ------------------------------------------------------------------ #
+
+    def _predict_after(self, state, before, config):
+        """Predict the resulting state without making API calls.
+
+        Implements the set-theoretic state operations:
+          merged:     C' = C ∪ D   (additive merge)
+          replaced:   C' = (C \\ K(D)) ∪ D   (item-level replacement)
+          overridden: C' = D   (set equality)
+          deleted:    C' = C \\ D   (set difference)
+        """
+        before_by_key = {}
+        if self.PRIMARY_KEY:
+            for item in before:
+                k = str(item.get(self.PRIMARY_KEY, ''))
+                if k:
+                    before_by_key[k] = item
+
+        if state == 'deleted':
+            return self._predict_deleted(before, config, before_by_key)
+        elif state == 'overridden':
+            return self._predict_overridden(before, config, before_by_key)
+        elif state == 'replaced':
+            return self._predict_replaced(before, config, before_by_key)
+        else:  # merged
+            return self._predict_merged(before, config, before_by_key)
+
+    def _predict_merged(self, before, config, before_by_key):
+        """Predict merged: union — add new items, merge fields into existing."""
+        result = [dict(item) for item in before]
+        result_by_key = {}
+        if self.PRIMARY_KEY:
+            for item in result:
+                k = str(item.get(self.PRIMARY_KEY, ''))
+                if k:
+                    result_by_key[k] = item
+
+        for item in config:
+            if self.PRIMARY_KEY and item.get(self.PRIMARY_KEY):
+                key = str(item[self.PRIMARY_KEY])
+                existing = result_by_key.get(key)
+                if existing is not None:
+                    for field, val in item.items():
+                        if val is not None:
+                            existing[field] = val
+                else:
+                    new_item = dict(item)
+                    result.append(new_item)
+                    result_by_key[key] = new_item
+            elif not self.PRIMARY_KEY and before:
+                for field, val in item.items():
+                    if val is not None:
+                        result[0][field] = val
+            else:
+                result.append(dict(item))
+        return result
+
+    def _predict_replaced(self, before, config, before_by_key):
+        """Predict replaced: item-level replacement, untouched items preserved."""
+        result = [dict(item) for item in before]
+        result_by_key = {}
+        if self.PRIMARY_KEY:
+            for i, item in enumerate(result):
+                k = str(item.get(self.PRIMARY_KEY, ''))
+                if k:
+                    result_by_key[k] = i
+
+        for item in config:
+            if self.PRIMARY_KEY and item.get(self.PRIMARY_KEY):
+                key = str(item[self.PRIMARY_KEY])
+                idx = result_by_key.get(key)
+                if idx is not None:
+                    result[idx] = dict(item)
+                else:
+                    result.append(dict(item))
+                    result_by_key[key] = len(result) - 1
+            elif not self.PRIMARY_KEY and before:
+                result[0] = dict(item)
+            else:
+                result.append(dict(item))
+        return result
+
+    @staticmethod
+    def _predict_overridden(before, config, before_by_key):
+        """Predict overridden: set equality — result is exactly the desired set."""
+        return [dict(item) for item in config]
+
+    def _predict_deleted(self, before, config, before_by_key):
+        """Predict deleted: set difference — remove items whose keys match."""
+        if not config:
+            return []
+        if not self.PRIMARY_KEY:
+            return []
+
+        delete_keys = set()
+        for item in config:
+            pk_val = item.get(self.PRIMARY_KEY)
+            if pk_val is not None:
+                delete_keys.add(str(pk_val))
+
+        return [
+            dict(item) for item in before
+            if str(item.get(self.PRIMARY_KEY, '')) not in delete_keys
+        ]
 
     # ------------------------------------------------------------------ #
     #  Manager lifecycle                                                   #

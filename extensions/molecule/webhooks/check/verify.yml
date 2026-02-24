@@ -1,0 +1,15 @@
+---
+- name: "Verify \u2014 webhooks (check)"
+  hosts: localhost
+  gather_facts: false
+  tasks:
+  - name: Gather actual state (should be unchanged)
+    cisco.meraki_rm.meraki_webhooks:
+      network_id: N_123456789012345678
+      state: gathered
+    register: actual
+  - name: Assert no resources were created (check mode is dry-run)
+    ansible.builtin.assert:
+      that:
+      - actual.gathered | default([]) | length == 0
+      fail_msg: "Check mode leaked changes \u2014 resources found after check-only run"

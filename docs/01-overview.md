@@ -169,26 +169,26 @@ Deploys and operates playbooks at scale. Needs performance, reliability, and cle
 
 ## Roadmap
 
-### Phase 1: Foundation
+### Phase 1: Foundation — **Complete**
 Build core SDK components. See [06-foundation-components.md](06-foundation-components.md).
 
-### Phase 2: Code Generation
+### Phase 2: Code Generation — **Complete**
 Set up automated dataclass generation from docstrings and OpenAPI specs. See [08-code-generators.md](08-code-generators.md).
 
-### Phase 3: First Resources
+### Phase 3: First Resources — **Complete**
 Implement high-value resource modules (VLAN, SSID, switch ports, admin users). See [07-adding-resources.md](07-adding-resources.md) and [10-case-study-novacom.md](10-case-study-novacom.md).
 
-### Phase 4: Broad Coverage
-Remaining resource modules, agent-assisted development.
+### Phase 4: Broad Coverage — **Complete**
+- Check Mode and Diff Mode
+- Remaining resource modules, agent-assisted development.
 
-### Phase 5: Advanced Features
-- Check mode / diff mode support
+### Phase 5: Bulk Operations, Action Batches — **Planned**
 - Bulk operations
 - Action Batch integration for atomic transactions
 - Inventory plugin for device discovery
 - Change tracking and performance metrics
 
-### Phase 6: Additional Presentation Layers
+### Phase 6: Alternative Presentation Layers — **Planned**
 - MCP server (see [03-sdk-architecture.md](03-sdk-architecture.md))
 - CLI tool
 - Documentation generator

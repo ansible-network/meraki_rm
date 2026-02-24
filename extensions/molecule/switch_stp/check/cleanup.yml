@@ -1,0 +1,8 @@
+---
+- name: "Cleanup \u2014 switch_stp (check)"
+  hosts: localhost
+  gather_facts: false
+  tasks:
+  - name: No cleanup needed for singleton resource
+    ansible.builtin.debug:
+      msg: switch_stp does not support delete

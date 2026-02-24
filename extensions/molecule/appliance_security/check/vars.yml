@@ -1,0 +1,7 @@
+---
+expected_config:
+  mode: disabled
+  ids_rulesets: balanced
+prepare_config:
+  mode: detection
+  ids_rulesets: connectivity
