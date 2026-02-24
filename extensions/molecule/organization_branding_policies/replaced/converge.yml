@@ -1,0 +1,27 @@
+---
+- name: "Converge — organization_branding_policies (replaced)"
+  hosts: localhost
+  gather_facts: false
+  vars_files:
+  - vars.yml
+  tasks:
+  - name: Gather current organization_branding_policies to get server-assigned IDs
+    cisco.meraki_rm.meraki_organization_branding_policies:
+      organization_id: '123456'
+      state: gathered
+    register: current
+
+  - name: Build config with actual server-assigned PK
+    ansible.builtin.set_fact:
+      replaced_config: >-
+        {{ expected_config | combine({'branding_policy_id': current.gathered[0].branding_policy_id}) }}
+    when: current.gathered | length > 0
+
+  - name: Replace organization_branding_policies configuration
+    cisco.meraki_rm.meraki_organization_branding_policies:
+      organization_id: '123456'
+      state: replaced
+      config:
+      - "{{ replaced_config }}"
+    register: replaced_result
+    when: replaced_config is defined

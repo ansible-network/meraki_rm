@@ -1,0 +1,18 @@
+---
+- name: "Cleanup — organization_policy_objects (overridden)"
+  hosts: localhost
+  gather_facts: false
+  tasks:
+  - name: Gather remaining organization_policy_objects resources
+    cisco.meraki_rm.meraki_organization_policy_objects:
+      organization_id: '123456'
+      state: gathered
+    register: current
+
+  - name: Remove all test resources
+    cisco.meraki_rm.meraki_organization_policy_objects:
+      organization_id: '123456'
+      state: deleted
+      config: "{{ current.gathered }}"
+    when: current.gathered | default([]) | length > 0
+    ignore_errors: true

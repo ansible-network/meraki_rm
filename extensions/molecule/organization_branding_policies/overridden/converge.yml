@@ -1,0 +1,27 @@
+---
+- name: "Converge — organization_branding_policies (overridden)"
+  hosts: localhost
+  gather_facts: false
+  vars_files:
+  - vars.yml
+  tasks:
+  - name: Gather current organization_branding_policies to get server-assigned IDs
+    cisco.meraki_rm.meraki_organization_branding_policies:
+      organization_id: '123456'
+      state: gathered
+    register: current
+
+  - name: Build config with actual server-assigned PK
+    ansible.builtin.set_fact:
+      overridden_config: >-
+        {{ expected_config | combine({'branding_policy_id': current.gathered[0].branding_policy_id}) }}
+    when: current.gathered | length > 0
+
+  - name: Override organization_branding_policies configuration
+    cisco.meraki_rm.meraki_organization_branding_policies:
+      organization_id: '123456'
+      state: overridden
+      config:
+      - "{{ overridden_config }}"
+    register: overridden_result
+    when: overridden_config is defined

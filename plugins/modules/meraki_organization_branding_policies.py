@@ -11,7 +11,7 @@ short_description: Manage Meraki organization branding policies
 
 description:
   - Manage Meraki organization branding policies.
-  - Supports merged, deleted, and gathered states.
+  - Supports merged, replaced, overridden, deleted, and gathered states.
 
 version_added: "0.1.0"
 
@@ -29,6 +29,8 @@ options:
     type: str
     choices:
       - merged
+      - replaced
+      - overridden
       - deleted
       - gathered
     default: merged

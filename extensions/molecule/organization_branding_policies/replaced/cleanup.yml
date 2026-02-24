@@ -1,0 +1,18 @@
+---
+- name: "Cleanup — organization_branding_policies (replaced)"
+  hosts: localhost
+  gather_facts: false
+  tasks:
+  - name: Gather remaining organization_branding_policies resources
+    cisco.meraki_rm.meraki_organization_branding_policies:
+      organization_id: '123456'
+      state: gathered
+    register: current
+
+  - name: Remove all test resources
+    cisco.meraki_rm.meraki_organization_branding_policies:
+      organization_id: '123456'
+      state: deleted
+      config: "{{ current.gathered }}"
+    when: current.gathered | default([]) | length > 0
+    ignore_errors: true

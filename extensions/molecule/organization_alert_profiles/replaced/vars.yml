@@ -1,0 +1,6 @@
+expected_config:
+  type: wanStatus
+  enabled: false
+  description: Replaced by Ansible
+  alert_config_id: example
+server_assigned_pk: alert_config_id

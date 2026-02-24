@@ -1238,6 +1238,11 @@ These modules have a Molecule scenario for every state they support.
 | `webhooks` | :white_check_mark: | :white_check_mark: | :white_check_mark: | :white_check_mark: | :white_check_mark: | network |
 | `wireless_ethernet_port_profiles` | :white_check_mark: | :white_check_mark: | :white_check_mark: | :white_check_mark: | :white_check_mark: | network |
 | `wireless_rf_profiles` | :white_check_mark: | :white_check_mark: | :white_check_mark: | :white_check_mark: | :white_check_mark: | network |
+| `organization_admins` | :white_check_mark: | :white_check_mark: | :white_check_mark: | :white_check_mark: | :white_check_mark: | organization |
+| `organization_alert_profiles` | :white_check_mark: | :white_check_mark: | :white_check_mark: | :white_check_mark: | :white_check_mark: | organization |
+| `organization_branding_policies` | :white_check_mark: | :white_check_mark: | :white_check_mark: | :white_check_mark: | :white_check_mark: | organization |
+| `organization_config_templates` | :white_check_mark: | :white_check_mark: | :white_check_mark: | :white_check_mark: | :white_check_mark: | organization |
+| `organization_policy_objects` | :white_check_mark: | :white_check_mark: | :white_check_mark: | :white_check_mark: | :white_check_mark: | organization |
 
 ### Singleton Resources (no delete — `SUPPORTS_DELETE = False`)
 
@@ -1275,27 +1280,14 @@ These resources represent device/network configuration that always exists. They 
 | `switch_stacks` | :white_check_mark: | :white_check_mark: | — | :white_check_mark: | — | Custom `VALID_STATES`; API does not support `replaced` or `overridden` |
 | `wireless_air_marshal_rules` | — | — | — | :white_check_mark: | — | No network-level GET endpoint; `merged`/`replaced` create resources but cannot verify via `gathered` |
 
-### Organization-Scoped Collections (missing `replaced` / `overridden`)
-
-These modules support all five standard states but `replaced` and `overridden` scenarios have not yet been authored. The `merged`, `gathered`, and `deleted` scenarios provide baseline CRUD coverage. Adding `replaced` and `overridden` scenarios is a future improvement.
-
-| Module | gathered | merged | replaced | deleted | overridden | Scope |
-|--------|:--------:|:------:|:--------:|:-------:|:----------:|-------|
-| `organization_admins` | :white_check_mark: | :white_check_mark: | :x: todo | :white_check_mark: | :x: todo | organization |
-| `organization_alert_profiles` | :white_check_mark: | :white_check_mark: | :x: todo | :white_check_mark: | :x: todo | organization |
-| `organization_branding_policies` | :white_check_mark: | :white_check_mark: | :x: todo | :white_check_mark: | :x: todo | organization |
-| `organization_config_templates` | :white_check_mark: | :white_check_mark: | :x: todo | :white_check_mark: | :x: todo | organization |
-| `organization_policy_objects` | :white_check_mark: | :white_check_mark: | :x: todo | :white_check_mark: | :x: todo | organization |
-
 ### Coverage Summary
 
 | Category | Modules | Scenarios |
 |----------|---------|-----------|
-| Full coverage (all valid states) | 19 | 95 |
+| Full coverage (all valid states) | 24 | 120 |
 | Singleton (all valid states) | 21 | 63 |
 | Special / custom states | 3 | 5 |
-| Partial coverage (missing `replaced`/`overridden`) | 5 | 15 |
-| **Total** | **48** | **178** |
+| **Total** | **48** | **188** |
 
 ---
 
@@ -1329,7 +1321,7 @@ These modules support all five standard states but `replaced` and `overridden` s
 | `pytest tests/unit/test_integration_flow.py -v` | In-process integration (PlatformService → mock server CRUD) | ~10 seconds |
 | `pytest -v` | All unit tests (colocated + contract + spec + integration + mock server) | ~15 seconds |
 | `molecule test -s {module}` | Single module integration test | ~30 seconds |
-| `molecule test --all --report` | Full integration suite (48 modules, 178 scenarios) | Minutes |
+| `molecule test --all --report` | Full integration suite (48 modules, 188 scenarios) | Minutes |
 
 **Tooling commands:**
 
@@ -1353,4 +1345,4 @@ These modules support all five standard states but `replaced` and `overridden` s
 - [09-agent-collaboration.md](09-agent-collaboration.md) — Agent testing workflow (Phase C)
 - [10-case-study-novacom.md](10-case-study-novacom.md) — Module map drives the scenario list
 
-*Document version: 1.5 | OpenAPI Resource Module SDK | Testing Strategy*
+*Document version: 1.6 | OpenAPI Resource Module SDK | Testing Strategy*

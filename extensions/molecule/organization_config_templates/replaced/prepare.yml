@@ -1,0 +1,13 @@
+---
+- name: "Prepare — organization_config_templates (replaced)"
+  hosts: localhost
+  gather_facts: false
+  vars_files:
+    - ../merged/vars.yml
+  tasks:
+    - name: Seed resource via merged (prerequisite for replaced)
+      cisco.meraki_rm.meraki_organization_config_templates:
+        organization_id: '123456'
+        state: merged
+        config:
+          - "{{ expected_config }}"
