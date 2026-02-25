@@ -1,11 +1,13 @@
 """MCP server for the Meraki RM SDK.
 
 Dynamically generates tools by introspecting User Model dataclasses.
-Supports two modes:
+Supports three modes:
 
   --mode=task  (default): Returns Ansible task YAML snippets. No auth needed.
   --mode=live:            Executes operations against the Meraki API.
                           Requires MERAKI_API_KEY env var.
+  --mock:                 Starts the mock server automatically, then runs
+                          in live mode against it.  No real API key needed.
 
 Uses the low-level mcp.server.Server API for full control over tool
 schemas (generated at runtime from dataclass introspection).
@@ -17,7 +19,11 @@ import argparse
 import asyncio
 import json
 import os
+import signal
+import subprocess
 import sys
+import time
+from pathlib import Path
 from typing import Any, Dict
 
 import yaml
@@ -57,9 +63,20 @@ def _build_ansible_task(tool_name: str, args: Dict[str, Any], metadata: Dict[str
 
 
 def _execute_live(tool_name: str, args: Dict[str, Any], metadata: Dict[str, Any]) -> Dict[str, Any]:
-    """Execute an operation against the Meraki Dashboard API."""
+    """Execute an operation against the Meraki Dashboard API.
+
+    Args:
+        tool_name: MCP tool name (e.g. ``meraki_vlan``).
+        args: Tool call arguments from the MCP client.
+        metadata: Internal metadata dict for this tool.
+
+    Returns:
+        Dict with ``state`` and ``results`` keys.
+    """
     api_key = os.environ.get("MERAKI_API_KEY")
     dashboard_url = os.environ.get("MERAKI_DASHBOARD_URL", "https://api.meraki.com/api/v1")
+
+    from dataclasses import asdict
 
     from ..manager.platform_manager import PlatformService
 
@@ -85,7 +102,7 @@ def _execute_live(tool_name: str, args: Dict[str, Any], metadata: Dict[str, Any]
     results = []
     for item in config:
         user_data = user_cls(**{scope_param: scope_value}, **item)
-        result = service.execute(operation, module_name, user_data)
+        result = service.execute(operation, module_name, asdict(user_data))
         results.append(result)
 
     return {"state": state, "results": results}
@@ -212,6 +229,75 @@ def create_server(mode: str = "task") -> Server:
     return server
 
 
+_MOCK_PORT = 29443
+_MOCK_URL = f"http://127.0.0.1:{_MOCK_PORT}"
+
+
+def _find_project_root() -> Path:
+    """Walk up from this file to find the collection root (contains galaxy.yml)."""
+    candidate = Path(__file__).resolve().parent
+    for _ in range(10):
+        if (candidate / "galaxy.yml").exists():
+            return candidate
+        candidate = candidate.parent
+    return Path.cwd()
+
+
+def _start_mock_server() -> subprocess.Popen:
+    """Start the mock server as a subprocess.
+
+    Returns:
+        The running Popen object.  The caller is responsible for termination.
+
+    Raises:
+        SystemExit: If the spec file is missing or the server fails health check.
+    """
+    root = _find_project_root()
+    spec = root / "spec3.json"
+    if not spec.exists():
+        print(
+            f"ERROR: spec3.json not found at {spec}",
+            file=sys.stderr,
+        )
+        sys.exit(1)
+
+    proc = subprocess.Popen(
+        [
+            sys.executable, "-m", "tools.mock_server.server",
+            "--spec", str(spec),
+            "--port", str(_MOCK_PORT),
+        ],
+        cwd=str(root),
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+    )
+
+    import urllib.request
+    import urllib.error
+
+    for attempt in range(30):
+        time.sleep(0.5)
+        if proc.poll() is not None:
+            print(
+                f"ERROR: Mock server exited with code {proc.returncode}",
+                file=sys.stderr,
+            )
+            sys.exit(1)
+        try:
+            urllib.request.urlopen(f"{_MOCK_URL}/health", timeout=2)
+            print(
+                f"Mock server ready on {_MOCK_URL} (pid {proc.pid})",
+                file=sys.stderr,
+            )
+            return proc
+        except (urllib.error.URLError, OSError):
+            continue
+
+    proc.kill()
+    print("ERROR: Mock server failed to become healthy", file=sys.stderr)
+    sys.exit(1)
+
+
 async def _run_server(mode: str) -> None:
     """Run the MCP server over stdio."""
     server = create_server(mode=mode)
@@ -223,7 +309,7 @@ async def _run_server(mode: str) -> None:
         )
 
 
-def main():
+def main() -> None:
     """CLI entry point for the MCP server."""
     parser = argparse.ArgumentParser(
         description="Meraki RM MCP Server — dynamic tool generation from User Model introspection",
@@ -234,9 +320,24 @@ def main():
         default="task",
         help="Server mode: 'task' generates Ansible YAML (default), 'live' executes API calls",
     )
+    parser.add_argument(
+        "--mock",
+        action="store_true",
+        help=(
+            "Auto-start the mock server and run in live mode against it. "
+            "Implies --mode=live. No MERAKI_API_KEY needed."
+        ),
+    )
     args = parser.parse_args()
 
-    if args.mode == "live":
+    mock_proc: subprocess.Popen | None = None
+
+    if args.mock:
+        args.mode = "live"
+        os.environ["MERAKI_API_KEY"] = "mock-api-key"
+        os.environ["MERAKI_DASHBOARD_URL"] = _MOCK_URL
+        mock_proc = _start_mock_server()
+    elif args.mode == "live":
         api_key = os.environ.get("MERAKI_API_KEY")
         if not api_key:
             print(
@@ -245,7 +346,15 @@ def main():
             )
             sys.exit(1)
 
-    asyncio.run(_run_server(args.mode))
+    try:
+        asyncio.run(_run_server(args.mode))
+    finally:
+        if mock_proc is not None:
+            mock_proc.terminate()
+            try:
+                mock_proc.wait(timeout=5)
+            except subprocess.TimeoutExpired:
+                mock_proc.kill()
 
 
 if __name__ == "__main__":

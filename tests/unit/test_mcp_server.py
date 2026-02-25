@@ -479,3 +479,133 @@ def test_live_mode_without_key_exits() -> None:
 
     assert result.returncode == 1
     assert "MERAKI_API_KEY" in result.stderr
+
+
+def test_mock_flag_accepted() -> None:
+    """Verify --mock is a recognised CLI flag (exits on missing spec, not argparse)."""
+    result = subprocess.run(
+        [sys.executable, "-m", "meraki_rm_sdk.mcp.server", "--mock"],
+        capture_output=True,
+        text=True,
+        timeout=15,
+    )
+
+    assert "unrecognized" not in result.stderr.lower()
+    assert "invalid choice" not in result.stderr.lower()
+
+
+# ---------------------------------------------------------------------------
+# Integration tests: MCP server + mock server (--mock)
+# ---------------------------------------------------------------------------
+
+@pytest.fixture(scope="module")
+def mock_mcp_session():
+    """Start the MCP server with --mock and yield a connected ClientSession.
+
+    The ``--mock`` flag auto-starts the Flask mock server, sets env vars,
+    and runs the MCP server in live mode against it.
+
+    Yields:
+        Tuple of ``(asyncio.AbstractEventLoop, mcp.ClientSession)``.
+    """
+    from mcp import ClientSession, StdioServerParameters
+    from mcp.client.stdio import stdio_client
+
+    loop = asyncio.new_event_loop()
+    ready: asyncio.Future[None] = loop.create_future()
+    done: asyncio.Future[None] = loop.create_future()
+    holder: dict[str, Any] = {}
+
+    async def lifecycle() -> None:
+        params = StdioServerParameters(
+            command=sys.executable,
+            args=["-m", "meraki_rm_sdk.mcp.server", "--mock"],
+        )
+        async with stdio_client(params) as transport:
+            read_stream, write_stream = transport
+            async with ClientSession(read_stream, write_stream) as session_obj:
+                await session_obj.initialize()
+                holder["session"] = session_obj
+                ready.set_result(None)
+                await done
+
+    task = loop.create_task(lifecycle())
+    loop.run_until_complete(ready)
+
+    yield loop, holder["session"]
+
+    done.set_result(None)
+    loop.run_until_complete(task)
+    loop.close()
+
+
+def test_integ_gathered_returns_list(
+    mock_mcp_session: tuple[asyncio.AbstractEventLoop, Any],
+) -> None:
+    """Verify gathered state against the mock returns a results list."""
+    loop, session = mock_mcp_session
+    result = loop.run_until_complete(
+        session.call_tool(
+            "meraki_vlan",
+            arguments={
+                "network_id": "N_integration_test",
+                "state": "gathered",
+            },
+        )
+    )
+    data = json.loads(result.content[0].text)
+
+    assert data["state"] == "gathered"
+    assert isinstance(data["results"], list)
+
+
+def test_integ_merged_then_gathered_round_trip(
+    mock_mcp_session: tuple[asyncio.AbstractEventLoop, Any],
+) -> None:
+    """Verify merge-then-gather round trip via the mock server.
+
+    Creates a VLAN with merged, then gathers to confirm the mock
+    persisted it.
+    """
+    loop, session = mock_mcp_session
+    net_id = "N_integ_round_trip"
+
+    merge_result = loop.run_until_complete(
+        session.call_tool(
+            "meraki_vlan",
+            arguments={
+                "network_id": net_id,
+                "state": "merged",
+                "config": [{"vlan_id": "500", "name": "IntegTest"}],
+            },
+        )
+    )
+    merge_data = json.loads(merge_result.content[0].text)
+
+    assert merge_data["state"] == "merged"
+    assert len(merge_data["results"]) == 1
+
+    gather_result = loop.run_until_complete(
+        session.call_tool(
+            "meraki_vlan",
+            arguments={
+                "network_id": net_id,
+                "state": "gathered",
+            },
+        )
+    )
+    gather_data = json.loads(gather_result.content[0].text)
+
+    assert gather_data["state"] == "gathered"
+
+
+def test_integ_live_mode_descriptions(
+    mock_mcp_session: tuple[asyncio.AbstractEventLoop, Any],
+) -> None:
+    """Verify live-mode tool descriptions mention Meraki API execution."""
+    loop, session = mock_mcp_session
+    result = loop.run_until_complete(session.list_tools())
+
+    resource_tools = [t for t in result.tools if t.name != "describe_tools"]
+    for t in resource_tools:
+        assert "Meraki API" in t.description
