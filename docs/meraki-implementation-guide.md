@@ -986,7 +986,7 @@ Nested `{module}/{state}/` groups related scenarios and scales naturally. The
 `config.yml` inventory path uses `MOLECULE_PROJECT_DIRECTORY` (depth-independent)
 instead of `MOLECULE_SCENARIO_DIRECTORY/../` (breaks at depth 2+).
 
-**Generator**: `tools/restructure_molecule.py` parses example files, splits
+**Generator**: `tools/generate_molecule_scenarios.py` parses example files, splits
 tasks into converge (set_fact + module call) and verify (assertions), and generates
 the complete nested directory structure with prepare/cleanup files.
 

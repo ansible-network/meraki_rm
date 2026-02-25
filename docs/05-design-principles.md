@@ -146,7 +146,13 @@ The module internally gathers all admins, finds the one with `email: "bob@corp.c
 | `novacom_appliance_prefixes` | `prefix` | `static_delegated_prefix_id` | Subnet string is the identity |
 | `novacom_webhooks` | `name` | `http_server_id` | Name chosen by user |
 
-**Category C — No canonical key exists.** The resource has no human-meaningful unique field. `CANONICAL_KEY` is `None`, only `SYSTEM_KEY` is set. The module documents this and requires the user to provide the system key (discovered via `state: gathered`).
+**Category C — No canonical key exists.** The resource has no human-meaningful unique field. `CANONICAL_KEY` is `None`, only `SYSTEM_KEY` is set. The framework resolves system keys automatically so the user does not need to discover or provide them:
+
+- **`merged` / `deleted`**: The framework uses *content-based matching* — it compares all user-supplied fields against existing resources to find the correct target, then injects the system key for the API call.
+- **`replaced` / `overridden`**: Content-based matching cannot work because the desired values intentionally differ from the current state. The framework falls back to *positional matching* — the Nth desired item maps to the Nth existing item.
+- **`overridden` with new items**: After deleting extras, any desired item that has no existing match is created via a `POST` (no system key needed).
+
+Users *may* still provide the system key explicitly as an escape hatch (see below), but it is not required for normal operation.
 
 | NovaCom Example | Canonical Key | System Key | Notes |
 |---|---|---|---|
@@ -181,7 +187,7 @@ Every module's DOCUMENTATION must identify:
 
 - The canonical key field (or state that none exists)
 - The system key field (when different from canonical key)
-- For Category C: a note that `state: gathered` must be used to discover system keys
+- For Category C: a note that the resource has no canonical key and the framework matches by content or position
 
 ### Decision Criteria for Choosing the Canonical Key
 

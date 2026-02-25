@@ -178,7 +178,9 @@ The returned data uses the module's argspec — human-readable field names, snak
 
 #### `rendered`
 
-**Generate device-native config (API payloads) from provided structured data** without contacting the device. Offline operation. Useful for review, audit, or generating what *would* be sent.
+> **Note:** `rendered` and `parsed` are part of the canonical Ansible resource module pattern for CLI-based network modules. They are **not used** in API-driven collections (e.g., cloud-managed platforms) because the API is already structured JSON — there is no opaque device-native format to render to or parse from. API-driven collections use the five core states above: `merged`, `replaced`, `overridden`, `deleted`, and `gathered`.
+
+**Generate device-native config (CLI commands or API payloads) from provided structured data** without contacting the device. Offline operation. Useful for review, audit, or generating what *would* be sent.
 
 ```yaml
 - name: Render VLAN config to API payloads
@@ -192,11 +194,11 @@ The returned data uses the module's argspec — human-readable field names, snak
   register: rendered_output
 ```
 
-The output shows the exact JSON payloads that would be sent to the NovaCom API. No API call is made. Useful for debugging, documentation, or pre-flight validation.
+The output shows the exact payloads that would be sent. No API call is made. Useful for debugging, documentation, or pre-flight validation.
 
 #### `parsed`
 
-**Parse device-native config (API responses) into the module's structured data format** without contacting the device. Offline operation. Useful for importing existing configs.
+**Parse device-native config (CLI output or API responses) into the module's structured data format** without contacting the device. Offline operation. Useful for importing existing configs.
 
 ```yaml
 - name: Parse API response into module format
@@ -207,7 +209,7 @@ The output shows the exact JSON payloads that would be sent to the NovaCom API. 
   register: parsed_output
 ```
 
-Given raw API response data, the module converts it to the same structured format used by `config` and `gathered`. Useful for migrating from manual API usage or importing configs from another source.
+Given raw device output, the module converts it to the same structured format used by `config` and `gathered`. Useful for migrating from manual usage or importing configs from another source.
 
 ### Why These States: Set Theory as the Foundation
 

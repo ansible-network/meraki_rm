@@ -520,10 +520,12 @@ class EndpointOperation:
         method: HTTP method ('GET', 'POST', 'PATCH', 'PUT', 'DELETE')
         fields: List of dataclass field names to include in request
         path_params: Optional list of path parameter names (e.g., ['id', 'network_id'])
+        path_param_aliases: Optional mapping of path param to alternative field names
         required_for: Optional operation type this is required for
             ('create', 'update', 'delete', 'find', or None for always)
         depends_on: Optional name of operation this depends on
         order: Execution order (lower runs first)
+        batch_eligible: Whether this operation can be batched (default True)
 
     Examples:
         >>> # Main create operation
@@ -582,9 +584,11 @@ class EndpointOperation:
     method: str
     fields: List[str]
     path_params: Optional[List[str]] = None
+    path_param_aliases: Optional[Dict[str, List[str]]] = None
     required_for: Optional[str] = None
     depends_on: Optional[str] = None
     order: int = 0
+    batch_eligible: bool = True
 ```
 
 **Usage**: Imported by transform mixins to define API endpoint operations. Mixins implement `get_endpoint_operations()` returning `Dict[str, EndpointOperation]`.
@@ -2050,34 +2054,34 @@ class BaseResourceActionPlugin(ActionBase):
         """
         Detect operation type from arguments.
 
-        Maps state parameter to operation:
-        - state: absent -> delete
-        - state: present, id provided -> update
-        - state: present, no id -> create
-        - state: find -> find
+        Maps resource module state to API operation:
+        - merged   -> 'update'  (create if not exists, update if exists)
+        - replaced -> 'replace' (full resource replacement)
+        - overridden -> 'override' (replace all instances of this resource type)
+        - deleted  -> 'delete'
+        - gathered -> 'find'
 
         Args:
             args: Module arguments
 
         Returns:
-            Operation name ('create', 'update', 'delete', 'find')
+            Operation name ('update', 'replace', 'override', 'delete', 'find')
 
         Raises:
             AnsibleError: If state is unknown
         """
-        state = args.get('state', 'present')
-
-        if state == 'absent':
-            return 'delete'
-        elif state == 'present':
-            if args.get('id') or args.get('vlan_id'):
-                return 'update'
-            else:
-                return 'create'
-        elif state == 'find' or state == 'gathered':
-            return 'find'
-        else:
+        state_to_operation = {
+            'merged': 'update',
+            'replaced': 'replace',
+            'overridden': 'override',
+            'deleted': 'delete',
+            'gathered': 'find',
+        }
+        state = args.get('state', 'merged')
+        operation = state_to_operation.get(state)
+        if operation is None:
             raise AnsibleError(f"Unknown state: {state}")
+        return operation
 ```
 
 ### Example Usage Pattern (Resource-Specific Action Plugin)

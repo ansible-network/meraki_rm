@@ -360,10 +360,10 @@ class AdminTransformMixin_v1(BaseTransformMixin):
     # --- TRANSFORMATION REGISTRY ---
     _transform_registry = {
         'names_to_ids': lambda value, context: (
-            context['manager'].lookup_organization_ids(value) if value else []
+            context['manager'].lookup_org_ids(value) if value else []
         ),
         'ids_to_names': lambda value, context: (
-            context['manager'].lookup_organization_names(value) if value else []
+            context['manager'].lookup_org_names(value) if value else []
         ),
     }
 
@@ -446,7 +446,7 @@ class APIAdmin_v1(AdminTransformMixin_v1, GeneratedAPIAdmin):
 
 The `context` dict passed to transform functions contains:
 
-- `manager`: PlatformService instance with `lookup_organization_ids()` and `lookup_organization_names()`
+- `manager`: PlatformService instance with `lookup_org_ids()` and `lookup_org_names()`
 - `session`: Persistent HTTP session
 - `cache`: Lookup cache (org name↔ID)
 - `api_version`: Detected API version
@@ -473,7 +473,7 @@ import logging
 
 from ansible_collections.novacom.dashboard.plugins.plugin_utils.docs.admin import DOCUMENTATION
 from ansible_collections.novacom.dashboard.plugins.plugin_utils.user_models.admin import UserAdmin
-from ansible_collections.novacom.dashboard.plugins.plugin_utils.action.base_resource import BaseResourceActionPlugin
+from ansible_collections.novacom.dashboard.plugins.action.base_action import BaseResourceActionPlugin
 
 logger = logging.getLogger(__name__)
 
@@ -802,7 +802,7 @@ class APISite_v1(SiteTransformMixin_v1, GeneratedAPISite):
 
 from ansible_collections.novacom.dashboard.plugins.plugin_utils.docs.site import DOCUMENTATION
 from ansible_collections.novacom.dashboard.plugins.plugin_utils.user_models.site import UserSite
-from ansible_collections.novacom.dashboard.plugins.plugin_utils.action.base_resource import BaseResourceActionPlugin
+from ansible_collections.novacom.dashboard.plugins.action.base_action import BaseResourceActionPlugin
 
 
 class ActionModule(BaseResourceActionPlugin):
@@ -858,10 +858,10 @@ _field_mapping = {
 
 _transform_registry = {
     'names_to_ids': lambda value, context: (
-        context['manager'].lookup_organization_ids(value) if value else []
+        context['manager'].lookup_org_ids(value) if value else []
     ),
     'ids_to_names': lambda value, context: (
-        context['manager'].lookup_organization_names(value) if value else []
+        context['manager'].lookup_org_names(value) if value else []
     ),
 }
 ```
@@ -869,7 +869,7 @@ _transform_registry = {
 **PlatformService helper methods:**
 
 ```python
-def lookup_organization_ids(self, names: List[str]) -> List[str]:
+def lookup_org_ids(self, names: List[str]) -> List[str]:
     ids = []
     for name in names:
         cache_key = f'org_name:{name}'
@@ -890,7 +890,7 @@ def lookup_organization_ids(self, names: List[str]) -> List[str]:
             raise ValueError(f"Organization '{name}' not found")
     return ids
 
-def lookup_organization_names(self, ids: List[str]) -> List[str]:
+def lookup_org_names(self, ids: List[str]) -> List[str]:
     names = []
     for org_id in ids:
         cache_key = f'org_id:{org_id}'
@@ -1042,10 +1042,10 @@ from ansible_collections.novacom.dashboard.plugins.plugin_utils.api.v1.admin imp
 class MockManager:
     """Mock PlatformService for lookups."""
 
-    def lookup_organization_ids(self, names):
+    def lookup_org_ids(self, names):
         return ['1', '2'] if names else []
 
-    def lookup_organization_names(self, ids):
+    def lookup_org_names(self, ids):
         return ['Engineering', 'Platform Team'] if ids else []
 
 

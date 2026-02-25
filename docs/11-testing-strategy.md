@@ -1016,11 +1016,11 @@ python tools/inject_examples.py --check  # exits 0 if in sync
 ### Step 3: Generate Molecule Scenarios
 
 ```bash
-python tools/restructure_molecule.py
+python tools/generate_molecule_scenarios.py
 python tools/generate_check_scenarios.py
 ```
 
-`restructure_molecule.py` creates per-state `extensions/molecule/{resource_name}/{state}/` directories with `molecule.yml`, `vars.yml`, `converge.yml`, `verify.yml`, `prepare.yml`, and `cleanup.yml`.
+`generate_molecule_scenarios.py` creates per-state `extensions/molecule/{resource_name}/{state}/` directories with `molecule.yml`, `vars.yml`, `converge.yml`, `verify.yml`, `prepare.yml`, and `cleanup.yml`.
 
 `generate_check_scenarios.py` creates the `check/` scenario for check mode and diff mode testing.
 
@@ -1388,7 +1388,7 @@ These resources represent device/network configuration that always exists. They 
 | `python tools/generate_examples.py` | (Re)generate per-state example files from DOCUMENTATION |
 | `python tools/inject_examples.py` | Inject examples into module `EXAMPLES` strings |
 | `python tools/inject_examples.py --check` | Verify all modules are in sync (pre-commit hook) |
-| `python tools/restructure_molecule.py` | (Re)generate per-state Molecule scenarios from examples |
+| `python tools/generate_molecule_scenarios.py` | (Re)generate per-state Molecule scenarios from examples |
 | `python tools/generate_check_scenarios.py` | (Re)generate check-mode Molecule scenarios for all modules |
 
 ---
