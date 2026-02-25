@@ -201,6 +201,9 @@ cython_debug/
 .cursorignore
 .cursorindexingignore
 
+# Local Ansible config (dev-only, not needed in collection)
+ansible.cfg
+
 # ansible-doc-renderer build output
 tools/ansible-doc-renderer/out/
 tools/ansible-doc-renderer/node_modules/
