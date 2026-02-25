@@ -33,6 +33,7 @@ build_ignore:
   - .github
   - .venv
   - venv
+  - ansible.cfg
   - spec3.json
   - tools
   - tests
