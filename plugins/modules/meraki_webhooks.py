@@ -114,7 +114,7 @@ EXAMPLES = r'''
 - name: Define replacement configuration
   ansible.builtin.set_fact:
     expected_config:
-      name: Replaced-Config
+      name: Test-Config
       url: "https://example.com/webhook"
       shared_secret: example
 
@@ -154,7 +154,7 @@ EXAMPLES = r'''
 - name: Define desired-state configuration
   ansible.builtin.set_fact:
     expected_config:
-      name: Replaced-Config
+      name: Test-Config
       url: "https://example.com/webhook"
       shared_secret: example
 

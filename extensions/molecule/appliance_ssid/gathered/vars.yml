@@ -1,9 +1,0 @@
----
-expected_config:
-  number: 2
-  name: Test-Config Gathered
-  enabled: false
-  auth_mode: 8021x-meraki
-  encryption_mode: wep
-  psk: testpassword123 Gathered
-  visible: false

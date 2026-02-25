@@ -145,7 +145,7 @@ EXAMPLES = r'''
 - name: Define replacement configuration
   ansible.builtin.set_fact:
     expected_config:
-      name: Replaced-Config
+      name: Test-Config
       width: 0.0
       height: 0.0
       floor_number: 0.0
@@ -188,7 +188,7 @@ EXAMPLES = r'''
 - name: Define desired-state configuration
   ansible.builtin.set_fact:
     expected_config:
-      name: Replaced-Config
+      name: Test-Config
       width: 0.0
       height: 0.0
       floor_number: 0.0

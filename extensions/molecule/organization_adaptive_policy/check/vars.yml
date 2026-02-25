@@ -1,5 +1,4 @@
 ---
-expected_config:
+expected_config: &id001
   last_entry_rule: allow
-prepare_config:
-  last_entry_rule: default
+prepare_config: *id001

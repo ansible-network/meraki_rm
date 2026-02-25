@@ -1,4 +1,4 @@
 ---
 expected_config:
-  name: Replaced-Config
+  name: Test-Config
   enabled: false

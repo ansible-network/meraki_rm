@@ -3,11 +3,6 @@
   hosts: localhost
   gather_facts: false
   tasks:
-  - name: Remove test resources
-    cisco.meraki_rm.meraki_switch_ports:
-      serial: Q2XX-switch_ports-replaced
-      state: deleted
-      config:
-      - port_id: '1'
-        port_schedule_id: example
-    ignore_errors: true
+  - name: No cleanup configured for singleton resource
+    ansible.builtin.debug:
+      msg: switch_ports does not support delete

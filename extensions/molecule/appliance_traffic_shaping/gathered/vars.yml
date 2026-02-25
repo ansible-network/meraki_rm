@@ -1,6 +1,0 @@
----
-expected_config:
-  default_rules_enabled: false
-  default_uplink: example Gathered
-  load_balancing_enabled: false
-  active_active_auto_vpn_enabled: false

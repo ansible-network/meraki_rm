@@ -1,21 +1,34 @@
 #!/usr/bin/env python3
-"""Generate examples/{module}/{state}.yml from module DOCUMENTATION.
+"""Step 1 — Generate example task files from module DOCUMENTATION.
 
-Creates per-state YAML task files organized as:
-    examples/
-      appliance_vlan/
-        merged.yml       # create / update
-        replaced.yml     # full resource replacement
-        overridden.yml   # replace all instances (if supported)
-        gathered.yml     # read current state
-        deleted.yml      # remove resource (if supported)
-      wireless_ssid/
-        merged.yml
-        ...
+Pipeline position:  **1 of 4**  (run first)
 
-These files serve as:
-  1. Molecule test input  (include_tasks from converge/verify/cleanup)
-  2. ansible-doc examples (concatenated by tools/inject_examples.py)
+Reads every ``plugins/modules/meraki_*.py`` file, parses its DOCUMENTATION
+string, and emits one YAML task file per supported state into::
+
+    examples/{module}/{state}.yml
+
+Each file is a self-contained Ansible task list showing how to use the
+module for that state (merged, replaced, overridden, gathered, deleted).
+
+Design decisions embedded here:
+  - ``RESPONSE_ONLY_FIELDS`` — fields the API returns but the user never
+    sends; excluded from generated configs so Molecule verify won't fail.
+  - ``FIELD_SAMPLES`` — realistic sample values for fields where the
+    default ``'example'`` would be invalid (e.g. port ranges, enums).
+  - ``REPLACED_OVERRIDES`` — alternate values used for replaced/overridden
+    states so the test actually changes something.
+  - System keys (server-assigned IDs) are never included in user configs;
+    the framework resolves them at runtime.
+
+Outputs feed into both:
+  1. ``tools/generate_molecule_scenarios.py`` — Molecule test scaffolding
+  2. ``tools/inject_examples.py`` — ``ansible-doc`` EXAMPLES blocks
+
+Usage::
+
+    python tools/generate_examples.py            # write all
+    python tools/generate_examples.py --check     # dry-run
 """
 
 import ast
@@ -95,6 +108,9 @@ FIELD_SAMPLES = {
     'max_retention_days': 30,
     'default_rules_enabled': True,
     'gateway_vlan_id': 1,
+    'band_selection_type': 'ssid',
+    'src_port_range': '1-1024',
+    'dst_port_range': '1-1024',
 }
 
 # Alternate values for replaced state (to show a meaningful change)
@@ -118,6 +134,13 @@ TYPE_DEFAULTS = {
     'bool': True,
     'list': [],
     'dict': {},
+}
+
+RESPONSE_ONLY_FIELDS = {
+    'meraki_organization_admins': {'account_status', 'two_factor_auth_enabled', 'has_api_key', 'last_active'},
+    'meraki_wireless_ethernet_port_profiles': {'is_default'},
+    'meraki_switch_stacks': {'virtual_mac', 'is_monitor_only'},
+    'meraki_wireless_rf_profiles': {'is_indoor_default', 'is_outdoor_default'},
 }
 
 
@@ -194,11 +217,13 @@ def parse_action_keys(module_name: str) -> dict:
     return result
 
 
-def build_items(subopts, replaced=False, max_fields=8, system_key=None):
+def build_items(subopts, replaced=False, max_fields=8, system_key=None,
+                canonical_key=None, response_only=None):
     """Build (key, value) pairs from suboptions, skipping the system key."""
     items = []
+    skip = response_only or set()
     for fname, fspec in subopts.items():
-        if fname == system_key:
+        if fname == system_key or fname in skip:
             continue
         ftype = fspec.get('type', 'str')
         choices = fspec.get('choices')
@@ -206,7 +231,8 @@ def build_items(subopts, replaced=False, max_fields=8, system_key=None):
             continue
         if ftype == 'list' and fname not in FIELD_SAMPLES:
             continue
-        items.append((fname, sample_value(fname, ftype, choices, replaced=replaced)))
+        use_replaced = replaced and fname != canonical_key
+        items.append((fname, sample_value(fname, ftype, choices, replaced=use_replaced)))
         if len(items) >= max_fields:
             break
     return items
@@ -216,20 +242,27 @@ def id_items(subopts, canonical_key=None, system_key=None):
     """Extract identity fields for delete operations using the canonical key."""
     if canonical_key and canonical_key in subopts:
         fspec = subopts[canonical_key]
-        return [(canonical_key, sample_value(canonical_key, fspec.get('type', 'str')))]
+        return [(canonical_key, sample_value(canonical_key, fspec.get('type', 'str'),
+                                             choices=fspec.get('choices')))]
 
     items = []
     for fname, fspec in subopts.items():
         if fname == system_key:
             continue
         if fspec.get('required') or fname.endswith('_id') or fname == 'number':
-            items.append((fname, sample_value(fname, fspec.get('type', 'str'))))
+            items.append((fname, sample_value(fname, fspec.get('type', 'str'),
+                                              choices=fspec.get('choices'))))
             if len(items) >= 2:
                 break
     if not items:
-        first = next(iter(subopts), None)
+        first = next((k for k in subopts if k != system_key), None)
         if first:
-            items.append((first, sample_value(first, subopts[first].get('type', 'str'))))
+            fspec = subopts[first]
+            ftype = fspec.get('type', 'str')
+            if ftype in ('list', 'dict'):
+                return items
+            items.append((first, sample_value(first, ftype,
+                                              choices=fspec.get('choices'))))
     return items
 
 
@@ -279,6 +312,7 @@ def parse_module(filepath):
         'short_desc': doc.get('short_description', module_name),
         'canonical_key': action_keys.get('CANONICAL_KEY'),
         'system_key': action_keys.get('SYSTEM_KEY'),
+        'response_only': RESPONSE_ONLY_FIELDS.get(module_name, set()),
     }
 
 
@@ -328,7 +362,9 @@ def assert_block(result_var):
 def gen_merged(meta):
     fqcn, scope, sv = meta['fqcn'], meta['scope'], meta['scope_value']
     short = meta['short_desc']
-    items = build_items(meta['config_subopts'], system_key=meta.get('system_key'))
+    items = build_items(meta['config_subopts'], system_key=meta.get('system_key'),
+                        canonical_key=meta.get('canonical_key'),
+                        response_only=meta.get('response_only'))
     fact_block = format_set_fact(items)
     return f"""---
 # {short} — create or update
@@ -357,7 +393,9 @@ def gen_merged(meta):
 def gen_replaced(meta):
     fqcn, scope, sv = meta['fqcn'], meta['scope'], meta['scope_value']
     short = meta['short_desc']
-    items = build_items(meta['config_subopts'], replaced=True, system_key=meta.get('system_key'))
+    items = build_items(meta['config_subopts'], replaced=True, system_key=meta.get('system_key'),
+                        canonical_key=meta.get('canonical_key'),
+                        response_only=meta.get('response_only'))
     fact_block = format_set_fact(items)
     return f"""---
 # {short} — full resource replacement
@@ -386,7 +424,9 @@ def gen_replaced(meta):
 def gen_overridden(meta):
     fqcn, scope, sv = meta['fqcn'], meta['scope'], meta['scope_value']
     short = meta['short_desc']
-    items = build_items(meta['config_subopts'], replaced=True, system_key=meta.get('system_key'))
+    items = build_items(meta['config_subopts'], replaced=True, system_key=meta.get('system_key'),
+                        canonical_key=meta.get('canonical_key'),
+                        response_only=meta.get('response_only'))
     fact_block = format_set_fact(items)
     return f"""---
 # {short} — override all instances
@@ -558,6 +598,11 @@ def main():
                     (module_dir / f'{state}.yml').write_text(content)
                 created += 1
                 generated_states.append(state)
+
+        if not dry_run:
+            for old in module_dir.glob('*.yml'):
+                if old.stem not in generated_states:
+                    old.unlink()
 
         print(f'  OK {dir_name}/ ({", ".join(generated_states)})')
 

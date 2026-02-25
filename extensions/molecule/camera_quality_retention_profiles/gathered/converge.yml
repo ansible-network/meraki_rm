@@ -2,8 +2,6 @@
 - name: "Converge \u2014 camera_quality_retention_profiles (gathered)"
   hosts: localhost
   gather_facts: false
-  vars_files:
-  - vars.yml
   tasks:
   - name: Gather current camera_quality_retention_profiles configuration
     cisco.meraki_rm.meraki_camera_quality_retention_profiles:

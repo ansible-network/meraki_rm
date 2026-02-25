@@ -129,7 +129,7 @@ EXAMPLES = r'''
 - name: Define replacement configuration
   ansible.builtin.set_fact:
     expected_config:
-      name: Replaced-Config
+      name: Test-Config
       splash_auth_settings: example
 
 - name: Replace group_policies configuration
@@ -168,7 +168,7 @@ EXAMPLES = r'''
 - name: Define desired-state configuration
   ansible.builtin.set_fact:
     expected_config:
-      name: Replaced-Config
+      name: Test-Config
       splash_auth_settings: example
 
 - name: Override all group_policies — desired state only

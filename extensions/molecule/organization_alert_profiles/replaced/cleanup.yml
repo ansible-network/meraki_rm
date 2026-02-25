@@ -8,5 +8,5 @@
       organization_id: org_organization_alert_profiles_replaced
       state: deleted
       config:
-      - alert_config_id: example
+      - type: appOutage
     ignore_errors: true

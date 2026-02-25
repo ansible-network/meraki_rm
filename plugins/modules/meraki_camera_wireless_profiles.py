@@ -108,7 +108,7 @@ EXAMPLES = r'''
 - name: Define replacement configuration
   ansible.builtin.set_fact:
     expected_config:
-      name: Replaced-Config
+      name: Test-Config
 
 - name: Replace camera_wireless_profiles configuration
   cisco.meraki_rm.meraki_camera_wireless_profiles:
@@ -146,7 +146,7 @@ EXAMPLES = r'''
 - name: Define desired-state configuration
   ansible.builtin.set_fact:
     expected_config:
-      name: Replaced-Config
+      name: Test-Config
 
 - name: Override all camera_wireless_profiles — desired state only
   cisco.meraki_rm.meraki_camera_wireless_profiles:

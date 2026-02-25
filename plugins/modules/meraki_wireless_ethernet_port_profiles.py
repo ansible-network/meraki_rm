@@ -83,7 +83,6 @@ EXAMPLES = r'''
   ansible.builtin.set_fact:
     expected_config:
       name: Test-Config
-      is_default: true
 
 - name: Create wireless_ethernet_port_profiles with merged state
   cisco.meraki_rm.meraki_wireless_ethernet_port_profiles:
@@ -120,8 +119,7 @@ EXAMPLES = r'''
 - name: Define replacement configuration
   ansible.builtin.set_fact:
     expected_config:
-      name: Replaced-Config
-      is_default: true
+      name: Test-Config
 
 - name: Replace wireless_ethernet_port_profiles configuration
   cisco.meraki_rm.meraki_wireless_ethernet_port_profiles:
@@ -159,8 +157,7 @@ EXAMPLES = r'''
 - name: Define desired-state configuration
   ansible.builtin.set_fact:
     expected_config:
-      name: Replaced-Config
-      is_default: true
+      name: Test-Config
 
 - name: Override all wireless_ethernet_port_profiles — desired state only
   cisco.meraki_rm.meraki_wireless_ethernet_port_profiles:

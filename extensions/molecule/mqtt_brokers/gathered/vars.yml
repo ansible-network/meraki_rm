@@ -1,5 +1,0 @@
----
-expected_config:
-  name: Test-Config Gathered
-  host: mqtt.example.com Gathered
-  port: 1882

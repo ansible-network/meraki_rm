@@ -1,9 +1,0 @@
----
-expected_config:
-  enabled: false
-  type: access Gathered
-  vlan: 2
-  allowed_vlans: all
-  access_policy: example Gathered
-  drop_untagged_traffic: false
-  port_id: '1'

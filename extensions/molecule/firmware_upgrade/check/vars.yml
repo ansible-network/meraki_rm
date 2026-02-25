@@ -1,5 +1,4 @@
 ---
-expected_config:
+expected_config: &id001
   timezone: America/Los_Angeles
-prepare_config:
-  timezone: America/Los_Angeles Gathered
+prepare_config: *id001

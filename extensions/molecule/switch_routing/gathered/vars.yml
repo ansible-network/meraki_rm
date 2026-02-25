@@ -1,6 +1,0 @@
----
-expected_config:
-  enabled: false
-  hello_timer_in_seconds: 2
-  dead_timer_in_seconds: 2
-  md5_authentication_enabled: false

@@ -1,4 +1,0 @@
----
-expected_config:
-  name: Test-Config Gathered
-  splash_auth_settings: network default

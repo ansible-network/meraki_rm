@@ -8,5 +8,5 @@
       network_id: N_switch_qos_rules_replaced
       state: deleted
       config:
-      - qos_rule_id: example
+      - dscp: 1
     ignore_errors: true

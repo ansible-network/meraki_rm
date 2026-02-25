@@ -9,6 +9,4 @@
       state: merged
       config:
       - name: Test-Config
-        is_default: true
       - name: Extra-To-Delete
-        is_default: true

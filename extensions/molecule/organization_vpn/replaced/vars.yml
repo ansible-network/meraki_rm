@@ -1,8 +1,0 @@
----
-expected_config:
-  peers:
-    - name: "Replaced peer"
-      publicIp: "198.51.100.1"
-      privateSubnets:
-        - "172.16.0.0/16"
-      secret: "replaced-shared-secret"

@@ -52,6 +52,15 @@ options:
       type:
         description: The alert type.
         type: str
+        choices:
+          - appOutage
+          - voipJitter
+          - voipMos
+          - voipPacketLoss
+          - wanLatency
+          - wanPacketLoss
+          - wanStatus
+          - wanUtilization
 
       enabled:
         description: Whether the alert is enabled.
@@ -82,7 +91,7 @@ EXAMPLES = r'''
 - name: Define expected configuration
   ansible.builtin.set_fact:
     expected_config:
-      type: access
+      type: appOutage
       enabled: true
       description: Managed by Ansible
 
@@ -121,7 +130,7 @@ EXAMPLES = r'''
 - name: Define replacement configuration
   ansible.builtin.set_fact:
     expected_config:
-      type: access
+      type: voipJitter
       enabled: false
       description: Replaced by Ansible
 
@@ -161,7 +170,7 @@ EXAMPLES = r'''
 - name: Define desired-state configuration
   ansible.builtin.set_fact:
     expected_config:
-      type: access
+      type: voipJitter
       enabled: false
       description: Replaced by Ansible
 
@@ -219,7 +228,7 @@ EXAMPLES = r'''
 - name: Define resource to delete
   ansible.builtin.set_fact:
     expected_config:
-      alert_config_id: example
+      type: appOutage
 
 - name: Delete organization_alert_profiles configuration
   cisco.meraki_rm.meraki_organization_alert_profiles:

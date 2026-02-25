@@ -1,18 +1,23 @@
 #!/usr/bin/env python3
-"""Generate colocated *_test.py files for user_models/ and api/v1/ pairs.
+"""Generate data-model unit tests (standalone — not part of the Molecule pipeline).
 
-Introspects each user model's _field_mapping and paired API model to emit
-sibling test files that verify:
-  - Forward transform (User -> API)
-  - Reverse transform (API -> User)
-  - Roundtrip (User -> API -> User)
+Introspects each user model's ``_field_mapping`` and paired API model to
+emit sibling ``*_test.py`` files that verify:
+
+  - Forward transform  (User → API)
+  - Reverse transform  (API → User)
+  - Roundtrip          (User → API → User)
   - Scope param exclusion
-  - Endpoint operations validity (api/v1/ only)
-  - Generated dataclass field existence (api/v1/generated/ only)
+  - Endpoint operations validity  (``api/v1/`` only)
+  - Generated dataclass field existence  (``api/v1/generated/`` only)
 
-Usage:
-    python tools/generate_model_tests.py          # write all *_test.py files
-    python tools/generate_model_tests.py --check   # dry-run, report what would change
+This tool is independent of the Molecule example/scenario pipeline; it
+targets the ``plugins/plugin_utils/`` model layer.
+
+Usage::
+
+    python tools/generate_model_tests.py            # write all *_test.py
+    python tools/generate_model_tests.py --check     # dry-run
 """
 
 import argparse

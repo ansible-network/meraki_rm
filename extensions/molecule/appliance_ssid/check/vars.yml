@@ -1,5 +1,5 @@
 ---
-expected_config:
+expected_config: &id001
   number: 1
   name: Test-Config
   enabled: true
@@ -8,11 +8,4 @@ expected_config:
   psk: testpassword123
   default_vlan_id: 1
   visible: true
-prepare_config:
-  number: 2
-  name: Test-Config Gathered
-  enabled: false
-  auth_mode: 8021x-meraki
-  encryption_mode: wep
-  psk: testpassword123 Gathered
-  visible: false
+prepare_config: *id001

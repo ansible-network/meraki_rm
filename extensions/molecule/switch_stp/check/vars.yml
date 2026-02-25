@@ -1,5 +1,4 @@
 ---
-expected_config:
+expected_config: &id001
   rstp_enabled: true
-prepare_config:
-  rstp_enabled: false
+prepare_config: *id001

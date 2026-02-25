@@ -1,8 +1,0 @@
----
-expected_config:
-  enabled: false
-  spare_serial: Q2XX-SPARE-0001 Gathered
-  uplink_mode: virtual Gathered
-  virtual_ip1: 10.0.0.3
-  virtual_ip2: 10.0.0.4
-  primary_serial: example Gathered

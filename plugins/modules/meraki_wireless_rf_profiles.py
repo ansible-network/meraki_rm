@@ -96,10 +96,8 @@ EXAMPLES = r'''
   ansible.builtin.set_fact:
     expected_config:
       name: Test-Config
-      band_selection_type: example
+      band_selection_type: ssid
       client_balancing_enabled: true
-      is_indoor_default: true
-      is_outdoor_default: true
 
 - name: Create wireless_rf_profiles with merged state
   cisco.meraki_rm.meraki_wireless_rf_profiles:
@@ -136,11 +134,9 @@ EXAMPLES = r'''
 - name: Define replacement configuration
   ansible.builtin.set_fact:
     expected_config:
-      name: Replaced-Config
-      band_selection_type: example
+      name: Test-Config
+      band_selection_type: ssid
       client_balancing_enabled: true
-      is_indoor_default: true
-      is_outdoor_default: true
 
 - name: Replace wireless_rf_profiles configuration
   cisco.meraki_rm.meraki_wireless_rf_profiles:
@@ -178,11 +174,9 @@ EXAMPLES = r'''
 - name: Define desired-state configuration
   ansible.builtin.set_fact:
     expected_config:
-      name: Replaced-Config
-      band_selection_type: example
+      name: Test-Config
+      band_selection_type: ssid
       client_balancing_enabled: true
-      is_indoor_default: true
-      is_outdoor_default: true
 
 - name: Override all wireless_rf_profiles — desired state only
   cisco.meraki_rm.meraki_wireless_rf_profiles:

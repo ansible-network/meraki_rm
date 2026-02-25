@@ -195,7 +195,6 @@ EXAMPLES = r'''
 - name: Define resource to delete
   ansible.builtin.set_fact:
     expected_config:
-      link_aggregation_id: example
 
 - name: Delete switch_link_aggregations configuration
   cisco.meraki_rm.meraki_switch_link_aggregations:

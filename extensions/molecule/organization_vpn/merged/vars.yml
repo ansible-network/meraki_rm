@@ -1,8 +1,0 @@
----
-expected_config:
-  peers:
-    - name: "Test peer"
-      publicIp: "192.0.2.1"
-      privateSubnets:
-        - "10.0.0.0/24"
-      secret: "test-shared-secret"

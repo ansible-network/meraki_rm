@@ -1,4 +1,0 @@
----
-expected_config:
-  mode: detection
-  ids_rulesets: connectivity

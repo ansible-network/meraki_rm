@@ -1,4 +1,3 @@
 ---
 expected_config:
-  name: Replaced-Config
-  is_default: true
+  name: Test-Config

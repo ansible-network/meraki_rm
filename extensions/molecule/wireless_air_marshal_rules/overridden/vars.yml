@@ -1,5 +1,0 @@
----
-expected_config:
-  type: access
-  default_policy: example
-  ssid: example

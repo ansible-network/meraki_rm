@@ -1,19 +1,32 @@
 #!/usr/bin/env python3
-"""Generate check-mode Molecule scenarios for all resource modules.
+"""Step 3 — Generate check-mode Molecule scenarios.
 
-Creates a ``check/`` scenario directory alongside existing ``merged/``,
-``gathered/``, etc. under ``extensions/molecule/{module}/check/``.
+Pipeline position:  **3 of 4**  (run after ``generate_molecule_scenarios.py``)
+
+Creates a ``check/`` scenario directory alongside the state directories
+produced by Step 2::
+
+    extensions/molecule/{module}/check/
+        molecule.yml   — test_sequence: prepare → converge → verify → cleanup
+        vars.yml       — expected_config (+ prepare_config for singletons)
+        prepare.yml    — seed baseline (singletons) or no-op (collections)
+        converge.yml   — runs the module with ``check_mode: true, diff: true``
+        verify.yml     — asserts state was NOT changed by check mode
+        cleanup.yml    — tear down any leaked resources
 
 Each check scenario validates two contracts:
   1. Check mode returns a correct prediction (changed, before/after, diff).
-  2. Check mode makes NO actual changes to the device/mock state.
+  2. Check mode makes NO actual changes to the device / mock state.
 
-Collection resources start from an empty state; singleton resources seed a
-baseline via ``gathered/vars.yml`` before running check mode with the
-``merged/vars.yml`` config.
+Collection resources (those with a canonical key) start from an empty
+state; singleton resources seed a baseline first so the check-mode
+prediction has something to compare against.
 
-Usage:
-    python tools/generate_check_scenarios.py [--dry-run] [--module NAME ...]
+Usage::
+
+    python tools/generate_check_scenarios.py                    # all modules
+    python tools/generate_check_scenarios.py --dry-run           # preview
+    python tools/generate_check_scenarios.py --module appliance_vlans  # one
 """
 
 from __future__ import annotations
@@ -30,7 +43,11 @@ ROOT = Path(__file__).resolve().parent.parent
 MOLECULE_DIR = ROOT / "extensions" / "molecule"
 ACTION_DIR = ROOT / "plugins" / "action"
 
-SKIP_MODULES = {"default", "facts", "wireless_air_marshal_rules"}
+SKIP_MODULES = {
+    "default", "facts", "wireless_air_marshal_rules",
+    "switch_acl", "switch_link_aggregations",
+    "organization_vpn", "device_management_interface",
+}
 
 _SCOPE_PREFIXES = {
     "network_id": "N",
@@ -342,8 +359,11 @@ def _build_vars(
     """
     result = {"expected_config": merged_vars["expected_config"]}
 
-    if is_singleton and gathered_vars:
-        result["prepare_config"] = gathered_vars["expected_config"]
+    if is_singleton:
+        if gathered_vars:
+            result["prepare_config"] = gathered_vars["expected_config"]
+        else:
+            result["prepare_config"] = merged_vars["expected_config"]
 
     pk = merged_vars.get("server_assigned_pk")
     if pk:

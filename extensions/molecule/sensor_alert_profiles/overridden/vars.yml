@@ -1,5 +1,5 @@
 ---
 expected_config:
-  name: Replaced-Config
+  name: Test-Config
   message: example
   include_sensor_url: true

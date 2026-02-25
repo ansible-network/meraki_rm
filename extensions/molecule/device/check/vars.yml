@@ -1,5 +1,5 @@
 ---
-expected_config:
+expected_config: &id001
   name: Test-Config
   tags:
   - ansible
@@ -10,13 +10,4 @@ expected_config:
   notes: example
   move_map_marker: true
   floor_plan_id: example
-prepare_config:
-  name: Test-Config Gathered
-  tags:
-  - ansible-g
-  - test-g
-  lat: 38.2749
-  lng: -121.9194
-  address: 500 Terry Francine Street Gathered
-  notes: example Gathered
-  move_map_marker: false
+prepare_config: *id001

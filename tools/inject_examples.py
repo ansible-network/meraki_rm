@@ -1,19 +1,25 @@
 #!/usr/bin/env python3
-"""Inject examples/{module}/*.yml into module EXAMPLES strings.
+"""Step 4 — Sync example files back into module EXAMPLES docstrings.
 
-Reads per-state YAML task files from examples/{module}/ subdirectories,
-concatenates them in a canonical order, and writes the combined content
-into the EXAMPLES block of the corresponding plugins/modules/meraki_*.py.
+Pipeline position:  **4 of 4**  (run last — after examples are generated)
 
-This keeps ansible-doc output in sync with the example files that also
-serve as Molecule test input.
+Reads the per-state YAML task files from ``examples/{module}/`` (produced
+by Step 1) and writes the concatenated content into the ``EXAMPLES``
+block of each ``plugins/modules/meraki_*.py`` file.  This keeps the
+``ansible-doc`` output in sync with the same files used by Molecule.
 
-Usage:
-    python tools/inject_examples.py          # inject all
-    python tools/inject_examples.py --check  # dry-run, exit 1 if stale
-    python tools/inject_examples.py --diff   # show what would change
+The canonical state order is: merged, replaced, overridden, gathered,
+deleted.  Only states that have a corresponding ``.yml`` file are
+included.
 
-Pre-commit hook:
+Usage::
+
+    python tools/inject_examples.py            # inject all
+    python tools/inject_examples.py --check     # dry-run, exit 1 if stale
+    python tools/inject_examples.py --diff      # show what would change
+
+Pre-commit hook::
+
     - repo: local
       hooks:
         - id: inject-examples

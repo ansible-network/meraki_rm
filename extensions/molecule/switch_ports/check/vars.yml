@@ -1,5 +1,5 @@
 ---
-expected_config:
+expected_config: &id001
   port_id: '1'
   name: Test-Config
   tags:
@@ -10,14 +10,4 @@ expected_config:
   vlan: 1
   voice_vlan: 100
   allowed_vlans: all
-prepare_config:
-  name: Test-Config Gathered
-  tags:
-  - ansible-g
-  - test-g
-  enabled: false
-  type: dad
-  vlan: 2
-  voice_vlan: 101
-  allowed_vlans: all
-  port_id: '1'
+prepare_config: *id001

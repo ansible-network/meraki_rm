@@ -115,7 +115,7 @@ EXAMPLES = r'''
 - name: Define replacement configuration
   ansible.builtin.set_fact:
     expected_config:
-      name: Replaced-Config
+      name: Test-Config
       time_zone: example
       copy_from_network_id: example
 
@@ -155,7 +155,7 @@ EXAMPLES = r'''
 - name: Define desired-state configuration
   ansible.builtin.set_fact:
     expected_config:
-      name: Replaced-Config
+      name: Test-Config
       time_zone: example
       copy_from_network_id: example
 

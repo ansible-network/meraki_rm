@@ -1,9 +1,0 @@
----
-expected_config:
-  wan1:
-    wanEnabled: "not configured"
-    usingStaticIp: false
-    staticIp: "1.2.3.5"
-    staticSubnetMask: "255.255.255.0"
-    staticGatewayIp: "1.2.3.1"
-    vlan: 8

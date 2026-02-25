@@ -138,7 +138,7 @@ EXAMPLES = r'''
 - name: Define replacement configuration
   ansible.builtin.set_fact:
     expected_config:
-      name: Replaced-Config
+      name: Test-Config
       max_retention_days: 30
       motion_based_retention_enabled: true
       restricted_bandwidth_mode_enabled: true
@@ -182,7 +182,7 @@ EXAMPLES = r'''
 - name: Define desired-state configuration
   ansible.builtin.set_fact:
     expected_config:
-      name: Replaced-Config
+      name: Test-Config
       max_retention_days: 30
       motion_based_retention_enabled: true
       restricted_bandwidth_mode_enabled: true

@@ -1,5 +1,5 @@
 ---
 expected_config:
-  type: access
+  type: voipJitter
   enabled: false
   description: Replaced by Ansible

@@ -10,8 +10,8 @@
       protocol: TCP
       src_port: 1
       dst_port: 1
-      src_port_range: example
-      dst_port_range: example
+      src_port_range: 1-1024
+      dst_port_range: 1-1024
 
 - name: Override all switch_qos_rules — desired state only
   cisco.meraki_rm.meraki_switch_qos_rules:

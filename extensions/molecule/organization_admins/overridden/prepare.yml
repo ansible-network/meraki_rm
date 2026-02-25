@@ -15,14 +15,8 @@
         - ansible
         - test
         authentication_method: Email
-        account_status: example
-        two_factor_auth_enabled: true
-        has_api_key: true
       - name: Test-Config
         email: extra@example.com
         org_access: full
         tags: *id001
         authentication_method: Email
-        account_status: example
-        two_factor_auth_enabled: true
-        has_api_key: true

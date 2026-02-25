@@ -8,6 +8,6 @@
       organization_id: org_organization_alert_profiles_replaced
       state: merged
       config:
-      - type: access
+      - type: appOutage
         enabled: true
         description: Managed by Ansible

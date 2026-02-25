@@ -106,6 +106,17 @@ class BaseResourceActionPlugin(ActionBase):
             index[k] = item
         return index
 
+    def _match_by_content(self, item, candidates):
+        """Content-based fallback for Category C resources.
+
+        When no canonical key exists and the user didn't supply the system
+        key, find a matching resource by comparing all user-supplied fields.
+        """
+        for candidate in candidates:
+            if self._config_matches(item, candidate):
+                return candidate
+        return None
+
     def _prepare_user_data(self, item, current, scope_value, user_cls):
         """Build user_data, injecting the system key from a matched resource.
 
@@ -369,6 +380,8 @@ class BaseResourceActionPlugin(ActionBase):
                 current = before_by_sys.get(str(item[self.SYSTEM_KEY]))
             elif match_key and item.get(match_key):
                 current = before_by_key.get(str(item[match_key]))
+            elif not self.CANONICAL_KEY and self.SYSTEM_KEY:
+                current = self._match_by_content(item, before)
 
             if current is None:
                 continue
@@ -404,6 +417,8 @@ class BaseResourceActionPlugin(ActionBase):
                 current = before_by_sys.get(str(item[self.SYSTEM_KEY]))
             elif match_key and item.get(match_key):
                 current = before_by_key.get(str(item[match_key]))
+            elif not self.CANONICAL_KEY and self.SYSTEM_KEY:
+                current = self._match_by_content(item, before)
 
             if match_key:
                 if current is not None:
@@ -438,6 +453,7 @@ class BaseResourceActionPlugin(ActionBase):
 
         before_by_key = self._index_by_key(before, match_key)
         desired_keys = set()
+        use_content_match = not self.CANONICAL_KEY and self.SYSTEM_KEY
 
         for item in config:
             key_val = item.get(match_key)
@@ -445,22 +461,35 @@ class BaseResourceActionPlugin(ActionBase):
                 desired_keys.add(str(key_val))
 
         # Delete extras (current items not in desired set)
+        matched_before = set()
+        if use_content_match:
+            for item in config:
+                m = self._match_by_content(item, before)
+                if m and m.get(match_key):
+                    matched_before.add(str(m[match_key]))
+
         for current in before:
             current_key = str(current.get(match_key, ''))
-            if current_key and current_key not in desired_keys:
-                delete_item = {match_key: current.get(match_key)}
-                delete_data = self._prepare_user_data(
-                    delete_item, current, scope_value, user_cls,
-                )
-                manager.execute('delete', self.MODULE_NAME, delete_data)
+            if not current_key:
+                continue
+            if current_key in desired_keys or current_key in matched_before:
+                continue
+            delete_item = {match_key: current.get(match_key)}
+            delete_data = self._prepare_user_data(
+                delete_item, current, scope_value, user_cls,
+            )
+            manager.execute('delete', self.MODULE_NAME, delete_data)
 
         # Replace each desired item (skip no-ops)
         for item in config:
             current = None
             if match_key and item.get(match_key):
                 current = before_by_key.get(str(item[match_key]))
-                if current and self._config_matches(item, current):
-                    continue
+            elif use_content_match:
+                current = self._match_by_content(item, before)
+
+            if current and self._config_matches(item, current):
+                continue
 
             user_data = self._prepare_user_data(
                 item, current, scope_value, user_cls,
@@ -551,6 +580,14 @@ class BaseResourceActionPlugin(ActionBase):
                     new_item = dict(item)
                     result.append(new_item)
                     result_by_key[key] = new_item
+            elif not self.CANONICAL_KEY and self.SYSTEM_KEY:
+                existing = self._match_by_content(item, result)
+                if existing is not None:
+                    for field, val in item.items():
+                        if val is not None:
+                            existing[field] = val
+                else:
+                    result.append(dict(item))
             elif not match_key and before:
                 for field, val in item.items():
                     if val is not None:
@@ -579,6 +616,13 @@ class BaseResourceActionPlugin(ActionBase):
                 else:
                     result.append(dict(item))
                     result_by_key[key] = len(result) - 1
+            elif not self.CANONICAL_KEY and self.SYSTEM_KEY:
+                matched = self._match_by_content(item, result)
+                if matched is not None:
+                    idx = result.index(matched)
+                    result[idx] = dict(item)
+                else:
+                    result.append(dict(item))
             elif not match_key and before:
                 result[0] = dict(item)
             else:
@@ -603,6 +647,14 @@ class BaseResourceActionPlugin(ActionBase):
             k = item.get(match_key)
             if k is not None:
                 delete_keys.add(str(k))
+
+        if not delete_keys and not self.CANONICAL_KEY and self.SYSTEM_KEY:
+            remaining = list(before)
+            for item in config:
+                matched = self._match_by_content(item, remaining)
+                if matched:
+                    remaining = [r for r in remaining if r is not matched]
+            return [dict(r) for r in remaining]
 
         return [
             dict(item) for item in before

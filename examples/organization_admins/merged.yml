@@ -11,9 +11,6 @@
         - ansible
         - test
       authentication_method: Email
-      account_status: example
-      two_factor_auth_enabled: true
-      has_api_key: true
 
 - name: Create organization_admins with merged state
   cisco.meraki_rm.meraki_organization_admins:

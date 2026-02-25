@@ -5,8 +5,6 @@
   ansible.builtin.set_fact:
     expected_config:
       name: Test-Config
-      is_monitor_only: true
-      virtual_mac: example
 
 - name: Create switch_stacks with merged state
   cisco.meraki_rm.meraki_switch_stacks:

@@ -131,7 +131,7 @@ EXAMPLES = r'''
   ansible.builtin.set_fact:
     expected_config:
       name: Replaced-Config
-      email: "replaced-admin@example.com"
+      email: "admin@example.com"
       password: example
       account_type: example
       is_admin: true
@@ -174,7 +174,7 @@ EXAMPLES = r'''
   ansible.builtin.set_fact:
     expected_config:
       name: Replaced-Config
-      email: "replaced-admin@example.com"
+      email: "admin@example.com"
       password: example
       account_type: example
       is_admin: true

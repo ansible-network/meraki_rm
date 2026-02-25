@@ -8,5 +8,5 @@
       network_id: N_wireless_air_marshal_rules_replaced
       state: deleted
       config:
-      - rule_id: example
+      - type: access
     ignore_errors: true

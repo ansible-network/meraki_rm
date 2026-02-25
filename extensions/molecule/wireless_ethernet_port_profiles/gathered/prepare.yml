@@ -9,4 +9,3 @@
       state: merged
       config:
       - name: Test-Config
-        is_default: true

@@ -2,8 +2,6 @@
 - name: "Converge \u2014 switch_stp (gathered)"
   hosts: localhost
   gather_facts: false
-  vars_files:
-  - vars.yml
   tasks:
   - name: Gather current switch_stp configuration
     cisco.meraki_rm.meraki_switch_stp:

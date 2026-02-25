@@ -1,5 +1,0 @@
----
-expected_config:
-  name: Test-Config Gathered
-  email: admin+gathered@example.com
-  org_access: enterprise

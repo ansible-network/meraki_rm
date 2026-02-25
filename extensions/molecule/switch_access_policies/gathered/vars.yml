@@ -1,8 +1,0 @@
----
-expected_config:
-  access_policy_number: '2'
-  name: Test-Config Gathered
-  access_policy_type: Hybrid authentication
-  host_mode: Multi-Auth
-  radius_accounting_enabled: false
-  radius_coa_support_enabled: false

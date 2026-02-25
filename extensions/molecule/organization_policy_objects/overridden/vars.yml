@@ -1,6 +1,6 @@
 ---
 expected_config:
-  name: Replaced-Config
+  name: Test-Config
   category: network
   type: cidr
   cidr: 192.168.128.0/24

@@ -90,8 +90,8 @@ EXAMPLES = r'''
       protocol: TCP
       src_port: 1
       dst_port: 1
-      src_port_range: example
-      dst_port_range: example
+      src_port_range: 1-1024
+      dst_port_range: 1-1024
 
 - name: Create switch_qos_rules with merged state
   cisco.meraki_rm.meraki_switch_qos_rules:
@@ -133,8 +133,8 @@ EXAMPLES = r'''
       protocol: TCP
       src_port: 1
       dst_port: 1
-      src_port_range: example
-      dst_port_range: example
+      src_port_range: 1-1024
+      dst_port_range: 1-1024
 
 - name: Replace switch_qos_rules configuration
   cisco.meraki_rm.meraki_switch_qos_rules:
@@ -177,8 +177,8 @@ EXAMPLES = r'''
       protocol: TCP
       src_port: 1
       dst_port: 1
-      src_port_range: example
-      dst_port_range: example
+      src_port_range: 1-1024
+      dst_port_range: 1-1024
 
 - name: Override all switch_qos_rules — desired state only
   cisco.meraki_rm.meraki_switch_qos_rules:
@@ -234,7 +234,7 @@ EXAMPLES = r'''
 - name: Define resource to delete
   ansible.builtin.set_fact:
     expected_config:
-      qos_rule_id: example
+      dscp: 1
 
 - name: Delete switch_qos_rules configuration
   cisco.meraki_rm.meraki_switch_qos_rules:

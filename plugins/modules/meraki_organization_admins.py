@@ -126,9 +126,6 @@ EXAMPLES = r'''
         - ansible
         - test
       authentication_method: Email
-      account_status: example
-      two_factor_auth_enabled: true
-      has_api_key: true
 
 - name: Create organization_admins with merged state
   cisco.meraki_rm.meraki_organization_admins:
@@ -166,15 +163,12 @@ EXAMPLES = r'''
   ansible.builtin.set_fact:
     expected_config:
       name: Replaced-Config
-      email: "replaced-admin@example.com"
+      email: "admin@example.com"
       org_access: read-only
       tags:
         - ansible
         - replaced
       authentication_method: Cisco SecureX Sign-On
-      account_status: example
-      two_factor_auth_enabled: true
-      has_api_key: true
 
 - name: Replace organization_admins configuration
   cisco.meraki_rm.meraki_organization_admins:
@@ -213,15 +207,12 @@ EXAMPLES = r'''
   ansible.builtin.set_fact:
     expected_config:
       name: Replaced-Config
-      email: "replaced-admin@example.com"
+      email: "admin@example.com"
       org_access: read-only
       tags:
         - ansible
         - replaced
       authentication_method: Cisco SecureX Sign-On
-      account_status: example
-      two_factor_auth_enabled: true
-      has_api_key: true
 
 - name: Override all organization_admins — desired state only
   cisco.meraki_rm.meraki_organization_admins:

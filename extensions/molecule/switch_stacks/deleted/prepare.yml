@@ -9,5 +9,3 @@
       state: merged
       config:
       - name: Test-Config
-        is_monitor_only: true
-        virtual_mac: example

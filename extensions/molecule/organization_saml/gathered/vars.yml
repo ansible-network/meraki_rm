@@ -1,8 +1,0 @@
----
-expected_config:
-  enabled: false
-  consumer_url: example Gathered
-  slo_logout_url: example Gathered
-  sso_login_url: example Gathered
-  x509cert_sha1_fingerprint: example Gathered
-  vision_consumer_url: example Gathered

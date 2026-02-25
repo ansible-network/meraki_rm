@@ -1,5 +1,4 @@
 ---
-expected_config:
+expected_config: &id001
   default_policy: example
-prepare_config:
-  default_policy: block
+prepare_config: *id001

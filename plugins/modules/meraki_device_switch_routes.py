@@ -139,7 +139,7 @@ EXAMPLES = r'''
 - name: Define replacement configuration
   ansible.builtin.set_fact:
     expected_config:
-      name: Replaced-Config
+      name: Test-Config
       subnet: 10.20.0.0/24
       interface_ip: 10.0.0.1
       default_gateway: 10.0.0.1
@@ -183,7 +183,7 @@ EXAMPLES = r'''
 - name: Define desired-state configuration
   ansible.builtin.set_fact:
     expected_config:
-      name: Replaced-Config
+      name: Test-Config
       subnet: 10.20.0.0/24
       interface_ip: 10.0.0.1
       default_gateway: 10.0.0.1

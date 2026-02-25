@@ -1,6 +1,0 @@
----
-expected_config:
-  local_status_page_enabled: false
-  remote_status_page_enabled: false
-  reporting_enabled: false
-  mode: basic

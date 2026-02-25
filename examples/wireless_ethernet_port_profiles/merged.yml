@@ -5,7 +5,6 @@
   ansible.builtin.set_fact:
     expected_config:
       name: Test-Config
-      is_default: true
 
 - name: Create wireless_ethernet_port_profiles with merged state
   cisco.meraki_rm.meraki_wireless_ethernet_port_profiles:

@@ -5,7 +5,7 @@
 - name: Define desired-state configuration
   ansible.builtin.set_fact:
     expected_config:
-      type: access
+      type: voipJitter
       enabled: false
       description: Replaced by Ansible
 
