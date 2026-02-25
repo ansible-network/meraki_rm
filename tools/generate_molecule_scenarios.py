@@ -190,8 +190,15 @@ def yaml_dump(data) -> str:
     return yaml.dump(data, default_flow_style=False, sort_keys=False, width=120)
 
 
-def write_molecule_yml(scenario_dir: Path) -> None:
-    content = "---\n# Inherits shared config from ../../config.yml\n"
+def write_molecule_yml(scenario_dir: Path, has_prepare: bool = False) -> None:
+    """Write molecule.yml with a test_sequence reflecting which playbooks exist."""
+    steps = []
+    if has_prepare:
+        steps.append("prepare")
+    steps.extend(["converge", "verify", "idempotence", "verify", "cleanup"])
+
+    data = {"scenario": {"test_sequence": steps}}
+    content = "---\n# Inherits shared config from ../../config.yml\n" + yaml_dump(data)
     (scenario_dir / "molecule.yml").write_text(content)
 
 
@@ -472,10 +479,16 @@ def process_module(module_name: str, dry_run: bool = False) -> list[str]:
             shutil.rmtree(scenario_dir)
         scenario_dir.mkdir(parents=True, exist_ok=True)
 
-        write_molecule_yml(scenario_dir)
-
         expected_config = info.get("expected_config")
         has_vars = expected_config is not None
+
+        # Determine whether this scenario will have a prepare.yml
+        has_prepare = (
+            (state in STATES_NEEDING_PREPARE and merged_config is not None)
+            or (state == "gathered" and merged_config is not None)
+        )
+
+        write_molecule_yml(scenario_dir, has_prepare=has_prepare)
 
         if has_vars:
             write_vars_yml(scenario_dir, expected_config)
