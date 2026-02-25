@@ -13,6 +13,10 @@ description:
   - Manage Meraki organization alert profiles.
   - Supports merged, replaced, overridden, deleted, and gathered states.
 
+notes:
+  - "This resource has no canonical key (Category C — gather-first)."
+  - "Use C(state=gathered) to discover C(alert_config_id) values, then reference them in subsequent tasks."
+
 version_added: "0.1.0"
 
 author:
@@ -41,7 +45,8 @@ options:
     elements: dict
     suboptions:
       alert_config_id:
-        description: Alert config ID (for update/delete).
+        description:
+          - Server-assigned config ID. Discover via C(state=gathered).
         type: str
 
       type:

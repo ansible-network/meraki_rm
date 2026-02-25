@@ -13,6 +13,9 @@ description:
   - Manage Meraki switch 802.1X access policies for a network.
   - Network-scoped. Supports merged, replaced, deleted, and gathered states.
 
+notes:
+  - "Canonical key: C(access_policy_number) — user-assigned, used for both identification and API routing."
+
 version_added: "0.1.0"
 
 author:

@@ -5,12 +5,19 @@ Each resource action plugin declares class-level attributes and the
 base class handles validation, state dispatch, and manager interaction.
 
 Subclass contract:
-    MODULE_NAME   — resource identifier (e.g. 'vlan')
-    SCOPE_PARAM   — scope kwarg name ('network_id', 'organization_id', 'serial')
-    USER_MODEL    — dotted import path to the User Model dataclass
-    PRIMARY_KEY   — user-model field that distinguishes create vs update (or None)
+    MODULE_NAME    — resource identifier (e.g. 'vlan')
+    SCOPE_PARAM    — scope kwarg name ('network_id', 'organization_id', 'serial')
+    USER_MODEL     — dotted import path to the User Model dataclass
+    CANONICAL_KEY  — human-facing field for matching (e.g. 'name', 'email', 'vlan_id')
+    SYSTEM_KEY     — API-generated identity field for URL routing (e.g. 'admin_id')
+                     None when CANONICAL_KEY is also the API routing key (Category A)
     SUPPORTS_DELETE — False for singletons that cannot be removed
-    DOCUMENTATION — imported from the corresponding plugins/modules/ file
+    DOCUMENTATION  — imported from the corresponding plugins/modules/ file
+
+Identity categories (see docs/05-design-principles.md, Principle 2):
+    Category A: CANONICAL_KEY set, SYSTEM_KEY=None  — user key IS the API key
+    Category B: CANONICAL_KEY set, SYSTEM_KEY set   — match by canonical, resolve system
+    Category C: CANONICAL_KEY=None, SYSTEM_KEY set  — gather-first, user provides system key
 
 For the common case the subclass needs NO run() override at all. Modules
 with custom logic (e.g. meraki_facts) override run() as before.
@@ -46,8 +53,8 @@ class BaseResourceActionPlugin(ActionBase):
             MODULE_NAME     = 'vlan'
             SCOPE_PARAM     = 'network_id'
             USER_MODEL      = 'plugins.plugin_utils.user_models.vlan.UserVlan'
-            PRIMARY_KEY     = 'vlan_id'
-            SUPPORTS_DELETE  = True
+            CANONICAL_KEY   = 'vlan_id'
+            SUPPORTS_DELETE = True
 
     The base run() validates input, loops over config items, builds User
     Model instances, and dispatches to the manager.  Only meraki_facts
@@ -58,7 +65,8 @@ class BaseResourceActionPlugin(ActionBase):
     MODULE_NAME: str = None
     SCOPE_PARAM: str = 'network_id'
     USER_MODEL: str = None
-    PRIMARY_KEY: str = None
+    CANONICAL_KEY: str = None
+    SYSTEM_KEY: str = None
     SUPPORTS_DELETE: bool = True
 
     # Canonical resource module states
@@ -68,6 +76,48 @@ class BaseResourceActionPlugin(ActionBase):
 
     # Resolved lazily by _get_user_model_class()
     _user_model_cls = None
+
+    @property
+    def _match_key(self) -> str:
+        """The field used to index and match resources.
+
+        Returns CANONICAL_KEY when set (Categories A and B), otherwise
+        falls back to SYSTEM_KEY (Category C — gather-first resources).
+        """
+        return self.CANONICAL_KEY or self.SYSTEM_KEY
+
+    def _index_by_key(self, items: list, key: str) -> dict:
+        """Index a list of resource dicts by *key*, detecting duplicates.
+
+        Raises AnsibleError when two resources share the same canonical key
+        value, directing the user to provide the SYSTEM_KEY to disambiguate.
+        """
+        index = {}
+        for item in items:
+            k = str(item.get(key, ''))
+            if not k:
+                continue
+            if k in index and key == self.CANONICAL_KEY and self.SYSTEM_KEY:
+                raise AnsibleError(
+                    f"Duplicate {key}='{k}' found in existing resources. "
+                    f"Provide '{self.SYSTEM_KEY}' in your config to "
+                    f"disambiguate."
+                )
+            index[k] = item
+        return index
+
+    def _prepare_user_data(self, item, current, scope_value, user_cls):
+        """Build user_data, injecting the system key from a matched resource.
+
+        When SYSTEM_KEY is set and the user did not provide it, copy it
+        from the matched ``current`` resource so the platform manager can
+        resolve the API path parameter for update/delete operations.
+        """
+        effective_item = dict(item)
+        if self.SYSTEM_KEY and current is not None:
+            if not effective_item.get(self.SYSTEM_KEY):
+                effective_item[self.SYSTEM_KEY] = current[self.SYSTEM_KEY]
+        return user_cls(**{self.SCOPE_PARAM: scope_value}, **effective_item)
 
     # ------------------------------------------------------------------ #
     #  Data-driven run()                                                   #
@@ -299,21 +349,33 @@ class BaseResourceActionPlugin(ActionBase):
     def _apply_deleted(self, manager, user_cls, scope_value, config, before):
         """Delete specified resources.
 
-        Skips items whose primary key is not present in ``before``
-        (already absent — nothing to do).
+        Matches by canonical key (or system key for Category C).
+        Skips items not present in ``before`` (already absent).
+        Injects the system key from ``before`` when needed for API routing.
         """
-        before_keys = set()
-        if self.PRIMARY_KEY:
-            for item in before:
-                k = str(item.get(self.PRIMARY_KEY, ''))
-                if k:
-                    before_keys.add(k)
+        match_key = self._match_key
+        if not match_key:
+            return
+
+        before_by_key = self._index_by_key(before, match_key)
+        before_by_sys = (
+            self._index_by_key(before, self.SYSTEM_KEY)
+            if self.SYSTEM_KEY else {}
+        )
 
         for item in config:
-            if self.PRIMARY_KEY and item.get(self.PRIMARY_KEY):
-                if str(item[self.PRIMARY_KEY]) not in before_keys:
-                    continue
-            user_data = user_cls(**{self.SCOPE_PARAM: scope_value}, **item)
+            current = None
+            if self.SYSTEM_KEY and item.get(self.SYSTEM_KEY):
+                current = before_by_sys.get(str(item[self.SYSTEM_KEY]))
+            elif match_key and item.get(match_key):
+                current = before_by_key.get(str(item[match_key]))
+
+            if current is None:
+                continue
+
+            user_data = self._prepare_user_data(
+                item, current, scope_value, user_cls,
+            )
             manager.execute('delete', self.MODULE_NAME, user_data)
 
     def _apply_merged_or_replaced(self, manager, user_cls, scope_value,
@@ -321,36 +383,45 @@ class BaseResourceActionPlugin(ActionBase):
         """Create or update resources, skipping items already at desired state.
 
         Uses ``before`` to decide create vs update and to skip no-ops.
+        When SYSTEM_KEY is set, injects the resolved system key from
+        matched ``before`` items so the platform manager can route API calls.
         """
         operation = self._detect_operation({'state': state})
+        match_key = self._match_key
 
-        before_by_key = {}
-        if self.PRIMARY_KEY:
-            for item in before:
-                k = str(item.get(self.PRIMARY_KEY, ''))
-                if k:
-                    before_by_key[k] = item
+        before_by_key = (
+            self._index_by_key(before, match_key) if match_key else {}
+        )
+        before_by_sys = (
+            self._index_by_key(before, self.SYSTEM_KEY)
+            if self.SYSTEM_KEY else {}
+        )
 
         for item in config:
-            user_data = user_cls(**{self.SCOPE_PARAM: scope_value}, **item)
+            current = None
 
-            if self.PRIMARY_KEY and item.get(self.PRIMARY_KEY):
-                key = str(item[self.PRIMARY_KEY])
-                current = before_by_key.get(key)
+            if self.SYSTEM_KEY and item.get(self.SYSTEM_KEY):
+                current = before_by_sys.get(str(item[self.SYSTEM_KEY]))
+            elif match_key and item.get(match_key):
+                current = before_by_key.get(str(item[match_key]))
 
+            if match_key:
                 if current is not None:
                     if self._config_matches(item, current):
                         continue
                     op = 'update' if state == 'merged' else operation
+                elif item.get(match_key) or item.get(self.SYSTEM_KEY):
+                    op = 'create'
                 else:
                     op = 'create'
-            elif self.PRIMARY_KEY and not item.get(self.PRIMARY_KEY):
-                op = 'create'
             else:
                 if before and self._config_matches(item, before[0]):
                     continue
                 op = operation
 
+            user_data = self._prepare_user_data(
+                item, current, scope_value, user_cls,
+            )
             manager.execute(op, self.MODULE_NAME, user_data)
 
     def _apply_overridden(self, manager, user_cls, scope_value, config,
@@ -358,40 +429,42 @@ class BaseResourceActionPlugin(ActionBase):
         """Override: delete extras, then replace each desired item.
 
         Uses ``before`` (already gathered by run()) to determine extras.
+        Matches by canonical key; injects system key for API routing.
         Skips replace for items already matching desired state.
         """
-        before_by_key = {}
+        match_key = self._match_key
+        if not match_key:
+            return
+
+        before_by_key = self._index_by_key(before, match_key)
         desired_keys = set()
 
-        if self.PRIMARY_KEY:
-            for item in before:
-                k = str(item.get(self.PRIMARY_KEY, ''))
-                if k:
-                    before_by_key[k] = item
-            for item in config:
-                key_val = item.get(self.PRIMARY_KEY)
-                if key_val is not None:
-                    desired_keys.add(str(key_val))
+        for item in config:
+            key_val = item.get(match_key)
+            if key_val is not None:
+                desired_keys.add(str(key_val))
 
-            # Delete extras (current items not in desired set)
-            for current in before:
-                current_key = str(current.get(self.PRIMARY_KEY, ''))
-                if current_key and current_key not in desired_keys:
-                    delete_data = user_cls(
-                        **{self.SCOPE_PARAM: scope_value},
-                        **{self.PRIMARY_KEY: current.get(self.PRIMARY_KEY)},
-                    )
-                    manager.execute('delete', self.MODULE_NAME, delete_data)
+        # Delete extras (current items not in desired set)
+        for current in before:
+            current_key = str(current.get(match_key, ''))
+            if current_key and current_key not in desired_keys:
+                delete_item = {match_key: current.get(match_key)}
+                delete_data = self._prepare_user_data(
+                    delete_item, current, scope_value, user_cls,
+                )
+                manager.execute('delete', self.MODULE_NAME, delete_data)
 
         # Replace each desired item (skip no-ops)
         for item in config:
-            if self.PRIMARY_KEY and item.get(self.PRIMARY_KEY):
-                k = str(item[self.PRIMARY_KEY])
-                existing = before_by_key.get(k)
-                if existing and self._config_matches(item, existing):
+            current = None
+            if match_key and item.get(match_key):
+                current = before_by_key.get(str(item[match_key]))
+                if current and self._config_matches(item, current):
                     continue
 
-            user_data = user_cls(**{self.SCOPE_PARAM: scope_value}, **item)
+            user_data = self._prepare_user_data(
+                item, current, scope_value, user_cls,
+            )
             manager.execute('replace', self.MODULE_NAME, user_data)
 
     @staticmethod
@@ -438,10 +511,11 @@ class BaseResourceActionPlugin(ActionBase):
           overridden: C' = D   (set equality)
           deleted:    C' = C \\ D   (set difference)
         """
+        match_key = self._match_key
         before_by_key = {}
-        if self.PRIMARY_KEY:
+        if match_key:
             for item in before:
-                k = str(item.get(self.PRIMARY_KEY, ''))
+                k = str(item.get(match_key, ''))
                 if k:
                     before_by_key[k] = item
 
@@ -456,17 +530,18 @@ class BaseResourceActionPlugin(ActionBase):
 
     def _predict_merged(self, before, config, before_by_key):
         """Predict merged: union — add new items, merge fields into existing."""
+        match_key = self._match_key
         result = [dict(item) for item in before]
         result_by_key = {}
-        if self.PRIMARY_KEY:
+        if match_key:
             for item in result:
-                k = str(item.get(self.PRIMARY_KEY, ''))
+                k = str(item.get(match_key, ''))
                 if k:
                     result_by_key[k] = item
 
         for item in config:
-            if self.PRIMARY_KEY and item.get(self.PRIMARY_KEY):
-                key = str(item[self.PRIMARY_KEY])
+            if match_key and item.get(match_key):
+                key = str(item[match_key])
                 existing = result_by_key.get(key)
                 if existing is not None:
                     for field, val in item.items():
@@ -476,7 +551,7 @@ class BaseResourceActionPlugin(ActionBase):
                     new_item = dict(item)
                     result.append(new_item)
                     result_by_key[key] = new_item
-            elif not self.PRIMARY_KEY and before:
+            elif not match_key and before:
                 for field, val in item.items():
                     if val is not None:
                         result[0][field] = val
@@ -486,24 +561,25 @@ class BaseResourceActionPlugin(ActionBase):
 
     def _predict_replaced(self, before, config, before_by_key):
         """Predict replaced: item-level replacement, untouched items preserved."""
+        match_key = self._match_key
         result = [dict(item) for item in before]
         result_by_key = {}
-        if self.PRIMARY_KEY:
+        if match_key:
             for i, item in enumerate(result):
-                k = str(item.get(self.PRIMARY_KEY, ''))
+                k = str(item.get(match_key, ''))
                 if k:
                     result_by_key[k] = i
 
         for item in config:
-            if self.PRIMARY_KEY and item.get(self.PRIMARY_KEY):
-                key = str(item[self.PRIMARY_KEY])
+            if match_key and item.get(match_key):
+                key = str(item[match_key])
                 idx = result_by_key.get(key)
                 if idx is not None:
                     result[idx] = dict(item)
                 else:
                     result.append(dict(item))
                     result_by_key[key] = len(result) - 1
-            elif not self.PRIMARY_KEY and before:
+            elif not match_key and before:
                 result[0] = dict(item)
             else:
                 result.append(dict(item))
@@ -516,20 +592,21 @@ class BaseResourceActionPlugin(ActionBase):
 
     def _predict_deleted(self, before, config, before_by_key):
         """Predict deleted: set difference — remove items whose keys match."""
+        match_key = self._match_key
         if not config:
             return []
-        if not self.PRIMARY_KEY:
+        if not match_key:
             return []
 
         delete_keys = set()
         for item in config:
-            pk_val = item.get(self.PRIMARY_KEY)
-            if pk_val is not None:
-                delete_keys.add(str(pk_val))
+            k = item.get(match_key)
+            if k is not None:
+                delete_keys.add(str(k))
 
         return [
             dict(item) for item in before
-            if str(item.get(self.PRIMARY_KEY, '')) not in delete_keys
+            if str(item.get(match_key, '')) not in delete_keys
         ]
 
     # ------------------------------------------------------------------ #

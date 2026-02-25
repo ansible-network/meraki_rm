@@ -174,7 +174,7 @@ def _find_all(svc, fix: dict, allow_404: bool = False) -> list:
     than an error — used after delete to verify the resource is gone.
     """
     user_data = _user_data_dict(fix)
-    pk = fix["attrs"].get("PRIMARY_KEY")
+    pk = fix["attrs"].get("CANONICAL_KEY")
     find_data = dict(user_data)
     if fix["is_collection"] and pk:
         find_data.pop(pk, None)
@@ -200,7 +200,7 @@ def _comparable_fields(fix: dict) -> set:
     assigned primary key."""
     expected = _strip_nones(fix["expected_config"])
     exclude = {fix["attrs"]["SCOPE_PARAM"]}
-    pk = fix["attrs"].get("PRIMARY_KEY")
+    pk = fix["attrs"].get("CANONICAL_KEY")
     if fix["is_collection"] and pk:
         exclude.add(pk)
     return set(expected.keys()) - exclude
@@ -348,7 +348,7 @@ class TestDeleteRemovesResource:
 
         result = svc.execute("create", module_name, user_data)
 
-        pk = attrs.get("PRIMARY_KEY")
+        pk = attrs.get("CANONICAL_KEY")
         if pk and isinstance(result, dict):
             created_id = result.get(pk)
             if created_id:

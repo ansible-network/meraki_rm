@@ -13,6 +13,11 @@ description:
   - Manage Meraki dashboard authentication users for a network.
   - Supports merged, replaced, deleted, and gathered states.
 
+notes:
+  - "Canonical key: C(email) — identifies the auth user in playbooks."
+  - "System key: C(meraki_auth_user_id) — server-assigned, resolved automatically from gathered state."
+  - "Users do not need to provide C(meraki_auth_user_id) unless disambiguating duplicate emails."
+
 version_added: "0.1.0"
 
 author:
@@ -41,7 +46,9 @@ options:
     elements: dict
     suboptions:
       meraki_auth_user_id:
-        description: Meraki auth user ID. Required for merged, replaced, deleted.
+        description:
+          - Server-assigned ID, resolved automatically by matching on C(email).
+          - Provide only to disambiguate when duplicate emails exist.
         type: str
 
       name:

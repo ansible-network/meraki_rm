@@ -2,4 +2,3 @@
 expected_config:
   name: Test-Config Gathered
   splash_auth_settings: network default
-  group_policy_id: example

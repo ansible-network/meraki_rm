@@ -1,4 +1,4 @@
 ---
 expected_config:
-  interface_id: example
+  name: Test-Config
   vlan_id: '100'

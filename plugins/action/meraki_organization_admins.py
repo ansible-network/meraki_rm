@@ -7,4 +7,5 @@ class ActionModule(BaseResourceActionPlugin):
     MODULE_NAME = 'admin'
     SCOPE_PARAM = 'organization_id'
     USER_MODEL = 'plugins.plugin_utils.user_models.admin.UserAdmin'
-    PRIMARY_KEY = 'admin_id'
+    CANONICAL_KEY = 'email'
+    SYSTEM_KEY = 'admin_id'

@@ -13,6 +13,11 @@ description:
   - Manage Meraki organization configuration templates.
   - Supports merged, replaced, overridden, deleted, and gathered states.
 
+notes:
+  - "Canonical key: C(name) — identifies the resource in playbooks."
+  - "System key: C(config_template_id) — server-assigned, resolved automatically from gathered state."
+  - "Users do not need to provide C(config_template_id) unless disambiguating duplicate names."
+
 version_added: "0.1.0"
 
 author:
@@ -41,7 +46,9 @@ options:
     elements: dict
     suboptions:
       config_template_id:
-        description: Configuration template ID (for update/delete).
+        description:
+          - Server-assigned ID, resolved automatically by matching on C(name).
+          - Provide only to disambiguate when duplicate names exist.
         type: str
 
       name:

@@ -13,6 +13,11 @@ description:
   - Manage Meraki floor plans for a network.
   - Supports merged, replaced, deleted, and gathered states.
 
+notes:
+  - "Canonical key: C(name) — identifies the resource in playbooks."
+  - "System key: C(floor_plan_id) — server-assigned, resolved automatically from gathered state."
+  - "Users do not need to provide C(floor_plan_id) unless disambiguating duplicate names."
+
 version_added: "0.1.0"
 
 author:
@@ -41,7 +46,9 @@ options:
     elements: dict
     suboptions:
       floor_plan_id:
-        description: Floor plan ID. Required for merged, replaced, deleted.
+        description:
+          - Server-assigned ID, resolved automatically by matching on C(name).
+          - Provide only to disambiguate when duplicate names exist.
         type: str
 
       name:

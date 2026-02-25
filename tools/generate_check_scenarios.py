@@ -51,8 +51,8 @@ def yaml_dump(data: object) -> str:
 
 
 def parse_action_plugin(module_name: str) -> dict:
-    """Extract PRIMARY_KEY, SCOPE_PARAM, SUPPORTS_DELETE from an action plugin
-    using AST parsing (no imports required)."""
+    """Extract CANONICAL_KEY, SYSTEM_KEY, SCOPE_PARAM, SUPPORTS_DELETE from an
+    action plugin using AST parsing (no imports required)."""
     fqcn_suffix = f"meraki_{module_name}"
     action_file = ACTION_DIR / f"{fqcn_suffix}.py"
     if not action_file.exists():
@@ -62,7 +62,8 @@ def parse_action_plugin(module_name: str) -> dict:
     tree = ast.parse(source, filename=str(action_file))
 
     attrs: dict[str, object] = {
-        "PRIMARY_KEY": None,
+        "CANONICAL_KEY": None,
+        "SYSTEM_KEY": None,
         "SCOPE_PARAM": "network_id",
         "SUPPORTS_DELETE": True,
     }
@@ -371,7 +372,7 @@ def generate_check_scenario(module_name: str, dry_run: bool = False) -> list[str
     if not attrs:
         return [f"SKIP {module_name}: could not parse action plugin"]
 
-    is_singleton = attrs["PRIMARY_KEY"] is None
+    is_singleton = attrs["CANONICAL_KEY"] is None and attrs["SYSTEM_KEY"] is None
     scope_param = attrs["SCOPE_PARAM"]
     scope_value = make_scope_id(scope_param, module_name, "check")
 

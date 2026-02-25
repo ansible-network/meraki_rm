@@ -5,5 +5,4 @@ expected_config:
   gateway_ip: 10.0.0.1
   enabled: true
   ip_version: 1
-  static_route_id: example
 server_assigned_pk: static_route_id

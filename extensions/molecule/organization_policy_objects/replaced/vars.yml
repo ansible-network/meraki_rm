@@ -3,5 +3,4 @@ expected_config:
   category: adaptivePolicy
   type: adaptivePolicyIpv4Cidr
   cidr: 10.0.0.0/16
-  policy_object_id: example
 server_assigned_pk: policy_object_id

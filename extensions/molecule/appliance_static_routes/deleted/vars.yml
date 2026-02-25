@@ -1,4 +1,4 @@
 ---
 expected_config:
-  static_route_id: example
+  name: Test-Config
   gateway_vlan_id: 1

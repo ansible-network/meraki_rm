@@ -2,4 +2,3 @@
 expected_config:
   name: Test-Config Gathered
   time_zone: example Gathered
-  config_template_id: example

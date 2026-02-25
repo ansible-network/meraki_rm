@@ -78,7 +78,131 @@ All six share the same Primary Key: `(network_id, ssid_number)`.
 
 ---
 
-## SECTION 2: Principle 2 — CRUD Consolidation
+## SECTION 2: Principle 2 — Canonical Key Identity
+
+### Core Rule
+
+**Every resource module must identify resources by a Canonical Key — a human-meaningful, user-controlled field — not by an opaque, API-generated System Key.**
+
+The framework distinguishes two kinds of identity:
+
+- **Canonical Key**: The field a human uses to identify a resource. Stable, user-specified, meaningful. Examples: `name`, `email`, `vlan_id`, `prefix`, `iname`.
+- **System Key**: The field the API generates internally for URL routing (PUT/DELETE paths). Opaque, server-assigned, never required from users in the normal workflow. Examples: `admin_id`, `rf_profile_id`, `static_delegated_prefix_id`.
+
+The module resolves the system key behind the scenes by gathering current state and matching on the canonical key. The user never needs to know the UUID.
+
+```
+User writes:                    Framework resolves:
+  name: "Engineering"     --->    rf_profile_id: "5a8f3b2c"
+  email: "bob@corp.com"   --->    admin_id: "a1b2c3d4"
+  vlan_id: 100            --->    (same — vlan_id is both)
+```
+
+### The Anti-Pattern
+
+Exposing system-generated IDs as the primary identity:
+
+```yaml
+# BAD: User must know the API-generated UUID
+- novacom_organization_admins:
+    admin_id: "5a8f3b2c-d1e2-4f3a-b5c6-7d8e9f0a1b2c"
+    name: "Bob Smith"
+    state: merged
+```
+
+The user has no way to know `admin_id` without first gathering. If they created the admin weeks ago, the ID is lost. Every playbook becomes a two-step "gather then act" workflow.
+
+### The Resource Way
+
+Match by canonical key, resolve system key internally:
+
+```yaml
+# GOOD: User identifies by what they know
+- novacom_organization_admins:
+    email: "bob@corp.com"
+    name: "Bob Smith"
+    org_access: full
+    state: merged
+```
+
+The module internally gathers all admins, finds the one with `email: "bob@corp.com"`, resolves `admin_id: "5a8f3b2c..."` from the gathered state, and uses it for the API call. The user never sees the UUID.
+
+### Three Categories of Identity
+
+**Category A — Canonical key IS the system key.** The user picks the value and the API uses it directly for routing. `CANONICAL_KEY` is set, `SYSTEM_KEY` is not needed.
+
+| NovaCom Example | Canonical Key | System Key | Notes |
+|---|---|---|---|
+| `novacom_appliance_vlan` | `vlan_id` | (same) | User picks VLAN 10, API routes by `/vlans/10` |
+| `novacom_vlan_profiles` | `iname` | (same) | User-defined identifier |
+| `novacom_switch_access_policies` | `access_policy_number` | (same) | User-assigned number |
+
+**Category B — Canonical key differs from system key.** The module matches by canonical key and resolves the system key behind the scenes. Both `CANONICAL_KEY` and `SYSTEM_KEY` are set.
+
+| NovaCom Example | Canonical Key | System Key | Notes |
+|---|---|---|---|
+| `novacom_organization_admins` | `email` | `admin_id` | Email is unique per org |
+| `novacom_wireless_rf_profiles` | `name` | `rf_profile_id` | Name is human-meaningful |
+| `novacom_appliance_prefixes` | `prefix` | `static_delegated_prefix_id` | Subnet string is the identity |
+| `novacom_webhooks` | `name` | `http_server_id` | Name chosen by user |
+
+**Category C — No canonical key exists.** The resource has no human-meaningful unique field. `CANONICAL_KEY` is `None`, only `SYSTEM_KEY` is set. The module documents this and requires the user to provide the system key (discovered via `state: gathered`).
+
+| NovaCom Example | Canonical Key | System Key | Notes |
+|---|---|---|---|
+| `novacom_switch_qos_rules` | (none) | `qos_rule_id` | Rules defined by dscp/vlan/protocol — no name |
+| `novacom_switch_link_aggregations` | (none) | `link_aggregation_id` | Only port lists, no name |
+
+### Duplicate Canonical Key Handling
+
+The framework assumes canonical keys are unique within scope. If duplicates are detected during gather:
+
+1. The module **fails immediately** with a clear error: *"Multiple resources with name='Engineering' found. Provide 'rf_profile_id' to disambiguate."*
+2. The user adds the system key to their config as a tiebreaker.
+3. When the system key is provided explicitly, it takes precedence over canonical key matching.
+
+This is a safety net, not a silent heuristic. The module never guesses which duplicate the user meant.
+
+### System Key as Escape Hatch
+
+For **any** category, if the user provides the system key in their config, it overrides canonical key matching:
+
+```yaml
+# Explicit system key — used when duplicates exist or for Category C
+- novacom_wireless_rf_profiles:
+    rf_profile_id: "abc-123"    # system key takes precedence
+    name: "Engineering"
+    state: merged
+```
+
+### Module Documentation Requirement
+
+Every module's DOCUMENTATION must identify:
+
+- The canonical key field (or state that none exists)
+- The system key field (when different from canonical key)
+- For Category C: a note that `state: gathered` must be used to discover system keys
+
+### Decision Criteria for Choosing the Canonical Key
+
+When generating a new module, evaluate candidate fields in this order:
+
+1. **`name`** — most common; human-meaningful, typically unique per scope
+2. **`email`** — for user/admin resources
+3. **Domain-specific identifier** — `prefix` (subnet string), `iname` (profile identifier), `url`
+4. **Numeric user-assigned key** — `vlan_id`, `access_policy_number`, `ssid_number`
+5. **No candidate** — Category C; halt and document as gather-first resource
+
+### Stop Condition
+
+If the agent cannot identify a canonical key candidate for a resource:
+
+- **Halt.** Do not default to the system key as canonical.
+- **Ask:** "No canonical key found for this resource. Confirm this is a Category C (gather-first) resource, or identify the canonical key field."
+
+---
+
+## SECTION 3: Principle 3 — CRUD Consolidation
 
 ### Core Rule
 
@@ -141,7 +265,7 @@ One module, one interface, full lifecycle.
 
 ---
 
-## SECTION 3: Principle 3 — Namespace Hoisting Threshold
+## SECTION 4: Principle 4 — Namespace Hoisting Threshold
 
 ### Core Rule
 
@@ -207,7 +331,7 @@ For NovaCom SSID firewall rules: they are never managed without the SSID. Sink t
 
 ---
 
-## SECTION 4: Principle 4 — Data Normalization over API Mirroring
+## SECTION 5: Principle 5 — Data Normalization over API Mirroring
 
 ### Core Rule
 
@@ -262,7 +386,7 @@ Users expect `snake_case`, descriptive names, and consistency with Ansible conve
 
 ---
 
-## SECTION 5: Principle 5 — Single-Session Transactions
+## SECTION 6: Principle 6 — Single-Session Transactions
 
 ### Core Rule
 
@@ -322,7 +446,7 @@ If the agent produces logic that loops API calls for individual fields, the code
 
 ---
 
-## SECTION 6: Principle 6 — Symmetric Validation
+## SECTION 7: Principle 7 — Symmetric Validation
 
 ### Core Rule
 
@@ -394,7 +518,7 @@ validated_output = validate_data(manager_response, argspec, direction='output')
 
 ---
 
-## SECTION 7: Stop Conditions for Code Generation
+## SECTION 8: Stop Conditions for Code Generation
 
 The agent **MUST** halt and escalate when it detects the following conditions.
 
@@ -444,7 +568,7 @@ Port:
 
 ---
 
-## SECTION 8: Quality Checklist
+## SECTION 9: Quality Checklist
 
 For **every** resource module, verify the following before merge.
 
@@ -467,7 +591,9 @@ For **every** resource module, verify the following before merge.
 ### Naming and Idempotency
 
 - [ ] **Module name follows entity naming** — `novacom_appliance_vlan`, not `novacom_networks_appliance_vlans` (endpoint mirroring).
-- [ ] **Primary key is clearly identified** — For idempotency: which field(s) uniquely identify the resource? Document in DOCUMENTATION.
+- [ ] **Canonical key identified and documented** — Module DOCUMENTATION states the canonical key (or notes this is a Category C gather-first resource). See Principle 2.
+- [ ] **System key documented when applicable** — If the canonical key differs from the API routing key, both are documented.
+- [ ] **Duplicate canonical key detection** — Module fails with actionable error when duplicate canonical keys are found in existing resources.
 
 ### Multi-Endpoint Resources
 
@@ -475,7 +601,7 @@ For **every** resource module, verify the following before merge.
 
 ---
 
-## SECTION 9: Human-in-the-Loop Triggers
+## SECTION 10: Human-in-the-Loop Triggers
 
 The agent **MUST** stop and ask a human when encountering the following. Do not guess or apply heuristics.
 
@@ -551,15 +677,16 @@ The API structure suggests two. Domain logic might suggest one.
 | Principle | One-Line Rule |
 |-----------|---------------|
 | 1. Entity Aggregation | Same primary key → one module. Group sub-resources. |
-| 2. CRUD Consolidation | One module, full lifecycle. state: merged, deleted, gathered. |
-| 3. Namespace Hoisting | Path depth > 3 → evaluate sinking into parent. |
-| 4. Data Normalization | No API mirroring. snake_case, human-readable names. |
-| 5. Single-Session Transactions | One task = one API transaction (or one batch). |
-| 6. Symmetric Validation | Single argspec for input and output validation. |
-| 7. Stop Conditions | Halt on duplicate schemas, circular refs, missing keys. |
-| 8. Quality Checklist | Verify every item before merge. |
-| 9. Human-in-the-Loop | Stop on unit conversion, state transitions, dependencies, ambiguity, entity disputes. |
+| 2. Canonical Key Identity | Match by human key (name, email). System key resolved internally. |
+| 3. CRUD Consolidation | One module, full lifecycle. state: merged, deleted, gathered. |
+| 4. Namespace Hoisting | Path depth > 3 → evaluate sinking into parent. |
+| 5. Data Normalization | No API mirroring. snake_case, human-readable names. |
+| 6. Single-Session Transactions | One task = one API transaction (or one batch). |
+| 7. Symmetric Validation | Single argspec for input and output validation. |
+| 8. Stop Conditions | Halt on duplicate schemas, circular refs, missing keys. |
+| 9. Quality Checklist | Verify every item before merge. |
+| 10. Human-in-the-Loop | Stop on unit conversion, state transitions, dependencies, ambiguity, entity disputes. |
 
 ---
 
-*Document version: 1.0 | NovaCom Networks (fictitious) | OpenAPI Module Design Principles*
+*Document version: 1.1 | NovaCom Networks (fictitious) | OpenAPI Module Design Principles*

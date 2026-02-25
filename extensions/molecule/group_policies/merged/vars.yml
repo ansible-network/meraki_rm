@@ -1,5 +1,4 @@
 ---
 expected_config:
-  group_policy_id: example
   name: Test-Config
   splash_auth_settings: example

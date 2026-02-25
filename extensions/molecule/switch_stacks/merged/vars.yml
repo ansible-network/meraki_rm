@@ -1,6 +1,5 @@
 ---
 expected_config:
-  switch_stack_id: example
   name: Test-Config
   is_monitor_only: true
   virtual_mac: example

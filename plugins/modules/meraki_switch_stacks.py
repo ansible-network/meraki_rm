@@ -13,6 +13,11 @@ description:
   - Manage Meraki switch stacks for a network.
   - Network-scoped. Supports merged, replaced, deleted, and gathered states.
 
+notes:
+  - "Canonical key: C(name) — identifies the resource in playbooks."
+  - "System key: C(switch_stack_id) — server-assigned, resolved automatically from gathered state."
+  - "Users do not need to provide C(switch_stack_id) unless disambiguating duplicate names."
+
 version_added: "0.1.0"
 
 author:
@@ -41,7 +46,9 @@ options:
     elements: dict
     suboptions:
       switch_stack_id:
-        description: Switch stack ID (identifier).
+        description:
+          - Server-assigned ID, resolved automatically by matching on C(name).
+          - Provide only to disambiguate when duplicate names exist.
         type: str
 
       name:

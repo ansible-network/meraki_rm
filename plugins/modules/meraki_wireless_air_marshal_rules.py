@@ -14,6 +14,10 @@ description:
   - Mixed resource - rules (CRUD) and settings (singleton).
   - Supports merged, replaced, deleted, and gathered states.
 
+notes:
+  - "This resource has no canonical key (Category C — gather-first)."
+  - "Use C(state=gathered) to discover C(rule_id) values, then reference them in subsequent tasks."
+
 version_added: "0.1.0"
 
 author:
@@ -42,7 +46,8 @@ options:
     elements: dict
     suboptions:
       rule_id:
-        description: Air Marshal rule ID (identifier).
+        description:
+          - Server-assigned rule ID. Discover via C(state=gathered).
         type: str
 
       type:

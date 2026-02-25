@@ -1,5 +1,4 @@
 expected_config:
   name: Replaced-Config
   time_zone: US/Eastern
-  config_template_id: example
 server_assigned_pk: config_template_id

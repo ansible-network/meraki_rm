@@ -13,6 +13,11 @@ description:
   - Manage Meraki appliance static delegated IPv6 prefixes for a network.
   - Supports merged, replaced, deleted, and gathered states.
 
+notes:
+  - "Canonical key: C(prefix) — the IPv6 prefix string identifies the resource in playbooks."
+  - "System key: C(static_delegated_prefix_id) — server-assigned, resolved automatically from gathered state."
+  - "Users do not need to provide C(static_delegated_prefix_id) unless disambiguating duplicate prefixes."
+
 version_added: "0.1.0"
 
 author:
@@ -41,7 +46,9 @@ options:
     elements: dict
     suboptions:
       static_delegated_prefix_id:
-        description: Static delegated prefix ID. Required for merged, replaced, deleted.
+        description:
+          - Server-assigned ID, resolved automatically by matching on C(prefix).
+          - Provide only to disambiguate when duplicate prefixes exist.
         type: str
 
       prefix:

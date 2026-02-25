@@ -1,6 +1,5 @@
 ---
 expected_config:
-  id: example
   name: Test-Config
   message: example
   include_sensor_url: true

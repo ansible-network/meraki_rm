@@ -6,4 +6,4 @@ from .base_action import BaseResourceActionPlugin
 class ActionModule(BaseResourceActionPlugin):
     MODULE_NAME = 'switch_qos_rule'
     USER_MODEL = 'plugins.plugin_utils.user_models.switch_qos_rule.UserSwitchQosRule'
-    PRIMARY_KEY = 'qos_rule_id'
+    SYSTEM_KEY = 'qos_rule_id'

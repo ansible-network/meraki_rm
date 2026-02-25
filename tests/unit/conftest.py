@@ -24,7 +24,7 @@ SPEC_PATH = REPO_ROOT / "spec3.json"
 
 _ATTR_RE = {
     attr: re.compile(rf"{attr}\s*=\s*['\"](.+?)['\"]")
-    for attr in ("MODULE_NAME", "SCOPE_PARAM", "USER_MODEL", "PRIMARY_KEY")
+    for attr in ("MODULE_NAME", "SCOPE_PARAM", "USER_MODEL", "CANONICAL_KEY")
 }
 _BOOL_RE = re.compile(r"SUPPORTS_DELETE\s*=\s*(True|False)")
 _STATES_RE = re.compile(
@@ -35,7 +35,7 @@ _ALL_STATES = frozenset({"merged", "replaced", "overridden", "deleted", "gathere
 
 _DEFAULTS: Dict[str, Any] = {
     "SCOPE_PARAM": "network_id",
-    "PRIMARY_KEY": None,
+    "CANONICAL_KEY": None,
     "SUPPORTS_DELETE": True,
     "VALID_STATES": _ALL_STATES,
 }

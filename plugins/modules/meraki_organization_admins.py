@@ -13,6 +13,11 @@ description:
   - Manage Meraki organization administrators.
   - Supports merged, replaced, overridden, deleted, and gathered states.
 
+notes:
+  - "Canonical key: C(email) — identifies the admin in playbooks."
+  - "System key: C(admin_id) — server-assigned, resolved automatically from gathered state."
+  - "Users do not need to provide C(admin_id) unless disambiguating duplicate emails."
+
 version_added: "0.1.0"
 
 author:
@@ -41,7 +46,9 @@ options:
     elements: dict
     suboptions:
       admin_id:
-        description: Admin ID (for update/delete).
+        description:
+          - Server-assigned ID, resolved automatically by matching on C(email).
+          - Provide only to disambiguate when duplicate emails exist.
         type: str
 
       name:

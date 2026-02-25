@@ -5,5 +5,4 @@ expected_config:
   interface_ip: 10.0.0.1
   default_gateway: 10.0.0.1
   multicast_routing: disabled
-  interface_id: example
 server_assigned_pk: interface_id

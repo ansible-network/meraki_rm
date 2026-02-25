@@ -5,4 +5,3 @@ expected_config:
   interface_ip: 10.0.0.2
   default_gateway: 10.0.0.2
   multicast_routing: IGMP snooping querier
-  interface_id: example

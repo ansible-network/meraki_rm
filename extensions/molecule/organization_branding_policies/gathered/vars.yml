@@ -2,4 +2,3 @@
 expected_config:
   name: Test-Config Gathered
   enabled: false
-  branding_policy_id: example

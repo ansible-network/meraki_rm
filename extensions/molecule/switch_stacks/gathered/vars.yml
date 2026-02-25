@@ -4,4 +4,3 @@ expected_config:
   serials:
   - Q2XX-XXXX-0001-g
   - Q2XX-XXXX-0002-g
-  switch_stack_id: example

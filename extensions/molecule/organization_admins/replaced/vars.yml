@@ -2,5 +2,4 @@ expected_config:
   name: Replaced-Config
   email: admin@example.com
   org_access: read-only
-  admin_id: example
 server_assigned_pk: admin_id

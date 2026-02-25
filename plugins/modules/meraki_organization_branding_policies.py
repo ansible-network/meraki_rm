@@ -13,6 +13,11 @@ description:
   - Manage Meraki organization branding policies.
   - Supports merged, replaced, overridden, deleted, and gathered states.
 
+notes:
+  - "Canonical key: C(name) — identifies the resource in playbooks."
+  - "System key: C(branding_policy_id) — server-assigned, resolved automatically from gathered state."
+  - "Users do not need to provide C(branding_policy_id) unless disambiguating duplicate names."
+
 version_added: "0.1.0"
 
 author:
@@ -41,7 +46,9 @@ options:
     elements: dict
     suboptions:
       branding_policy_id:
-        description: Branding policy ID (for update/delete).
+        description:
+          - Server-assigned ID, resolved automatically by matching on C(name).
+          - Provide only to disambiguate when duplicate names exist.
         type: str
 
       name:

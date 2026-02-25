@@ -6,4 +6,3 @@ expected_config:
   account_type: 802.1X
   is_admin: false
   email_password_to_user: false
-  meraki_auth_user_id: example

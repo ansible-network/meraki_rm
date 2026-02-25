@@ -1,4 +1,4 @@
 ---
 expected_config:
-  quality_retention_profile_id: example
+  name: Test-Config
   schedule_id: example

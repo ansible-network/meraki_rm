@@ -1,6 +1,5 @@
 ---
 expected_config:
-  mqtt_broker_id: example
   name: Replaced-Config
   host: mqtt.example.com
   port: 1883

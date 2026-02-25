@@ -13,6 +13,9 @@ description:
   - Manage Meraki VLAN profiles for a network.
   - Supports merged, replaced, deleted, and gathered states.
 
+notes:
+  - "Canonical key: C(iname) — user-assigned identifier, used for both identification and API routing."
+
 version_added: "0.1.0"
 
 author:

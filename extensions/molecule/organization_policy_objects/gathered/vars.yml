@@ -4,4 +4,3 @@ expected_config:
   category: adaptivePolicy Gathered
   type: adaptivePolicyIpv4Cidr Gathered
   cidr: 192.168.128.1/24
-  policy_object_id: example

@@ -19,14 +19,14 @@ from plugins.action.base_action import BaseResourceActionPlugin
 class FakePlugin(BaseResourceActionPlugin):
     MODULE_NAME = 'test_resource'
     SCOPE_PARAM = 'network_id'
-    PRIMARY_KEY = 'item_id'
+    CANONICAL_KEY = 'item_id'
     SUPPORTS_DELETE = True
 
 
 class SingletonPlugin(BaseResourceActionPlugin):
     MODULE_NAME = 'test_singleton'
     SCOPE_PARAM = 'network_id'
-    PRIMARY_KEY = None
+    CANONICAL_KEY = None
     SUPPORTS_DELETE = False
 
 

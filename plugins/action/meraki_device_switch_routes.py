@@ -7,4 +7,5 @@ class ActionModule(BaseResourceActionPlugin):
     MODULE_NAME = 'device_switch_routing'
     SCOPE_PARAM = 'serial'
     USER_MODEL = 'plugins.plugin_utils.user_models.device_switch_routing.UserDeviceSwitchRouting'
-    PRIMARY_KEY = 'interface_id'
+    CANONICAL_KEY = 'name'
+    SYSTEM_KEY = 'interface_id'

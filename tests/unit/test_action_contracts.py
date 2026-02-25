@@ -11,7 +11,7 @@ Validated contracts per module:
   1. State routing     – every supported state resolves to endpoint ops
   2. Field mapping     – _field_mapping keys/values match real dataclass fields
   3. Endpoint fields   – operation field lists reference real API class fields
-  4. Identity fields   – SCOPE_PARAM and PRIMARY_KEY exist on the user model
+  4. Identity fields   – SCOPE_PARAM and CANONICAL_KEY exist on the user model
   5. Data roundtrip    – User → API → User preserves all mapped fields
 """
 
@@ -80,7 +80,7 @@ class TestStateRouting:
             pytest.skip("merged not in VALID_STATES")
         found = self._ops_for(ops, "update")
         # Create-only resources (no PUT) may have merged for create path only
-        if not found and attrs.get("PRIMARY_KEY"):
+        if not found and attrs.get("CANONICAL_KEY"):
             found = self._ops_for(ops, "create")
         assert found, (
             f"{attrs['MODULE_NAME']}: 'merged' state needs endpoint ops "
@@ -116,11 +116,11 @@ class TestStateRouting:
         attrs, _, _, ops = plugin
         if "merged" not in attrs["VALID_STATES"]:
             pytest.skip("merged not in VALID_STATES")
-        if not attrs.get("PRIMARY_KEY"):
-            pytest.skip("No PRIMARY_KEY — singleton resource")
+        if not attrs.get("CANONICAL_KEY"):
+            pytest.skip("No CANONICAL_KEY — singleton resource")
         found = self._ops_for(ops, "create")
         assert found, (
-            f"{attrs['MODULE_NAME']}: PRIMARY_KEY='{attrs['PRIMARY_KEY']}' "
+            f"{attrs['MODULE_NAME']}: CANONICAL_KEY='{attrs['CANONICAL_KEY']}' "
             f"implies merged can create new items, but no endpoint op with "
             f"required_for='create' found."
         )
@@ -131,7 +131,7 @@ class TestStateRouting:
 # ===================================================================
 
 class TestIdentityFields:
-    """SCOPE_PARAM and PRIMARY_KEY must exist on the user model."""
+    """SCOPE_PARAM and CANONICAL_KEY must exist on the user model."""
 
     def test_scope_param_on_user_model(self, plugin):
         attrs, user_cls, _, _ = plugin
@@ -143,12 +143,12 @@ class TestIdentityFields:
 
     def test_primary_key_on_user_model(self, plugin):
         attrs, user_cls, _, _ = plugin
-        pk = attrs.get("PRIMARY_KEY")
+        pk = attrs.get("CANONICAL_KEY")
         if not pk:
-            pytest.skip("No PRIMARY_KEY set")
+            pytest.skip("No CANONICAL_KEY set")
         user_fields = {f.name for f in dc_fields(user_cls)}
         assert pk in user_fields, (
-            f"{attrs['MODULE_NAME']}: PRIMARY_KEY='{pk}' not in "
+            f"{attrs['MODULE_NAME']}: CANONICAL_KEY='{pk}' not in "
             f"{user_cls.__name__} fields: {sorted(user_fields)}"
         )
 

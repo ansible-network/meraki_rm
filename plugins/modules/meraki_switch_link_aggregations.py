@@ -13,6 +13,10 @@ description:
   - Manage Meraki switch link aggregation groups for a network.
   - Network-scoped. Supports merged, replaced, deleted, and gathered states.
 
+notes:
+  - "This resource has no canonical key (Category C — gather-first)."
+  - "Use C(state=gathered) to discover C(link_aggregation_id) values, then reference them in subsequent tasks."
+
 version_added: "0.1.0"
 
 author:
@@ -41,7 +45,8 @@ options:
     elements: dict
     suboptions:
       link_aggregation_id:
-        description: Link aggregation ID (identifier).
+        description:
+          - Server-assigned aggregation ID. Discover via C(state=gathered).
         type: str
 
       switch_ports:

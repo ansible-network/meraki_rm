@@ -13,6 +13,11 @@ description:
   - Manage Meraki camera wireless profiles for a network.
   - Supports merged, replaced, deleted, and gathered states.
 
+notes:
+  - "Canonical key: C(name) — identifies the resource in playbooks."
+  - "System key: C(wireless_profile_id) — server-assigned, resolved automatically from gathered state."
+  - "Users do not need to provide C(wireless_profile_id) unless disambiguating duplicate names."
+
 version_added: "0.1.0"
 
 author:
@@ -41,7 +46,9 @@ options:
     elements: dict
     suboptions:
       wireless_profile_id:
-        description: Wireless profile ID. Required for merged, replaced, deleted.
+        description:
+          - Server-assigned ID, resolved automatically by matching on C(name).
+          - Provide only to disambiguate when duplicate names exist.
         type: str
 
       name:

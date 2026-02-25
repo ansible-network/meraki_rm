@@ -524,7 +524,7 @@ class ActionModule(BaseResourceActionPlugin):
    from `SCOPE_PARAM`.
 5. **Dispatches per state**: gathered → find, deleted → delete (if `SUPPORTS_DELETE`),
    overridden → gather + diff + delete extras + replace desired,
-   merged/replaced → create or update (using `PRIMARY_KEY` to decide).
+   merged/replaced → create or update (using `CANONICAL_KEY` to decide).
 6. **Validates output** against the same argspec before returning — strips
    undocumented fields, enforcing the return data contract with the user.
 
@@ -535,12 +535,13 @@ class ActionModule(BaseResourceActionPlugin):
 | `MODULE_NAME` | `str` | (required) | Resource identifier, e.g. `'vlan'` |
 | `SCOPE_PARAM` | `str` | `'network_id'` | Which arg carries the resource scope |
 | `USER_MODEL` | `str` | (required) | Dotted import path to the User Model class |
-| `PRIMARY_KEY` | `str` | `None` | Field name that distinguishes create vs update |
+| `CANONICAL_KEY` | `str` | `None` | Human-facing field for matching (name, email, vlan_id) |
+| `SYSTEM_KEY` | `str` | `None` | API-generated identity for URL routing (admin_id, etc.) |
 | `SUPPORTS_DELETE` | `bool` | `True` | `False` for singletons (no delete endpoint) |
 
 #### Archetypes
 
-| Archetype | PRIMARY_KEY | SUPPORTS_DELETE | Modules |
+| Archetype | CANONICAL_KEY | SUPPORTS_DELETE | Modules |
 |---|---|---|---|
 | Full CRUD | set (e.g. `'admin_id'`) | `True` | admin, config_template, policy_object, ... |
 | Update-only | `None` | `True` | vlan, static_route, webhook, ... |
@@ -1038,15 +1039,15 @@ adding opt-in complexity.
 
 ### 24. Singleton Idempotence — Skip Check for Keyless Resources
 
-**Mistake**: Modules without `PRIMARY_KEY` (singletons like `network_settings`,
+**Mistake**: Modules without `CANONICAL_KEY` (singletons like `network_settings`,
 `appliance_security`) always sent the API update on every run because the
 `_apply_merged_or_replaced` skip-if-matching check was gated behind
-`if self.PRIMARY_KEY`. The before/after comparison then detected changes introduced
+`if self._match_key`. The before/after comparison then detected changes introduced
 by the mock server's response (extra fields, type coercion) and reported `changed: true`
 on idempotence replay.
 
 **Fix**: Added a `_config_matches(item, before[0])` check in the `else` branch
-(no PRIMARY_KEY). Singletons now compare the desired config against the existing state
+(no CANONICAL_KEY). Singletons now compare the desired config against the existing state
 and skip the API call when all user-supplied fields already match.
 
 **Rule**: Every code path through `_apply_merged_or_replaced` must have a no-op

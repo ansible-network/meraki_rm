@@ -391,14 +391,28 @@ def process_module(module_name: str, dry_run: bool = False) -> list[str]:
         if state in STATES_NEEDING_PREPARE and merged_config:
             if state == "overridden" and merged_config:
                 extra_seed = dict(merged_config)
-                pk = next((k for k in extra_seed if k.endswith("_id") or k == "id"), None)
-                if pk and isinstance(extra_seed.get(pk), str):
-                    extra_seed[pk] = "999"
-                    if "name" in extra_seed:
-                        extra_seed["name"] = "Extra-To-Delete"
+                # Vary the canonical key (name/email/prefix) to create a
+                # second resource.  Fall back to system key (_id) if no
+                # canonical key exists (Category C).
+                if "name" in extra_seed:
+                    extra_seed["name"] = "Extra-To-Delete"
+                    seed_config = [merged_config, extra_seed]
+                elif "email" in extra_seed:
+                    extra_seed["email"] = "extra@example.com"
+                    seed_config = [merged_config, extra_seed]
+                elif "prefix" in extra_seed:
+                    extra_seed["prefix"] = "10.255.255.0/24"
+                    seed_config = [merged_config, extra_seed]
+                elif "iname" in extra_seed:
+                    extra_seed["iname"] = "extra_profile"
                     seed_config = [merged_config, extra_seed]
                 else:
-                    seed_config = merged_config
+                    pk = next((k for k in extra_seed if k.endswith("_id") or k == "id"), None)
+                    if pk and isinstance(extra_seed.get(pk), str):
+                        extra_seed[pk] = "999"
+                        seed_config = [merged_config, extra_seed]
+                    else:
+                        seed_config = merged_config
             else:
                 seed_config = merged_config
             write_prepare(scenario_dir, module_name, state, module_fqcn,

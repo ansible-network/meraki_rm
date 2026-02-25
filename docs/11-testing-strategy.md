@@ -782,7 +782,7 @@ tests/unit/
 | Contract | Assertion |
 |---|---|
 | **State routing** | Every state in `VALID_STATES` maps to an existing endpoint operation (`merged` → `update` or `create`, `deleted` → `delete`, `gathered` → `find`) |
-| **Identity fields** | `SCOPE_PARAM` and `PRIMARY_KEY` exist as fields on the User Model dataclass |
+| **Identity fields** | `SCOPE_PARAM`, `CANONICAL_KEY`, and `SYSTEM_KEY` (when set) exist as fields on the User Model dataclass |
 | **Field mapping keys** | Every key in `_field_mapping` is a real field on the User Model |
 | **Field mapping values** | Every value in `_field_mapping` is a real field on the API class |
 | **Endpoint fields** | Fields listed in `EndpointOperation.fields` exist on the API class |
@@ -790,7 +790,7 @@ tests/unit/
 
 ### Discovery
 
-Tests dynamically discover all action plugins by globbing `plugins/action/meraki_*.py`, parsing class attributes (`MODULE_NAME`, `SCOPE_PARAM`, `USER_MODEL`, `PRIMARY_KEY`, `VALID_STATES`, `SUPPORTS_DELETE`) from source text without importing, then loading the corresponding classes.
+Tests dynamically discover all action plugins by globbing `plugins/action/meraki_*.py`, parsing class attributes (`MODULE_NAME`, `SCOPE_PARAM`, `USER_MODEL`, `CANONICAL_KEY`, `SYSTEM_KEY`, `VALID_STATES`, `SUPPORTS_DELETE`) from source text without importing, then loading the corresponding classes.
 
 ### Why These Live in `tests/unit/` Not `plugins/`
 
@@ -1217,7 +1217,7 @@ Unit tests run first (fast gate — ~1200+ tests in <5s across colocated, contra
 | **Argspec choices violation** | — | — | Catches (ArgumentSpecValidator) | — | — | — |
 | **Wrong API endpoint path** | Tier 2 endpoint ops | — | — | Catches (404 from mock) | — | — |
 | **State has no matching endpoint op** | — | Catches (state routing) | — | — | — | — |
-| **PRIMARY_KEY missing from user model** | — | Catches (identity fields) | — | — | — | — |
+| **CANONICAL_KEY missing from user model** | — | Catches (identity fields) | — | — | — | — |
 | **Endpoint field not on API class** | — | Catches (endpoint fields) | — | — | — | — |
 | **Broken forward transform** (User → API) | Tier 1 forward + Tier 2 roundtrip | — | Catches (jsonschema) | Catches (invalid payload) | — | — |
 | **Broken reverse transform** (API → User) | Tier 2 reverse + roundtrip | — | Catches (roundtrip) | Catches (find mismatch) | Catches (verify) | — |
