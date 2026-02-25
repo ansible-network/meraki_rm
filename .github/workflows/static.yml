@@ -5,7 +5,11 @@ on:
     branches: [main]
     paths:
       - 'plugins/modules/**'
+      - 'plugins/plugin_utils/user_models/**'
       - 'tools/ansible-doc-renderer/**'
+      - 'tools/generate_mcp_docs.py'
+      - 'tools/generate_cli_docs.py'
+      - 'tools/md_to_html.py'
       - '.github/workflows/static.yml'
   workflow_dispatch:
 
@@ -46,7 +50,7 @@ jobs:
           npm ci
           npm run build
 
-      - name: Generate site
+      - name: Generate module docs
         run: |
           ansible-doc --metadata-dump -t module --no-fail-on-errors cisco.meraki_rm > /tmp/meraki-docs.json
           node tools/ansible-doc-renderer/out/cli.js \
@@ -55,6 +59,16 @@ jobs:
             --title "Cisco Meraki RM Collection" \
             --description "Ansible resource module collection for managing Cisco Meraki Dashboard infrastructure" \
             --version "$(grep '^version:' galaxy.yml | awk '{print $2}')"
+
+      - name: Generate MCP & CLI docs
+        run: |
+          pip install requests
+          python tools/generate_mcp_docs.py
+          python tools/generate_cli_docs.py
+          python tools/md_to_html.py \
+            --output docs/_site \
+            --css-path styles.css \
+            docs/12-mcp-server.md docs/13-cli.md
 
       - uses: actions/upload-pages-artifact@v3
         with:

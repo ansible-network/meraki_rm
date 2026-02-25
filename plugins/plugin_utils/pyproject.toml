@@ -11,9 +11,11 @@ dependencies = ["requests"]
 
 [project.optional-dependencies]
 mcp = ["mcp", "pyyaml"]
+cli = ["pyyaml", "requests"]
 
 [project.scripts]
 meraki-mcp-server = "meraki_rm_sdk.mcp.server:main"
+meraki-cli = "meraki_rm_sdk.cli.main:main"
 
 # Hatch source remapping: install plugin_utils/ contents as meraki_rm_sdk/
 # Note: editable installs (pip install -e) not supported with prefix remaps;

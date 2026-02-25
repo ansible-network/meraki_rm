@@ -19,11 +19,8 @@ import argparse
 import asyncio
 import json
 import os
-import signal
 import subprocess
 import sys
-import time
-from pathlib import Path
 from typing import Any, Dict
 
 import yaml
@@ -229,75 +226,6 @@ def create_server(mode: str = "task") -> Server:
     return server
 
 
-_MOCK_PORT = 29443
-_MOCK_URL = f"http://127.0.0.1:{_MOCK_PORT}"
-
-
-def _find_project_root() -> Path:
-    """Walk up from this file to find the collection root (contains galaxy.yml)."""
-    candidate = Path(__file__).resolve().parent
-    for _ in range(10):
-        if (candidate / "galaxy.yml").exists():
-            return candidate
-        candidate = candidate.parent
-    return Path.cwd()
-
-
-def _start_mock_server() -> subprocess.Popen:
-    """Start the mock server as a subprocess.
-
-    Returns:
-        The running Popen object.  The caller is responsible for termination.
-
-    Raises:
-        SystemExit: If the spec file is missing or the server fails health check.
-    """
-    root = _find_project_root()
-    spec = root / "spec3.json"
-    if not spec.exists():
-        print(
-            f"ERROR: spec3.json not found at {spec}",
-            file=sys.stderr,
-        )
-        sys.exit(1)
-
-    proc = subprocess.Popen(
-        [
-            sys.executable, "-m", "tools.mock_server.server",
-            "--spec", str(spec),
-            "--port", str(_MOCK_PORT),
-        ],
-        cwd=str(root),
-        stdout=subprocess.DEVNULL,
-        stderr=subprocess.DEVNULL,
-    )
-
-    import urllib.request
-    import urllib.error
-
-    for attempt in range(30):
-        time.sleep(0.5)
-        if proc.poll() is not None:
-            print(
-                f"ERROR: Mock server exited with code {proc.returncode}",
-                file=sys.stderr,
-            )
-            sys.exit(1)
-        try:
-            urllib.request.urlopen(f"{_MOCK_URL}/health", timeout=2)
-            print(
-                f"Mock server ready on {_MOCK_URL} (pid {proc.pid})",
-                file=sys.stderr,
-            )
-            return proc
-        except (urllib.error.URLError, OSError):
-            continue
-
-    proc.kill()
-    print("ERROR: Mock server failed to become healthy", file=sys.stderr)
-    sys.exit(1)
-
-
 async def _run_server(mode: str) -> None:
     """Run the MCP server over stdio."""
     server = create_server(mode=mode)
@@ -330,13 +258,15 @@ def main() -> None:
     )
     args = parser.parse_args()
 
+    from ..mock import MOCK_URL, start_mock_server, stop_mock_server
+
     mock_proc: subprocess.Popen | None = None
 
     if args.mock:
         args.mode = "live"
         os.environ["MERAKI_API_KEY"] = "mock-api-key"
-        os.environ["MERAKI_DASHBOARD_URL"] = _MOCK_URL
-        mock_proc = _start_mock_server()
+        os.environ["MERAKI_DASHBOARD_URL"] = MOCK_URL
+        mock_proc = start_mock_server()
     elif args.mode == "live":
         api_key = os.environ.get("MERAKI_API_KEY")
         if not api_key:
@@ -350,11 +280,7 @@ def main() -> None:
         asyncio.run(_run_server(args.mode))
     finally:
         if mock_proc is not None:
-            mock_proc.terminate()
-            try:
-                mock_proc.wait(timeout=5)
-            except subprocess.TimeoutExpired:
-                mock_proc.kill()
+            stop_mock_server(mock_proc)
 
 
 if __name__ == "__main__":

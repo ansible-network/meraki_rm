@@ -45,4 +45,6 @@ build_ignore:
   - plugins/plugin_utils/dist
   - "plugins/plugin_utils/*.egg-info"
   - plugins/plugin_utils/mcp
+  - plugins/plugin_utils/cli
+  - plugins/plugin_utils/mock.py
   - "*.dist-info"
