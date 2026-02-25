@@ -1,0 +1,25 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "meraki-rm-sdk"
+version = "0.1.0"
+description = "Introspection SDK for Cisco Meraki RM Ansible collection"
+requires-python = ">=3.10"
+dependencies = ["requests"]
+
+[project.optional-dependencies]
+mcp = ["mcp", "pyyaml"]
+
+[project.scripts]
+meraki-mcp-server = "meraki_rm_sdk.mcp.server:main"
+
+# Hatch source remapping: install plugin_utils/ contents as meraki_rm_sdk/
+# Note: editable installs (pip install -e) not supported with prefix remaps;
+# use `pip install plugins/plugin_utils/` (non-editable) instead.
+[tool.hatch.build.targets.wheel]
+packages = ["."]
+
+[tool.hatch.build.targets.wheel.sources]
+"" = "meraki_rm_sdk"

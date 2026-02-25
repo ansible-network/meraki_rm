@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional
 
 from ..platform.base_transform import BaseTransformMixin
@@ -12,31 +12,34 @@ from ..platform.base_transform import BaseTransformMixin
 class UserSsid(BaseTransformMixin):
     """User-facing SSID model with snake_case fields."""
 
+    MODULE_NAME = 'ssid'
+    SUPPORTS_DELETE = False
+
     # scope
     network_id: Optional[str] = None
     # identity
-    number: Optional[int] = None
+    number: Optional[int] = field(default=None, metadata={"description": "SSID number (0-14). Required for merged and replaced."})
     # fields
-    name: Optional[str] = None
-    enabled: Optional[bool] = None
-    auth_mode: Optional[str] = None
-    encryption_mode: Optional[str] = None
-    psk: Optional[str] = None
-    wpa_encryption_mode: Optional[str] = None
-    ip_assignment_mode: Optional[str] = None
-    use_vlan_tagging: Optional[bool] = None
-    default_vlan_id: Optional[int] = None
-    vlan_id: Optional[int] = None
-    splash_page: Optional[str] = None
-    band_selection: Optional[str] = None
-    min_bitrate: Optional[float] = None
-    per_client_bandwidth_limit_up: Optional[int] = None
-    per_client_bandwidth_limit_down: Optional[int] = None
-    per_ssid_bandwidth_limit_up: Optional[int] = None
-    per_ssid_bandwidth_limit_down: Optional[int] = None
-    visible: Optional[bool] = None
-    available_on_all_aps: Optional[bool] = None
-    availability_tags: Optional[List[str]] = None
+    name: Optional[str] = field(default=None, metadata={"description": "SSID name."})
+    enabled: Optional[bool] = field(default=None, metadata={"description": "Whether the SSID is enabled."})
+    auth_mode: Optional[str] = field(default=None, metadata={"description": "Authentication mode."})
+    encryption_mode: Optional[str] = field(default=None, metadata={"description": "Encryption mode for the SSID."})
+    psk: Optional[str] = field(default=None, metadata={"description": "Pre-shared key (for PSK auth). Write-only; not returned by API."})
+    wpa_encryption_mode: Optional[str] = field(default=None, metadata={"description": "WPA encryption mode."})
+    ip_assignment_mode: Optional[str] = field(default=None, metadata={"description": "Client IP assignment mode."})
+    use_vlan_tagging: Optional[bool] = field(default=None, metadata={"description": "Whether to use VLAN tagging."})
+    default_vlan_id: Optional[int] = field(default=None, metadata={"description": "Default VLAN ID for all other APs."})
+    vlan_id: Optional[int] = field(default=None, metadata={"description": "VLAN ID for VLAN tagging."})
+    splash_page: Optional[str] = field(default=None, metadata={"description": "Splash page type."})
+    band_selection: Optional[str] = field(default=None, metadata={"description": "Band selection for the SSID."})
+    min_bitrate: Optional[float] = field(default=None, metadata={"description": "Minimum bitrate in Mbps."})
+    per_client_bandwidth_limit_up: Optional[int] = field(default=None, metadata={"description": "Per-client upload bandwidth limit in Kbps (0 = no limit)."})
+    per_client_bandwidth_limit_down: Optional[int] = field(default=None, metadata={"description": "Per-client download bandwidth limit in Kbps (0 = no limit)."})
+    per_ssid_bandwidth_limit_up: Optional[int] = field(default=None, metadata={"description": "Per-SSID upload bandwidth limit in Kbps (0 = no limit)."})
+    per_ssid_bandwidth_limit_down: Optional[int] = field(default=None, metadata={"description": "Per-SSID download bandwidth limit in Kbps (0 = no limit)."})
+    visible: Optional[bool] = field(default=None, metadata={"description": "Whether the SSID is advertised (visible) or hidden."})
+    available_on_all_aps: Optional[bool] = field(default=None, metadata={"description": "Whether the SSID is broadcast on all APs."})
+    availability_tags: Optional[List[str]] = field(default=None, metadata={"description": "AP tags for SSID availability (when available_on_all_aps is false)."})
 
     _field_mapping = {
         'number': 'number',

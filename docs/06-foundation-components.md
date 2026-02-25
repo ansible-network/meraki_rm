@@ -165,11 +165,29 @@ class BaseTransformMixin(ABC):
     Attributes:
         _field_mapping: Dict defining field mappings (set by subclasses)
         _transform_registry: Dict of transformation functions (set by subclasses)
+
+    Resource metadata (overridden by User Model subclasses):
+        MODULE_NAME: Resource identifier used by PlatformManager (e.g. 'vlan')
+        SCOPE_PARAM: Scope kwarg name ('network_id', 'organization_id', 'serial')
+        CANONICAL_KEY: User-facing stable identifier field (e.g. 'name', 'vlan_id')
+        SYSTEM_KEY: API-generated opaque identifier for URL routing (e.g. 'admin_id')
+        SUPPORTS_DELETE: False for singletons that cannot be removed
+        VALID_STATES: Frozenset of states this resource supports
     """
 
     # Subclasses must define these class variables
     _field_mapping: Optional[Dict] = None
     _transform_registry: Optional[Dict] = None
+
+    # Resource metadata defaults — User Model subclasses override these
+    MODULE_NAME: Optional[str] = None
+    SCOPE_PARAM: str = 'network_id'
+    CANONICAL_KEY: Optional[str] = None
+    SYSTEM_KEY: Optional[str] = None
+    SUPPORTS_DELETE: bool = True
+    VALID_STATES: frozenset = frozenset({
+        'merged', 'replaced', 'overridden', 'deleted', 'gathered',
+    })
 
     def to_api(self, context: Optional[Dict] = None) -> Any:
         """
@@ -485,6 +503,7 @@ class BaseTransformMixin(ABC):
 - Pluggable transformation functions via registry
 - Bidirectional (forward and reverse) transforms
 - Post-transform hooks for custom logic
+- **Resource metadata defaults** — User Model subclasses override `MODULE_NAME`, `SCOPE_PARAM`, `CANONICAL_KEY`, `SYSTEM_KEY`, `SUPPORTS_DELETE`, and `VALID_STATES` to centralize identity and state information on the data model rather than on the action plugin
 
 ---
 
@@ -2135,18 +2154,20 @@ class ActionModule(BaseResourceActionPlugin):
             return {'failed': True, 'msg': str(e)}
 ```
 
-> **Meraki improvement**: The `cisco.meraki_rm` collection eliminates per-module
-> `run()` methods entirely. `BaseResourceActionPlugin` provides a data-driven `run()`
-> that auto-discovers DOCUMENTATION from the module file and resolves the User Model
-> via `importlib`. Each action plugin becomes pure configuration (~8 lines):
+> **Meraki implementation**: The `cisco.meraki_rm` collection eliminates per-module
+> `run()` methods entirely. All resource metadata (`MODULE_NAME`, `SCOPE_PARAM`,
+> `CANONICAL_KEY`, `SYSTEM_KEY`, `VALID_STATES`) lives on the User Model dataclass
+> (via `BaseTransformMixin` defaults). `BaseResourceActionPlugin` provides a
+> data-driven `run()` that loads the User Model via `importlib`, syncs its metadata
+> onto `self`, and dispatches. Each action plugin is pure configuration (~2 lines):
 >
 > ```python
 > class ActionModule(BaseResourceActionPlugin):
->     MODULE_NAME = 'vlan'
 >     USER_MODEL = 'plugins.plugin_utils.user_models.vlan.UserVlan'
 > ```
 >
-> See [meraki-implementation-guide.md](meraki-implementation-guide.md) §7 for details.
+> The same User Model metadata drives the MCP server's tool generation —
+> see [03-sdk-architecture.md](03-sdk-architecture.md) §10 for details.
 
 ---
 

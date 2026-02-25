@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional
 
 from ..platform.base_transform import BaseTransformMixin
@@ -12,20 +12,24 @@ from ..platform.base_transform import BaseTransformMixin
 class UserWirelessRfProfile(BaseTransformMixin):
     """User-facing wireless RF profile model with snake_case fields."""
 
+    MODULE_NAME = 'wireless_rf_profile'
+    CANONICAL_KEY = 'name'
+    SYSTEM_KEY = 'rf_profile_id'
+
     # scope
     network_id: Optional[str] = None
     # identity
-    rf_profile_id: Optional[str] = None
+    rf_profile_id: Optional[str] = field(default=None, metadata={"description": "Server-assigned ID, resolved automatically by matching on C(name). Provide only to disambiguate when duplicate names exist."})
     # fields
-    name: Optional[str] = None
-    band_selection_type: Optional[str] = None
-    client_balancing_enabled: Optional[bool] = None
-    two_four_ghz_settings: Optional[Dict[str, Any]] = None
-    five_ghz_settings: Optional[Dict[str, Any]] = None
-    six_ghz_settings: Optional[Dict[str, Any]] = None
-    transmission: Optional[Dict[str, Any]] = None
-    is_indoor_default: Optional[bool] = None
-    is_outdoor_default: Optional[bool] = None
+    name: Optional[str] = field(default=None, metadata={"description": "Name of the RF profile. Must be unique."})
+    band_selection_type: Optional[str] = field(default=None, metadata={"description": "Band selection (ssid or ap)."})
+    client_balancing_enabled: Optional[bool] = field(default=None, metadata={"description": "Steer clients to best available AP."})
+    two_four_ghz_settings: Optional[Dict[str, Any]] = field(default=None, metadata={"description": "2.4 GHz band settings."})
+    five_ghz_settings: Optional[Dict[str, Any]] = field(default=None, metadata={"description": "5 GHz band settings."})
+    six_ghz_settings: Optional[Dict[str, Any]] = field(default=None, metadata={"description": "6 GHz band settings."})
+    transmission: Optional[Dict[str, Any]] = field(default=None, metadata={"description": "Radio transmission settings."})
+    is_indoor_default: Optional[bool] = field(default=None, metadata={"description": "Set as default indoor profile."})
+    is_outdoor_default: Optional[bool] = field(default=None, metadata={"description": "Set as default outdoor profile."})
     ap_band_settings: Optional[Dict[str, Any]] = None
     per_ssid_settings: Optional[Dict[str, Any]] = None
     min_bitrate_type: Optional[str] = None

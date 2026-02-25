@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional
 
 from ..platform.base_transform import BaseTransformMixin
@@ -12,19 +12,23 @@ from ..platform.base_transform import BaseTransformMixin
 class UserStaticRoute(BaseTransformMixin):
     """User-facing static route model with snake_case fields."""
 
+    MODULE_NAME = 'static_route'
+    CANONICAL_KEY = 'name'
+    SYSTEM_KEY = 'static_route_id'
+
     # scope
     network_id: Optional[str] = None
     # identity
-    static_route_id: Optional[str] = None
+    static_route_id: Optional[str] = field(default=None, metadata={"description": "Server-assigned ID, resolved automatically by matching on C(name). Provide only to disambiguate when duplicate names exist."})
     # fields
-    name: Optional[str] = None
-    subnet: Optional[str] = None
-    gateway_ip: Optional[str] = None
-    gateway_vlan_id: Optional[int] = None
-    enabled: Optional[bool] = None
-    fixed_ip_assignments: Optional[Dict[str, Any]] = None
-    reserved_ip_ranges: Optional[List[Dict[str, Any]]] = None
-    ip_version: Optional[int] = None
+    name: Optional[str] = field(default=None, metadata={"description": "Name of the route."})
+    subnet: Optional[str] = field(default=None, metadata={"description": "Subnet of the route (e.g., 192.168.1.0/24)."})
+    gateway_ip: Optional[str] = field(default=None, metadata={"description": "Gateway IP address (next hop)."})
+    gateway_vlan_id: Optional[int] = field(default=None, metadata={"description": "Gateway VLAN ID."})
+    enabled: Optional[bool] = field(default=None, metadata={"description": "Whether the route is enabled."})
+    fixed_ip_assignments: Optional[Dict[str, Any]] = field(default=None, metadata={"description": "Fixed DHCP IP assignments on the route."})
+    reserved_ip_ranges: Optional[List[Dict[str, Any]]] = field(default=None, metadata={"description": "DHCP reserved IP ranges."})
+    ip_version: Optional[int] = field(default=None, metadata={"description": "IP protocol version (4 or 6)."})
 
     _field_mapping = {
         'static_route_id': 'id',

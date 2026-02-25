@@ -1,18 +1,16 @@
 """Base action plugin for Meraki Dashboard resource modules.
 
 Provides a data-driven run() that eliminates per-module boilerplate.
-Each resource action plugin declares class-level attributes and the
-base class handles validation, state dispatch, and manager interaction.
+Each resource action plugin declares USER_MODEL (dotted import path to
+the User Model dataclass) and the base class handles the rest.
 
-Subclass contract:
-    MODULE_NAME    — resource identifier (e.g. 'vlan')
-    SCOPE_PARAM    — scope kwarg name ('network_id', 'organization_id', 'serial')
-    USER_MODEL     — dotted import path to the User Model dataclass
-    CANONICAL_KEY  — human-facing field for matching (e.g. 'name', 'email', 'vlan_id')
-    SYSTEM_KEY     — API-generated identity field for URL routing (e.g. 'admin_id')
-                     None when CANONICAL_KEY is also the API routing key (Category A)
-    SUPPORTS_DELETE — False for singletons that cannot be removed
-    DOCUMENTATION  — imported from the corresponding plugins/modules/ file
+All resource metadata lives on the User Model class itself (via
+BaseTransformMixin): MODULE_NAME, SCOPE_PARAM, CANONICAL_KEY,
+SYSTEM_KEY, SUPPORTS_DELETE, VALID_STATES.  The base run() loads the
+model class, syncs its metadata onto ``self``, then dispatches.
+
+Subclass contract (minimal):
+    USER_MODEL — dotted import path to the User Model dataclass
 
 Identity categories (see docs/05-design-principles.md, Principle 2):
     Category A: CANONICAL_KEY set, SYSTEM_KEY=None  — user key IS the API key
@@ -47,34 +45,29 @@ display = Display()
 class BaseResourceActionPlugin(ActionBase):
     """Data-driven base action plugin for all Meraki resource modules.
 
-    Subclasses declare metadata as class attributes:
+    Subclasses declare the User Model import path:
 
         class ActionModule(BaseResourceActionPlugin):
-            MODULE_NAME     = 'vlan'
-            SCOPE_PARAM     = 'network_id'
-            USER_MODEL      = 'plugins.plugin_utils.user_models.vlan.UserVlan'
-            CANONICAL_KEY   = 'vlan_id'
-            SUPPORTS_DELETE = True
+            USER_MODEL = 'plugins.plugin_utils.user_models.vlan.UserVlan'
 
-    The base run() validates input, loops over config items, builds User
-    Model instances, and dispatches to the manager.  Only meraki_facts
-    needs a custom run().
+    All resource metadata (MODULE_NAME, SCOPE_PARAM, CANONICAL_KEY, etc.)
+    is read from the User Model class at runtime. Only meraki_facts needs
+    a custom run().
     """
 
-    # --- subclass must set these ----------------------------------------
+    # The only attribute subclasses must set (except meraki_facts)
+    USER_MODEL: str = None
+
+    # Defaults — overridden by _sync_model_metadata() from User Model
     MODULE_NAME: str = None
     SCOPE_PARAM: str = 'network_id'
-    USER_MODEL: str = None
     CANONICAL_KEY: str = None
     SYSTEM_KEY: str = None
     SUPPORTS_DELETE: bool = True
-
-    # Canonical resource module states
-    VALID_STATES = frozenset({
+    VALID_STATES: frozenset = frozenset({
         'merged', 'replaced', 'overridden', 'deleted', 'gathered',
     })
 
-    # Resolved lazily by _get_user_model_class()
     _user_model_cls = None
 
     @property
@@ -155,7 +148,12 @@ class BaseResourceActionPlugin(ActionBase):
         return dotted_path
 
     def _get_user_model_class(self):
-        """Lazily resolve USER_MODEL dotted path to a class object."""
+        """Lazily resolve USER_MODEL dotted path to a class object.
+
+        On first load, syncs resource metadata (MODULE_NAME, SCOPE_PARAM,
+        CANONICAL_KEY, SYSTEM_KEY, SUPPORTS_DELETE, VALID_STATES) from the
+        User Model class onto this action plugin instance.
+        """
         if self._user_model_cls is not None:
             return self._user_model_cls
 
@@ -169,6 +167,13 @@ class BaseResourceActionPlugin(ActionBase):
         mod = importlib.import_module(module_path)
         cls = getattr(mod, class_name)
         type(self)._user_model_cls = cls
+
+        for attr in ('MODULE_NAME', 'SCOPE_PARAM', 'CANONICAL_KEY',
+                      'SYSTEM_KEY', 'SUPPORTS_DELETE', 'VALID_STATES'):
+            model_val = getattr(cls, attr, None)
+            if model_val is not None:
+                setattr(self, attr, model_val)
+
         return cls
 
     def _get_documentation(self) -> str:
@@ -241,6 +246,8 @@ class BaseResourceActionPlugin(ActionBase):
         args = self._task.args.copy()
 
         try:
+            user_cls = self._get_user_model_class()
+
             doc = self._get_documentation()
             if doc:
                 argspec = self._build_argspec_from_docs(doc)
@@ -254,7 +261,6 @@ class BaseResourceActionPlugin(ActionBase):
             scope_value = validated_args.get(self.SCOPE_PARAM)
 
             manager = self._get_or_spawn_manager(task_vars)
-            user_cls = self._get_user_model_class()
 
             # -- gathered: read-only, no before/after -----------------------
             if state == 'gathered':

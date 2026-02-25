@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional
 
 from ..platform.base_transform import BaseTransformMixin
@@ -12,13 +12,16 @@ from ..platform.base_transform import BaseTransformMixin
 class UserSwitchLinkAggregation(BaseTransformMixin):
     """User-facing switch link aggregation model with snake_case fields."""
 
+    MODULE_NAME = 'switch_link_aggregation'
+    SYSTEM_KEY = 'link_aggregation_id'
+
     # scope
     network_id: Optional[str] = None
     # identity
-    link_aggregation_id: Optional[str] = None
+    link_aggregation_id: Optional[str] = field(default=None, metadata={"description": "Server-assigned aggregation ID. Discover via C(state=gathered)."})
     # fields
-    switch_ports: Optional[List[Dict[str, Any]]] = None
-    switch_profile_ports: Optional[List[Dict[str, Any]]] = None
+    switch_ports: Optional[List[Dict[str, Any]]] = field(default=None, metadata={"description": "Array of switch ports for the aggregation."})
+    switch_profile_ports: Optional[List[Dict[str, Any]]] = field(default=None, metadata={"description": "Array of switch profile ports for creating aggregation."})
 
     _field_mapping = {
         'link_aggregation_id': 'id',

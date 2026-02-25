@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional
 
 from ..platform.base_transform import BaseTransformMixin
@@ -12,15 +12,18 @@ from ..platform.base_transform import BaseTransformMixin
 class UserSwitchDhcpPolicy(BaseTransformMixin):
     """User-facing switch DHCP policy model with snake_case fields."""
 
+    MODULE_NAME = 'switch_dhcp_policy'
+    SUPPORTS_DELETE = False
+
     # scope
     network_id: Optional[str] = None
     # fields (singleton - no primary key)
-    default_policy: Optional[str] = None
-    allowed_servers: Optional[List[str]] = None
-    blocked_servers: Optional[List[str]] = None
-    always_allowed_servers: Optional[List[str]] = None
-    arp_inspection: Optional[Dict[str, Any]] = None
-    alerts: Optional[Dict[str, Any]] = None
+    default_policy: Optional[str] = field(default=None, metadata={"description": "Default policy for new DHCP servers (allow or block)."})
+    allowed_servers: Optional[List[str]] = field(default=None, metadata={"description": "MAC addresses of DHCP servers to permit."})
+    blocked_servers: Optional[List[str]] = field(default=None, metadata={"description": "MAC addresses of DHCP servers to block."})
+    always_allowed_servers: Optional[List[str]] = field(default=None, metadata={"description": "MAC addresses always allowed on the network."})
+    arp_inspection: Optional[Dict[str, Any]] = field(default=None, metadata={"description": "Dynamic ARP Inspection settings."})
+    alerts: Optional[Dict[str, Any]] = field(default=None, metadata={"description": "Email alert settings for DHCP servers."})
 
     _field_mapping = {
         'default_policy': 'defaultPolicy',

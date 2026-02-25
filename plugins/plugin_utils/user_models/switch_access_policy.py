@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional
 
 from ..platform.base_transform import BaseTransformMixin
@@ -12,20 +12,23 @@ from ..platform.base_transform import BaseTransformMixin
 class UserSwitchAccessPolicy(BaseTransformMixin):
     """User-facing switch access policy model with snake_case fields."""
 
+    MODULE_NAME = 'switch_access_policy'
+    CANONICAL_KEY = 'access_policy_number'
+
     # scope
     network_id: Optional[str] = None
     # identity
-    access_policy_number: Optional[str] = None
+    access_policy_number: Optional[str] = field(default=None, metadata={"description": "Access policy number (identifier)."})
     # fields
-    name: Optional[str] = None
-    access_policy_type: Optional[str] = None
-    host_mode: Optional[str] = None
-    radius_servers: Optional[List[Dict[str, Any]]] = None
-    radius_accounting_servers: Optional[List[Dict[str, Any]]] = None
-    radius_accounting_enabled: Optional[bool] = None
-    radius_coa_support_enabled: Optional[bool] = None
-    guest_vlan_id: Optional[int] = None
-    dot1x: Optional[Dict[str, Any]] = None
+    name: Optional[str] = field(default=None, metadata={"description": "Name of the access policy."})
+    access_policy_type: Optional[str] = field(default=None, metadata={"description": "Access type of the policy."})
+    host_mode: Optional[str] = field(default=None, metadata={"description": "Host mode for the access policy."})
+    radius_servers: Optional[List[Dict[str, Any]]] = field(default=None, metadata={"description": "List of RADIUS servers for authentication."})
+    radius_accounting_servers: Optional[List[Dict[str, Any]]] = field(default=None, metadata={"description": "List of RADIUS accounting servers."})
+    radius_accounting_enabled: Optional[bool] = field(default=None, metadata={"description": "Enable RADIUS accounting."})
+    radius_coa_support_enabled: Optional[bool] = field(default=None, metadata={"description": "Enable RADIUS CoA support."})
+    guest_vlan_id: Optional[int] = field(default=None, metadata={"description": "Guest VLAN ID for unauthorized devices."})
+    dot1x: Optional[Dict[str, Any]] = field(default=None, metadata={"description": "802.1X settings."})
     radius_group_attribute: Optional[str] = None
     url_redirect_walled_garden_enabled: Optional[bool] = None
     url_redirect_walled_garden_ranges: Optional[List[str]] = None

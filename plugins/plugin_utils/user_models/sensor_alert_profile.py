@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional
 
 from ..platform.base_transform import BaseTransformMixin
@@ -12,18 +12,22 @@ from ..platform.base_transform import BaseTransformMixin
 class UserSensorAlertProfile(BaseTransformMixin):
     """User-facing sensor alert profile model with snake_case fields."""
 
+    MODULE_NAME = 'sensor_alert_profile'
+    CANONICAL_KEY = 'name'
+    SYSTEM_KEY = 'id'
+
     # scope
     network_id: Optional[str] = None
     # identity (API path uses 'id', response has profileId)
-    id: Optional[str] = None
+    id: Optional[str] = field(default=None, metadata={"description": "Server-assigned ID, resolved automatically by matching on C(name). Provide only to disambiguate when duplicate names exist."})
     # fields
-    name: Optional[str] = None
-    conditions: Optional[List[Dict[str, Any]]] = None
-    schedule: Optional[Dict[str, Any]] = None
-    recipients: Optional[Dict[str, Any]] = None
-    message: Optional[str] = None
-    include_sensor_url: Optional[bool] = None
-    serials: Optional[List[str]] = None
+    name: Optional[str] = field(default=None, metadata={"description": "Name of the sensor alert profile."})
+    conditions: Optional[List[Dict[str, Any]]] = field(default=None, metadata={"description": "List of conditions that trigger alerts."})
+    schedule: Optional[Dict[str, Any]] = field(default=None, metadata={"description": "Sensor schedule for the alert profile."})
+    recipients: Optional[Dict[str, Any]] = field(default=None, metadata={"description": "Recipients that receive alerts."})
+    message: Optional[str] = field(default=None, metadata={"description": "Custom message for email and text alerts."})
+    include_sensor_url: Optional[bool] = field(default=None, metadata={"description": "Include dashboard link to sensor in messages."})
+    serials: Optional[List[str]] = field(default=None, metadata={"description": "Device serials assigned to this profile."})
 
     _field_mapping = {
         'id': 'profileId',

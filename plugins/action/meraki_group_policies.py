@@ -4,7 +4,4 @@ from .base_action import BaseResourceActionPlugin
 
 
 class ActionModule(BaseResourceActionPlugin):
-    MODULE_NAME = 'group_policy'
     USER_MODEL = 'plugins.plugin_utils.user_models.group_policy.UserGroupPolicy'
-    CANONICAL_KEY = 'name'
-    SYSTEM_KEY = 'group_policy_id'

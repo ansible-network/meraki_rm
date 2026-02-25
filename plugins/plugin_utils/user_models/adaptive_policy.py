@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional
 
 from ..platform.base_transform import BaseTransformMixin
@@ -12,11 +12,15 @@ from ..platform.base_transform import BaseTransformMixin
 class UserAdaptivePolicy(BaseTransformMixin):
     """User-facing adaptive policy settings model with snake_case fields."""
 
+    MODULE_NAME = 'adaptive_policy'
+    SCOPE_PARAM = 'organization_id'
+    SUPPORTS_DELETE = False
+
     # scope
     organization_id: Optional[str] = None
     # fields (singleton - no primary key)
-    enabled_networks: Optional[List[str]] = None
-    last_entry_rule: Optional[str] = None
+    enabled_networks: Optional[List[str]] = field(default=None, metadata={"description": "List of network IDs with adaptive policy enabled."})
+    last_entry_rule: Optional[str] = field(default=None, metadata={"description": "Rule to apply when no matching ACL is found."})
 
     _field_mapping = {
         'enabled_networks': 'enabledNetworks',

@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional
 
 from ..platform.base_transform import BaseTransformMixin
@@ -12,20 +12,24 @@ from ..platform.base_transform import BaseTransformMixin
 class UserCameraQualityRetentionProfile(BaseTransformMixin):
     """User-facing camera quality retention profile model with snake_case fields."""
 
+    MODULE_NAME = 'camera_quality_retention_profile'
+    CANONICAL_KEY = 'name'
+    SYSTEM_KEY = 'quality_retention_profile_id'
+
     # scope
     network_id: Optional[str] = None
     # identity
-    quality_retention_profile_id: Optional[str] = None
+    quality_retention_profile_id: Optional[str] = field(default=None, metadata={"description": "Server-assigned ID, resolved automatically by matching on C(name). Provide only to disambiguate when duplicate names exist."})
     # fields
-    name: Optional[str] = None
-    max_retention_days: Optional[int] = None
-    motion_based_retention_enabled: Optional[bool] = None
-    restricted_bandwidth_mode_enabled: Optional[bool] = None
-    audio_recording_enabled: Optional[bool] = None
-    cloud_archive_enabled: Optional[bool] = None
-    schedule_id: Optional[str] = None
-    video_settings: Optional[Dict[str, Dict[str, Any]]] = None
-    smart_retention: Optional[Dict[str, Any]] = None
+    name: Optional[str] = field(default=None, metadata={"description": "Name of the quality retention profile."})
+    max_retention_days: Optional[int] = field(default=None, metadata={"description": "Maximum retention days for recordings."})
+    motion_based_retention_enabled: Optional[bool] = field(default=None, metadata={"description": "Enable motion-based retention."})
+    restricted_bandwidth_mode_enabled: Optional[bool] = field(default=None, metadata={"description": "Enable restricted bandwidth mode."})
+    audio_recording_enabled: Optional[bool] = field(default=None, metadata={"description": "Enable audio recording."})
+    cloud_archive_enabled: Optional[bool] = field(default=None, metadata={"description": "Enable cloud archive."})
+    schedule_id: Optional[str] = field(default=None, metadata={"description": "Schedule ID for recording."})
+    video_settings: Optional[Dict[str, Dict[str, Any]]] = field(default=None, metadata={"description": "Video quality and resolution settings per camera model."})
+    smart_retention: Optional[Dict[str, Any]] = field(default=None, metadata={"description": "Smart retention settings."})
 
     _field_mapping = {
         'quality_retention_profile_id': 'id',

@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional
 
 from ..platform.base_transform import BaseTransformMixin
@@ -12,17 +12,20 @@ from ..platform.base_transform import BaseTransformMixin
 class UserPort(BaseTransformMixin):
     """User-facing port model with snake_case fields."""
 
+    MODULE_NAME = 'port'
+    SUPPORTS_DELETE = False
+
     # scope
     network_id: Optional[str] = None
     # identity
-    port_id: Optional[str] = None
+    port_id: Optional[str] = field(default=None, metadata={"description": "Port ID (e.g., 1, 2, 3, 4). Required for merged, replaced."})
     # fields
-    enabled: Optional[bool] = None
-    type: Optional[str] = None
-    vlan: Optional[int] = None
-    allowed_vlans: Optional[str] = None
-    access_policy: Optional[str] = None
-    drop_untagged_traffic: Optional[bool] = None
+    enabled: Optional[bool] = field(default=None, metadata={"description": "Whether the port is enabled."})
+    type: Optional[str] = field(default=None, metadata={"description": "Port type (access or trunk)."})
+    vlan: Optional[int] = field(default=None, metadata={"description": "Native VLAN (trunk) or access VLAN."})
+    allowed_vlans: Optional[str] = field(default=None, metadata={"description": "Allowed VLANs (comma-delimited or 'all')."})
+    access_policy: Optional[str] = field(default=None, metadata={"description": "Access policy name (access ports only)."})
+    drop_untagged_traffic: Optional[bool] = field(default=None, metadata={"description": "Drop untagged traffic (trunk ports)."})
 
     _field_mapping = {
         'port_id': 'number',

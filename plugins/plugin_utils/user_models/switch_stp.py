@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional
 
 from ..platform.base_transform import BaseTransformMixin
@@ -12,11 +12,14 @@ from ..platform.base_transform import BaseTransformMixin
 class UserSwitchStp(BaseTransformMixin):
     """User-facing switch STP model with snake_case fields."""
 
+    MODULE_NAME = 'switch_stp'
+    SUPPORTS_DELETE = False
+
     # scope
     network_id: Optional[str] = None
     # fields (singleton - no primary key)
-    rstp_enabled: Optional[bool] = None
-    stp_bridge_priority: Optional[List[Dict[str, Any]]] = None
+    rstp_enabled: Optional[bool] = field(default=None, metadata={"description": "Enable RSTP (Rapid Spanning Tree Protocol)."})
+    stp_bridge_priority: Optional[List[Dict[str, Any]]] = field(default=None, metadata={"description": "STP bridge priority for switches/stacks or templates."})
 
     _field_mapping = {
         'rstp_enabled': 'rstpEnabled',

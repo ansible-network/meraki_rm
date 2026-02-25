@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional
 
 from ..platform.base_transform import BaseTransformMixin
@@ -12,17 +12,21 @@ from ..platform.base_transform import BaseTransformMixin
 class UserOrgAlertProfile(BaseTransformMixin):
     """User-facing alert profile model with snake_case fields."""
 
+    MODULE_NAME = 'org_alert_profile'
+    SCOPE_PARAM = 'organization_id'
+    SYSTEM_KEY = 'alert_config_id'
+
     # scope
     organization_id: Optional[str] = None
     # identity
-    alert_config_id: Optional[str] = None
+    alert_config_id: Optional[str] = field(default=None, metadata={"description": "Server-assigned config ID. Discover via C(state=gathered)."})
     # fields
-    type: Optional[str] = None
-    enabled: Optional[bool] = None
-    alert_condition: Optional[Dict[str, Any]] = None
-    recipients: Optional[Dict[str, Any]] = None
-    network_tags: Optional[List[str]] = None
-    description: Optional[str] = None
+    type: Optional[str] = field(default=None, metadata={"description": "The alert type."})
+    enabled: Optional[bool] = field(default=None, metadata={"description": "Whether the alert is enabled."})
+    alert_condition: Optional[Dict[str, Any]] = field(default=None, metadata={"description": "Conditions that determine if the alert triggers."})
+    recipients: Optional[Dict[str, Any]] = field(default=None, metadata={"description": "Recipients that receive the alert."})
+    network_tags: Optional[List[str]] = field(default=None, metadata={"description": "Network tags to monitor for the alert."})
+    description: Optional[str] = field(default=None, metadata={"description": "User-supplied description of the alert."})
 
     _field_mapping = {
         'alert_config_id': 'id',

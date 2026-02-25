@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional
 
 from ..platform.base_transform import BaseTransformMixin
@@ -12,17 +12,20 @@ from ..platform.base_transform import BaseTransformMixin
 class UserWarmSpare(BaseTransformMixin):
     """User-facing warm spare model with snake_case fields."""
 
+    MODULE_NAME = 'warm_spare'
+    SUPPORTS_DELETE = False
+
     # scope
     network_id: Optional[str] = None
     # fields (singleton - no primary key)
-    enabled: Optional[bool] = None
-    spare_serial: Optional[str] = None
-    uplink_mode: Optional[str] = None
-    virtual_ip1: Optional[str] = None
-    virtual_ip2: Optional[str] = None
-    wan1: Optional[Dict[str, Any]] = None
-    wan2: Optional[Dict[str, Any]] = None
-    primary_serial: Optional[str] = None
+    enabled: Optional[bool] = field(default=None, metadata={"description": "Whether warm spare is enabled."})
+    spare_serial: Optional[str] = field(default=None, metadata={"description": "Serial number of the warm spare appliance."})
+    uplink_mode: Optional[str] = field(default=None, metadata={"description": "Uplink mode (virtual or public)."})
+    virtual_ip1: Optional[str] = field(default=None, metadata={"description": "WAN 1 shared IP."})
+    virtual_ip2: Optional[str] = field(default=None, metadata={"description": "WAN 2 shared IP."})
+    wan1: Optional[Dict[str, Any]] = field(default=None, metadata={"description": "WAN 1 IP and subnet."})
+    wan2: Optional[Dict[str, Any]] = field(default=None, metadata={"description": "WAN 2 IP and subnet."})
+    primary_serial: Optional[str] = field(default=None, metadata={"description": "Serial number of the primary appliance."})
 
     _field_mapping = {
         'enabled': 'enabled',

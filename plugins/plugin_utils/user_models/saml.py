@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional
 
 from ..platform.base_transform import BaseTransformMixin
@@ -12,16 +12,20 @@ from ..platform.base_transform import BaseTransformMixin
 class UserSaml(BaseTransformMixin):
     """User-facing SAML settings model with snake_case fields."""
 
+    MODULE_NAME = 'saml'
+    SCOPE_PARAM = 'organization_id'
+    SUPPORTS_DELETE = False
+
     # scope
     organization_id: Optional[str] = None
     # fields (singleton - no primary key)
-    enabled: Optional[bool] = None
-    consumer_url: Optional[str] = None
-    slo_logout_url: Optional[str] = None
-    sso_login_url: Optional[str] = None
-    x509cert_sha1_fingerprint: Optional[str] = None
-    vision_consumer_url: Optional[str] = None
-    sp_initiated: Optional[Dict[str, Any]] = None
+    enabled: Optional[bool] = field(default=None, metadata={"description": "Whether SAML SSO is enabled."})
+    consumer_url: Optional[str] = field(default=None, metadata={"description": "URL consuming SAML Identity Provider (IdP)."})
+    slo_logout_url: Optional[str] = field(default=None, metadata={"description": "URL for redirect on sign out."})
+    sso_login_url: Optional[str] = field(default=None, metadata={"description": "URL for redirect to log in again when session expires."})
+    x509cert_sha1_fingerprint: Optional[str] = field(default=None, metadata={"description": "SHA1 fingerprint of the SAML certificate from IdP."})
+    vision_consumer_url: Optional[str] = field(default=None, metadata={"description": "URL consuming SAML IdP for Meraki Vision Portal."})
+    sp_initiated: Optional[Dict[str, Any]] = field(default=None, metadata={"description": "SP-Initiated SSO settings."})
 
     _field_mapping = {
         'enabled': 'enabled',

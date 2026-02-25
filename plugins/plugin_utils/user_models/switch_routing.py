@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional
 
 from ..platform.base_transform import BaseTransformMixin
@@ -12,17 +12,20 @@ from ..platform.base_transform import BaseTransformMixin
 class UserSwitchRouting(BaseTransformMixin):
     """User-facing switch routing model with snake_case fields."""
 
+    MODULE_NAME = 'switch_routing'
+    SUPPORTS_DELETE = False
+
     # scope
     network_id: Optional[str] = None
     # fields (singleton - no primary key)
-    default_settings: Optional[Dict[str, Any]] = None
-    overrides: Optional[List[Dict[str, Any]]] = None
-    enabled: Optional[bool] = None
-    hello_timer_in_seconds: Optional[int] = None
-    dead_timer_in_seconds: Optional[int] = None
-    areas: Optional[List[Dict[str, Any]]] = None
-    md5_authentication_enabled: Optional[bool] = None
-    md5_authentication_key: Optional[Dict[str, Any]] = None
+    default_settings: Optional[Dict[str, Any]] = field(default=None, metadata={"description": "Default multicast settings for the network."})
+    overrides: Optional[List[Dict[str, Any]]] = field(default=None, metadata={"description": "Multicast overrides per switch/stack/profile."})
+    enabled: Optional[bool] = field(default=None, metadata={"description": "Enable OSPF routing."})
+    hello_timer_in_seconds: Optional[int] = field(default=None, metadata={"description": "OSPF hello timer in seconds."})
+    dead_timer_in_seconds: Optional[int] = field(default=None, metadata={"description": "OSPF dead timer in seconds."})
+    areas: Optional[List[Dict[str, Any]]] = field(default=None, metadata={"description": "OSPF areas."})
+    md5_authentication_enabled: Optional[bool] = field(default=None, metadata={"description": "Enable MD5 authentication for OSPF."})
+    md5_authentication_key: Optional[Dict[str, Any]] = field(default=None, metadata={"description": "MD5 authentication credentials."})
     v3: Optional[Dict[str, Any]] = None
 
     _field_mapping = {

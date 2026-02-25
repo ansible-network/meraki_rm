@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional
 
 from ..platform.base_transform import BaseTransformMixin
@@ -12,35 +12,39 @@ from ..platform.base_transform import BaseTransformMixin
 class UserSwitchPort(BaseTransformMixin):
     """User-facing switch port model with snake_case fields."""
 
+    MODULE_NAME = 'switch_port'
+    SCOPE_PARAM = 'serial'
+    SUPPORTS_DELETE = False
+
     # scope
     serial: Optional[str] = None
     # identity
-    port_id: Optional[str] = None
+    port_id: Optional[str] = field(default=None, metadata={"description": "Port number/ID."})
     # fields
-    name: Optional[str] = None
-    tags: Optional[List[str]] = None
-    enabled: Optional[bool] = None
-    type: Optional[str] = None
-    vlan: Optional[int] = None
-    voice_vlan: Optional[int] = None
-    allowed_vlans: Optional[str] = None
-    poe_enabled: Optional[bool] = None
-    isolation_enabled: Optional[bool] = None
-    rstp_enabled: Optional[bool] = None
-    stp_guard: Optional[str] = None
-    link_negotiation: Optional[str] = None
-    port_schedule_id: Optional[str] = None
-    udld: Optional[str] = None
-    access_policy_type: Optional[str] = None
-    access_policy_number: Optional[int] = None
-    sticky_mac_allow_list: Optional[List[str]] = None
-    sticky_mac_allow_list_limit: Optional[int] = None
-    storm_control_enabled: Optional[bool] = None
-    adaptive_policy_group_id: Optional[str] = None
-    peer_sgt_capable: Optional[bool] = None
-    flexible_stacking_enabled: Optional[bool] = None
-    dai_trusted: Optional[bool] = None
-    profile: Optional[Dict[str, Any]] = None
+    name: Optional[str] = field(default=None, metadata={"description": "Port name."})
+    tags: Optional[List[str]] = field(default=None, metadata={"description": "Tags for the port."})
+    enabled: Optional[bool] = field(default=None, metadata={"description": "Whether the port is enabled."})
+    type: Optional[str] = field(default=None, metadata={"description": "Port type."})
+    vlan: Optional[int] = field(default=None, metadata={"description": "VLAN number."})
+    voice_vlan: Optional[int] = field(default=None, metadata={"description": "Voice VLAN number."})
+    allowed_vlans: Optional[str] = field(default=None, metadata={"description": "Allowed VLANs (for trunk ports)."})
+    poe_enabled: Optional[bool] = field(default=None, metadata={"description": "Power over Ethernet enabled."})
+    isolation_enabled: Optional[bool] = field(default=None, metadata={"description": "Port isolation enabled."})
+    rstp_enabled: Optional[bool] = field(default=None, metadata={"description": "RSTP enabled."})
+    stp_guard: Optional[str] = field(default=None, metadata={"description": "STP guard setting."})
+    link_negotiation: Optional[str] = field(default=None, metadata={"description": "Link speed negotiation."})
+    port_schedule_id: Optional[str] = field(default=None, metadata={"description": "Port schedule ID."})
+    udld: Optional[str] = field(default=None, metadata={"description": "Unidirectional Link Detection action."})
+    access_policy_type: Optional[str] = field(default=None, metadata={"description": "Access policy type."})
+    access_policy_number: Optional[int] = field(default=None, metadata={"description": "Access policy number."})
+    sticky_mac_allow_list: Optional[List[str]] = field(default=None, metadata={"description": "Sticky MAC allow list."})
+    sticky_mac_allow_list_limit: Optional[int] = field(default=None, metadata={"description": "Sticky MAC allow list limit."})
+    storm_control_enabled: Optional[bool] = field(default=None, metadata={"description": "Storm control enabled."})
+    adaptive_policy_group_id: Optional[str] = field(default=None, metadata={"description": "Adaptive policy group ID."})
+    peer_sgt_capable: Optional[bool] = field(default=None, metadata={"description": "Peer SGT capable."})
+    flexible_stacking_enabled: Optional[bool] = field(default=None, metadata={"description": "Flexible stacking enabled."})
+    dai_trusted: Optional[bool] = field(default=None, metadata={"description": "DAI trusted."})
+    profile: Optional[Dict[str, Any]] = field(default=None, metadata={"description": "Port profile."})
 
     _field_mapping = {
         'port_id': 'portId',

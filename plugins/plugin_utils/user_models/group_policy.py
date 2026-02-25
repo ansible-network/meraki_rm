@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional
 
 from ..platform.base_transform import BaseTransformMixin
@@ -12,19 +12,23 @@ from ..platform.base_transform import BaseTransformMixin
 class UserGroupPolicy(BaseTransformMixin):
     """User-facing group policy model with snake_case fields."""
 
+    MODULE_NAME = 'group_policy'
+    CANONICAL_KEY = 'name'
+    SYSTEM_KEY = 'group_policy_id'
+
     # scope
     network_id: Optional[str] = None
     # identity
-    group_policy_id: Optional[str] = None
+    group_policy_id: Optional[str] = field(default=None, metadata={"description": "Server-assigned ID, resolved automatically by matching on C(name). Provide only to disambiguate when duplicate names exist."})
     # fields
-    name: Optional[str] = None
-    bandwidth: Optional[Dict[str, Any]] = None
-    bonjour_forwarding: Optional[Dict[str, Any]] = None
-    content_filtering: Optional[Dict[str, Any]] = None
-    firewall_and_traffic_shaping: Optional[Dict[str, Any]] = None
-    scheduling: Optional[Dict[str, Any]] = None
-    splash_auth_settings: Optional[str] = None
-    vlan_tagging: Optional[Dict[str, Any]] = None
+    name: Optional[str] = field(default=None, metadata={"description": "Name of the group policy. Required for create."})
+    bandwidth: Optional[Dict[str, Any]] = field(default=None, metadata={"description": "Bandwidth settings for clients."})
+    bonjour_forwarding: Optional[Dict[str, Any]] = field(default=None, metadata={"description": "Bonjour forwarding settings."})
+    content_filtering: Optional[Dict[str, Any]] = field(default=None, metadata={"description": "Content filtering settings."})
+    firewall_and_traffic_shaping: Optional[Dict[str, Any]] = field(default=None, metadata={"description": "Firewall and traffic shaping rules."})
+    scheduling: Optional[Dict[str, Any]] = field(default=None, metadata={"description": "Schedule for the group policy."})
+    splash_auth_settings: Optional[str] = field(default=None, metadata={"description": "Splash authorization bypass setting."})
+    vlan_tagging: Optional[Dict[str, Any]] = field(default=None, metadata={"description": "VLAN tagging settings."})
 
     _field_mapping = {
         'group_policy_id': 'groupPolicyId',

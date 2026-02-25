@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional
 
 from ..platform.base_transform import BaseTransformMixin
@@ -12,16 +12,19 @@ from ..platform.base_transform import BaseTransformMixin
 class UserVlanProfile(BaseTransformMixin):
     """User-facing VLAN profile model with snake_case fields."""
 
+    MODULE_NAME = 'vlan_profile'
+    CANONICAL_KEY = 'iname'
+
     # scope
     network_id: Optional[str] = None
     # identity (API uses iname in path)
-    iname: Optional[str] = None
+    iname: Optional[str] = field(default=None, metadata={"description": "VLAN profile iname (primary key). Required for merged, replaced, deleted."})
     # fields
-    name: Optional[str] = None
-    is_default: Optional[bool] = None
-    vlan_names: Optional[List[Dict[str, Any]]] = None
-    vlan_groups: Optional[List[Dict[str, Any]]] = None
-    vlan_profile: Optional[Dict[str, Any]] = None
+    name: Optional[str] = field(default=None, metadata={"description": "Name of the profile (1-255 chars)."})
+    is_default: Optional[bool] = field(default=None, metadata={"description": "Whether this is the default VLAN profile."})
+    vlan_names: Optional[List[Dict[str, Any]]] = field(default=None, metadata={"description": "Array of named VLANs."})
+    vlan_groups: Optional[List[Dict[str, Any]]] = field(default=None, metadata={"description": "Array of named VLAN groups."})
+    vlan_profile: Optional[Dict[str, Any]] = field(default=None, metadata={"description": "VLAN profile configuration."})
 
     _field_mapping = {
         'iname': 'iname',

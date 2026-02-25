@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional
 
 from ..platform.base_transform import BaseTransformMixin
@@ -12,16 +12,20 @@ from ..platform.base_transform import BaseTransformMixin
 class UserMqttBroker(BaseTransformMixin):
     """User-facing MQTT broker model with snake_case fields."""
 
+    MODULE_NAME = 'mqtt_broker'
+    CANONICAL_KEY = 'name'
+    SYSTEM_KEY = 'mqtt_broker_id'
+
     # scope
     network_id: Optional[str] = None
     # identity
-    mqtt_broker_id: Optional[str] = None
+    mqtt_broker_id: Optional[str] = field(default=None, metadata={"description": "Server-assigned ID, resolved automatically by matching on C(name). Provide only to disambiguate when duplicate names exist."})
     # fields
-    name: Optional[str] = None
-    host: Optional[str] = None
-    port: Optional[int] = None
-    authentication: Optional[Dict[str, Any]] = None
-    security: Optional[Dict[str, Any]] = None
+    name: Optional[str] = field(default=None, metadata={"description": "Name of the MQTT broker."})
+    host: Optional[str] = field(default=None, metadata={"description": "Host name or IP address of the MQTT broker."})
+    port: Optional[int] = field(default=None, metadata={"description": "Port for the MQTT broker."})
+    authentication: Optional[Dict[str, Any]] = field(default=None, metadata={"description": "Authentication settings."})
+    security: Optional[Dict[str, Any]] = field(default=None, metadata={"description": "Security settings."})
 
     _field_mapping = {
         'mqtt_broker_id': 'id',

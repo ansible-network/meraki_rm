@@ -4,8 +4,4 @@ from .base_action import BaseResourceActionPlugin
 
 
 class ActionModule(BaseResourceActionPlugin):
-    MODULE_NAME = 'policy_object'
-    SCOPE_PARAM = 'organization_id'
     USER_MODEL = 'plugins.plugin_utils.user_models.policy_object.UserPolicyObject'
-    CANONICAL_KEY = 'name'
-    SYSTEM_KEY = 'policy_object_id'

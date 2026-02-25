@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional
 
 from ..platform.base_transform import BaseTransformMixin
@@ -12,18 +12,21 @@ from ..platform.base_transform import BaseTransformMixin
 class UserNetworkSettings(BaseTransformMixin):
     """User-facing network settings model with snake_case fields."""
 
+    MODULE_NAME = 'network_settings'
+    SUPPORTS_DELETE = False
+
     # scope
     network_id: Optional[str] = None
     # fields (singleton - no primary key)
-    local_status_page_enabled: Optional[bool] = None
-    remote_status_page_enabled: Optional[bool] = None
-    local_status_page: Optional[Dict[str, Any]] = None
-    fips: Optional[Dict[str, Any]] = None
-    named_vlans: Optional[Dict[str, Any]] = None
-    secure_port: Optional[Dict[str, Any]] = None
-    reporting_enabled: Optional[bool] = None
-    mode: Optional[str] = None
-    custom_pie_chart_items: Optional[List[Dict[str, Any]]] = None
+    local_status_page_enabled: Optional[bool] = field(default=None, metadata={"description": "Enable local device status pages."})
+    remote_status_page_enabled: Optional[bool] = field(default=None, metadata={"description": "Enable access to device status page via LAN IP."})
+    local_status_page: Optional[Dict[str, Any]] = field(default=None, metadata={"description": "Local status page authentication options."})
+    fips: Optional[Dict[str, Any]] = field(default=None, metadata={"description": "FIPS options for the network."})
+    named_vlans: Optional[Dict[str, Any]] = field(default=None, metadata={"description": "Named VLANs options."})
+    secure_port: Optional[Dict[str, Any]] = field(default=None, metadata={"description": "SecureConnect options."})
+    reporting_enabled: Optional[bool] = field(default=None, metadata={"description": "Enable NetFlow traffic reporting."})
+    mode: Optional[str] = field(default=None, metadata={"description": "Traffic analysis mode."})
+    custom_pie_chart_items: Optional[List[Dict[str, Any]]] = field(default=None, metadata={"description": "Custom pie chart items for traffic reporting."})
 
     _field_mapping = {
         'local_status_page_enabled': 'localStatusPageEnabled',

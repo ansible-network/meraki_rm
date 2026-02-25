@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional
 
 from ..platform.base_transform import BaseTransformMixin
@@ -12,16 +12,20 @@ from ..platform.base_transform import BaseTransformMixin
 class UserEthernetPortProfile(BaseTransformMixin):
     """User-facing Ethernet port profile model with snake_case fields."""
 
+    MODULE_NAME = 'ethernet_port_profile'
+    CANONICAL_KEY = 'name'
+    SYSTEM_KEY = 'profile_id'
+
     # scope
     network_id: Optional[str] = None
     # identity
-    profile_id: Optional[str] = None
+    profile_id: Optional[str] = field(default=None, metadata={"description": "Server-assigned ID, resolved automatically by matching on C(name). Provide only to disambiguate when duplicate names exist."})
     # fields
-    name: Optional[str] = None
-    ports: Optional[List[Dict[str, Any]]] = None
-    usb_ports: Optional[List[Dict[str, Any]]] = None
-    is_default: Optional[bool] = None
-    serials: Optional[List[str]] = None
+    name: Optional[str] = field(default=None, metadata={"description": "AP port profile name."})
+    ports: Optional[List[Dict[str, Any]]] = field(default=None, metadata={"description": "Ports configuration."})
+    usb_ports: Optional[List[Dict[str, Any]]] = field(default=None, metadata={"description": "USB ports configuration."})
+    is_default: Optional[bool] = field(default=None, metadata={"description": "Whether this is the default profile."})
+    serials: Optional[List[str]] = field(default=None, metadata={"description": "List of AP serials to assign."})
 
     _field_mapping = {
         'profile_id': 'profileId',

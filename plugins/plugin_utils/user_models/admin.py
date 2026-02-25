@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional
 
 from ..platform.base_transform import BaseTransformMixin
@@ -12,21 +12,26 @@ from ..platform.base_transform import BaseTransformMixin
 class UserAdmin(BaseTransformMixin):
     """User-facing admin model with snake_case fields."""
 
+    MODULE_NAME = 'admin'
+    SCOPE_PARAM = 'organization_id'
+    CANONICAL_KEY = 'email'
+    SYSTEM_KEY = 'admin_id'
+
     # scope
     organization_id: Optional[str] = None
     # identity
-    admin_id: Optional[str] = None
+    admin_id: Optional[str] = field(default=None, metadata={"description": "Server-assigned ID, resolved automatically by matching on C(email). Provide only to disambiguate when duplicate emails exist."})
     # fields
-    name: Optional[str] = None
-    email: Optional[str] = None
-    org_access: Optional[str] = None
-    tags: Optional[List[Dict[str, Any]]] = None
-    networks: Optional[List[Dict[str, Any]]] = None
-    authentication_method: Optional[str] = None
-    account_status: Optional[str] = None
-    two_factor_auth_enabled: Optional[bool] = None
-    has_api_key: Optional[bool] = None
-    last_active: Optional[str] = None
+    name: Optional[str] = field(default=None, metadata={"description": "Admin name."})
+    email: Optional[str] = field(default=None, metadata={"description": "Admin email."})
+    org_access: Optional[str] = field(default=None, metadata={"description": "Admin's level of access to the organization."})
+    tags: Optional[List[Dict[str, Any]]] = field(default=None, metadata={"description": "List of tag-based access controls."})
+    networks: Optional[List[Dict[str, Any]]] = field(default=None, metadata={"description": "List of network-based access controls."})
+    authentication_method: Optional[str] = field(default=None, metadata={"description": "Admin's authentication method."})
+    account_status: Optional[str] = field(default=None, metadata={"description": "Status of the admin's account."})
+    two_factor_auth_enabled: Optional[bool] = field(default=None, metadata={"description": "Indicates whether two-factor authentication is enabled."})
+    has_api_key: Optional[bool] = field(default=None, metadata={"description": "Indicates whether the admin has an API key."})
+    last_active: Optional[str] = field(default=None, metadata={"description": "Time when the admin was last active."})
 
     _field_mapping = {
         'admin_id': 'id',

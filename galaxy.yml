@@ -41,3 +41,8 @@ build_ignore:
   - "*.tar.gz"
   - __pycache__
   - "*.pyc"
+  - plugins/plugin_utils/pyproject.toml
+  - plugins/plugin_utils/dist
+  - "plugins/plugin_utils/*.egg-info"
+  - plugins/plugin_utils/mcp
+  - "*.dist-info"

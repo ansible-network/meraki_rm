@@ -28,10 +28,27 @@ class BaseTransformMixin(ABC):
     Attributes:
         _field_mapping: Dict defining field mappings (set by subclasses)
         _transform_registry: Dict of transformation functions (set by subclasses)
+
+    Resource metadata (overridden by User Model subclasses):
+        MODULE_NAME: Resource identifier used by PlatformManager (e.g. 'vlan')
+        SCOPE_PARAM: Scope kwarg name ('network_id', 'organization_id', 'serial')
+        CANONICAL_KEY: User-facing stable identifier field (e.g. 'name', 'vlan_id')
+        SYSTEM_KEY: API-generated opaque identifier for URL routing (e.g. 'admin_id')
+        SUPPORTS_DELETE: False for singletons that cannot be removed
+        VALID_STATES: Frozenset of states this resource supports
     """
 
     _field_mapping: Optional[Dict] = None
     _transform_registry: Optional[Dict] = None
+
+    MODULE_NAME: str = None
+    SCOPE_PARAM: str = 'network_id'
+    CANONICAL_KEY: str = None
+    SYSTEM_KEY: str = None
+    SUPPORTS_DELETE: bool = True
+    VALID_STATES: frozenset = frozenset({
+        'merged', 'replaced', 'overridden', 'deleted', 'gathered',
+    })
 
     def to_api(self, context: Optional[Dict] = None) -> Any:
         """

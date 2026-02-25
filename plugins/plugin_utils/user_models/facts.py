@@ -12,6 +12,9 @@ from ..platform.base_transform import BaseTransformMixin
 class UserFacts(BaseTransformMixin):
     """User-facing facts model with gather options."""
 
+    MODULE_NAME = 'facts'
+    SUPPORTS_DELETE = False
+
     gather_subset: Optional[List[str]] = None
     organization_id: Optional[str] = None
     network_id: Optional[str] = None

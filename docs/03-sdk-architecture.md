@@ -470,7 +470,120 @@ The library is the product. The presentation layers are distribution channels. A
 
 ---
 
-## Section 9: Why This Matters
+## Section 10: Meraki RM Implementation
+
+The `cisco.meraki_rm` Ansible collection implements this architecture. The SDK lives inside `plugins/plugin_utils/` and is dual-packaged: it ships as part of the Ansible collection tarball *and* as a standalone Python package (`meraki-rm-sdk`) for non-Ansible consumers like the MCP server.
+
+### Directory Layout
+
+```
+plugins/plugin_utils/               # SDK root
+├── platform/
+│   ├── base_transform.py           # BaseTransformMixin + resource metadata defaults
+│   ├── types.py                    # EndpointOperation
+│   ├── registry.py                 # APIVersionRegistry
+│   └── loader.py                   # DynamicClassLoader
+├── manager/
+│   ├── platform_manager.py         # PlatformService + PlatformManager
+│   └── rpc_client.py               # ManagerRPCClient
+├── user_models/                    # 48 User Model dataclasses
+│   ├── vlan.py                     # UserVlan (Category A)
+│   ├── admin.py                    # UserAdmin (Category B)
+│   ├── qos_rule.py                 # UserQosRule (Category C)
+│   └── ...
+├── mcp/                            # MCP server subpackage
+│   ├── schema.py                   # dataclass → JSON Schema conversion
+│   ├── introspect.py               # User Model discovery + tool definition generation
+│   └── server.py                   # MCP server (task and live modes)
+└── pyproject.toml                  # Standalone Python packaging (meraki-rm-sdk)
+```
+
+### User Models as Single Source of Truth
+
+Each User Model dataclass carries both field definitions *and* resource metadata:
+
+```python
+@dataclass
+class UserVlan(BaseTransformMixin):
+    MODULE_NAME = 'vlan'
+    CANONICAL_KEY = 'vlan_id'
+    # SCOPE_PARAM, SYSTEM_KEY, SUPPORTS_DELETE, VALID_STATES
+    # inherit defaults from BaseTransformMixin
+
+    vlan_id: Optional[str] = field(
+        default=None, metadata={"description": "VLAN ID (1-4094)."}
+    )
+    name: Optional[str] = field(
+        default=None, metadata={"description": "VLAN name."}
+    )
+    # ...
+```
+
+This single class drives:
+
+| Consumer | What It Reads |
+|----------|---------------|
+| **Ansible action plugin** | `MODULE_NAME`, `SCOPE_PARAM`, `CANONICAL_KEY`, `SYSTEM_KEY`, `VALID_STATES`, field types |
+| **MCP server** | Same metadata + `field.metadata["description"]` for tool schemas |
+| **Code generators** | Field names, types, descriptions for docs and test scaffolding |
+
+### Dual Packaging
+
+The `pyproject.toml` in `plugins/plugin_utils/` defines the standalone SDK:
+
+```toml
+[project]
+name = "meraki-rm-sdk"
+version = "0.1.0"
+dependencies = ["requests"]
+
+[project.optional-dependencies]
+mcp = ["mcp", "pyyaml"]
+
+[project.scripts]
+meraki-mcp-server = "meraki_rm_sdk.mcp.server:main"
+```
+
+Install modes:
+
+| Mode | Command | Use Case |
+|------|---------|----------|
+| **Ansible collection** | `ansible-galaxy collection install cisco.meraki_rm` | Playbook authors |
+| **SDK (non-editable)** | `pip install plugins/plugin_utils/` | MCP server, introspection tools |
+| **SDK + MCP** | `pip install 'plugins/plugin_utils/[mcp]'` | Full MCP server with dependencies |
+
+The `galaxy.yml` `build_ignore` list excludes `pyproject.toml`, `mcp/`, and Python packaging artifacts from the Ansible collection tarball.
+
+### MCP Server
+
+The MCP server dynamically generates 48 tools by introspecting User Model dataclasses at startup:
+
+1. `introspect.py` scans `user_models/` via `pkgutil.iter_modules()`
+2. For each `User*` dataclass, reads `MODULE_NAME`, `SCOPE_PARAM`, `CANONICAL_KEY`, `VALID_STATES`
+3. `schema.py` converts field types and `metadata["description"]` to JSON Schema
+4. `server.py` registers tools with the low-level `mcp.server.Server` API
+
+Two modes are supported:
+
+| Mode | CLI Flag | Behavior |
+|------|----------|----------|
+| **task** (default) | `--mode=task` | Returns Ansible task YAML snippets. No API key needed. |
+| **live** | `--mode=live` | Executes operations against the Meraki Dashboard API. Requires `MERAKI_API_KEY`. |
+
+### Action Plugin Simplification
+
+With metadata on the User Model, action plugins are pure configuration:
+
+```python
+class ActionModule(BaseResourceActionPlugin):
+    USER_MODEL = 'plugins.plugin_utils.user_models.vlan.UserVlan'
+```
+
+The base class loads the User Model, syncs its metadata attributes, and dispatches the operation. No per-module `run()` override needed.
+
+---
+
+## Section 11: Why This Matters
 
 ### For NovaCom Specifically
 

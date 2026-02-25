@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional
 
 from ..platform.base_transform import BaseTransformMixin
@@ -12,14 +12,18 @@ from ..platform.base_transform import BaseTransformMixin
 class UserCameraWirelessProfile(BaseTransformMixin):
     """User-facing camera wireless profile model with snake_case fields."""
 
+    MODULE_NAME = 'camera_wireless_profile'
+    CANONICAL_KEY = 'name'
+    SYSTEM_KEY = 'wireless_profile_id'
+
     # scope
     network_id: Optional[str] = None
     # identity
-    wireless_profile_id: Optional[str] = None
+    wireless_profile_id: Optional[str] = field(default=None, metadata={"description": "Server-assigned ID, resolved automatically by matching on C(name). Provide only to disambiguate when duplicate names exist."})
     # fields
-    name: Optional[str] = None
-    identity: Optional[Dict[str, Any]] = None
-    ssid: Optional[Dict[str, Any]] = None
+    name: Optional[str] = field(default=None, metadata={"description": "Name of the camera wireless profile."})
+    identity: Optional[Dict[str, Any]] = field(default=None, metadata={"description": "Identity of the wireless profile (required for create)."})
+    ssid: Optional[Dict[str, Any]] = field(default=None, metadata={"description": "SSID configuration details."})
 
     _field_mapping = {
         'wireless_profile_id': 'id',

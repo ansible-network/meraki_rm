@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional
 
 from ..platform.base_transform import BaseTransformMixin
@@ -12,17 +12,20 @@ from ..platform.base_transform import BaseTransformMixin
 class UserVpn(BaseTransformMixin):
     """User-facing VPN model with snake_case fields."""
 
+    MODULE_NAME = 'vpn'
+    SUPPORTS_DELETE = False
+
     # scope
     network_id: Optional[str] = None
     # fields (singleton - no primary key)
-    mode: Optional[str] = None
-    hubs: Optional[List[Dict[str, Any]]] = None
-    subnets: Optional[List[Dict[str, Any]]] = None
-    subnet: Optional[Dict[str, Any]] = None
-    enabled: Optional[bool] = None
-    as_number: Optional[int] = None
-    ibgp_hold_timer: Optional[int] = None
-    neighbors: Optional[List[Dict[str, Any]]] = None
+    mode: Optional[str] = field(default=None, metadata={"description": "Site-to-site VPN mode."})
+    hubs: Optional[List[Dict[str, Any]]] = field(default=None, metadata={"description": "List of VPN hubs, in order of preference."})
+    subnets: Optional[List[Dict[str, Any]]] = field(default=None, metadata={"description": "List of subnets and their VPN presence."})
+    subnet: Optional[Dict[str, Any]] = field(default=None, metadata={"description": "Configuration of subnet features."})
+    enabled: Optional[bool] = field(default=None, metadata={"description": "Whether VPN is enabled."})
+    as_number: Optional[int] = field(default=None, metadata={"description": "BGP autonomous system number."})
+    ibgp_hold_timer: Optional[int] = field(default=None, metadata={"description": "iBGP hold time in seconds."})
+    neighbors: Optional[List[Dict[str, Any]]] = field(default=None, metadata={"description": "List of eBGP neighbor configurations."})
 
     _field_mapping = {
         'mode': 'mode',

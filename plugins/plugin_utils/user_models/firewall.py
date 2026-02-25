@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional
 
 from ..platform.base_transform import BaseTransformMixin
@@ -12,16 +12,19 @@ from ..platform.base_transform import BaseTransformMixin
 class UserFirewall(BaseTransformMixin):
     """User-facing firewall model with snake_case fields."""
 
+    MODULE_NAME = 'firewall'
+    SUPPORTS_DELETE = False
+
     # scope
     network_id: Optional[str] = None
     # fields (singleton - no primary key)
-    rules: Optional[List[Dict[str, Any]]] = None
-    syslog_default_rule: Optional[bool] = None
-    spoofing_protection: Optional[Dict[str, Any]] = None
-    application_categories: Optional[List[Dict[str, Any]]] = None
-    access: Optional[str] = None
-    allowed_ips: Optional[List[str]] = None
-    service: Optional[str] = None
+    rules: Optional[List[Dict[str, Any]]] = field(default=None, metadata={"description": "Ordered array of L3 firewall rules."})
+    syslog_default_rule: Optional[bool] = field(default=None, metadata={"description": "Log the special default rule."})
+    spoofing_protection: Optional[Dict[str, Any]] = field(default=None, metadata={"description": "Spoofing protection settings."})
+    application_categories: Optional[List[Dict[str, Any]]] = field(default=None, metadata={"description": "L7 application categories and applications."})
+    access: Optional[str] = field(default=None, metadata={"description": "Rule for which IPs are allowed to access."})
+    allowed_ips: Optional[List[str]] = field(default=None, metadata={"description": "Array of allowed CIDRs."})
+    service: Optional[str] = field(default=None, metadata={"description": "Appliance service name."})
 
     _field_mapping = {
         'rules': 'rules',

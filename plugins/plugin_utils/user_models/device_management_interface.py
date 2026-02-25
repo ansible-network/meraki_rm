@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional
 
 from ..platform.base_transform import BaseTransformMixin
@@ -12,12 +12,16 @@ from ..platform.base_transform import BaseTransformMixin
 class UserDeviceManagementInterface(BaseTransformMixin):
     """User-facing device management interface model with snake_case fields."""
 
+    MODULE_NAME = 'device_management_interface'
+    SCOPE_PARAM = 'serial'
+    SUPPORTS_DELETE = False
+
     # scope
     serial: Optional[str] = None
     # fields (singleton - no primary key)
-    wan1: Optional[Dict[str, Any]] = None
-    wan2: Optional[Dict[str, Any]] = None
-    ddns_hostnames: Optional[Dict[str, Any]] = None
+    wan1: Optional[Dict[str, Any]] = field(default=None, metadata={"description": "WAN 1 settings."})
+    wan2: Optional[Dict[str, Any]] = field(default=None, metadata={"description": "WAN 2 settings (MX devices only)."})
+    ddns_hostnames: Optional[Dict[str, Any]] = field(default=None, metadata={"description": "Dynamic DNS hostnames."})
 
     _field_mapping = {
         'wan1': 'wan1',

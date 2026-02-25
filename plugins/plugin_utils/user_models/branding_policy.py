@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional
 
 from ..platform.base_transform import BaseTransformMixin
@@ -12,16 +12,21 @@ from ..platform.base_transform import BaseTransformMixin
 class UserBrandingPolicy(BaseTransformMixin):
     """User-facing branding policy model with snake_case fields."""
 
+    MODULE_NAME = 'branding_policy'
+    SCOPE_PARAM = 'organization_id'
+    CANONICAL_KEY = 'name'
+    SYSTEM_KEY = 'branding_policy_id'
+
     # scope
     organization_id: Optional[str] = None
     # identity
-    branding_policy_id: Optional[str] = None
+    branding_policy_id: Optional[str] = field(default=None, metadata={"description": "Server-assigned ID, resolved automatically by matching on C(name). Provide only to disambiguate when duplicate names exist."})
     # fields
-    name: Optional[str] = None
-    enabled: Optional[bool] = None
-    admin_settings: Optional[Dict[str, Any]] = None
-    help_settings: Optional[Dict[str, Any]] = None
-    custom_logo: Optional[Dict[str, Any]] = None
+    name: Optional[str] = field(default=None, metadata={"description": "Name of the branding policy."})
+    enabled: Optional[bool] = field(default=None, metadata={"description": "Whether the policy is enabled."})
+    admin_settings: Optional[Dict[str, Any]] = field(default=None, metadata={"description": "Settings for which kinds of admins this policy applies to."})
+    help_settings: Optional[Dict[str, Any]] = field(default=None, metadata={"description": "Modifications to Help page features."})
+    custom_logo: Optional[Dict[str, Any]] = field(default=None, metadata={"description": "Custom logo properties."})
 
     _field_mapping = {
         'branding_policy_id': 'id',

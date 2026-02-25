@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional
 
 from ..platform.base_transform import BaseTransformMixin
@@ -12,12 +12,15 @@ from ..platform.base_transform import BaseTransformMixin
 class UserFirmwareUpgrade(BaseTransformMixin):
     """User-facing firmware upgrade model with snake_case fields."""
 
+    MODULE_NAME = 'firmware_upgrade'
+    SUPPORTS_DELETE = False
+
     # scope
     network_id: Optional[str] = None
     # fields (singleton - no primary key)
-    upgrade_window: Optional[Dict[str, Any]] = None
-    timezone: Optional[str] = None
-    products: Optional[Dict[str, Any]] = None
+    upgrade_window: Optional[Dict[str, Any]] = field(default=None, metadata={"description": "Upgrade window (dayOfWeek, hourOfDay)."})
+    timezone: Optional[str] = field(default=None, metadata={"description": "Timezone for the network."})
+    products: Optional[Dict[str, Any]] = field(default=None, metadata={"description": "Product-specific upgrade settings (wireless, appliance, switch, camera)."})
 
     _field_mapping = {
         'upgrade_window': 'upgradeWindow',

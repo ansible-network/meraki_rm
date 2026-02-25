@@ -15,6 +15,7 @@ This document covers the **code generation tools** that automate creation of dat
 1. [Code Generation Strategy](#section-1-code-generation-strategy)
 2. [User Model Dataclass Generator](#section-2-user-model-dataclass-generator)
 3. [API Dataclass Generator (Device Models)](#section-3-api-dataclass-generator-device-models)
+3B. [Field Description Sync Generator](#section-3b-field-description-sync-generator)
 4. [Usage Examples](#section-4-usage-examples)
 5. [Verification Checklist](#section-5-verification-checklist)
 6. [CI/CD Integration](#section-6-cicd-integration)
@@ -577,6 +578,43 @@ echo "  3. Import generated classes in your transform mixin files"
 cd novacom.dashboard
 bash tools/generators/generate_api_models.sh
 ```
+
+---
+
+## SECTION 3B: Field Description Sync Generator
+
+### Tool: `generate_model_descriptions.py`
+
+**Location**: `tools/generate_model_descriptions.py`
+
+**Purpose**: Sync field descriptions from module `DOCUMENTATION` YAML strings into User Model dataclass `field(metadata={"description": "..."})` annotations. This keeps the User Model self-describing — the MCP server reads these descriptions at runtime to populate tool input schemas.
+
+### How It Works
+
+1. Scans `plugins/modules/meraki_*.py` for `DOCUMENTATION` assignments
+2. Extracts per-field descriptions from `options.config.suboptions`
+3. Reads the corresponding action plugin to find the `USER_MODEL` path
+4. Rewrites the User Model file, transforming bare field defaults:
+
+```python
+# Before
+name: Optional[str] = None
+
+# After
+name: Optional[str] = field(default=None, metadata={"description": "VLAN name."})
+```
+
+### Usage
+
+```bash
+python tools/generate_model_descriptions.py
+```
+
+The tool is **idempotent**: running it again updates existing descriptions if the `DOCUMENTATION` string has changed, and leaves already-current fields untouched.
+
+### Why This Exists
+
+Module `DOCUMENTATION` strings define field descriptions for `ansible-doc` but are not accessible at Python import time (they are string constants in module files, not importable metadata). The MCP server needs descriptions when generating JSON Schema tool definitions. This generator bridges the gap by copying descriptions into the dataclass `field(metadata=...)` where they are available via `dataclasses.fields()`.
 
 ---
 

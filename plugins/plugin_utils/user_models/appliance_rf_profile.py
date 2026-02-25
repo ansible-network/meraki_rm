@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional
 
 from ..platform.base_transform import BaseTransformMixin
@@ -12,16 +12,20 @@ from ..platform.base_transform import BaseTransformMixin
 class UserApplianceRfProfile(BaseTransformMixin):
     """User-facing appliance RF profile model with snake_case fields."""
 
+    MODULE_NAME = 'appliance_rf_profile'
+    CANONICAL_KEY = 'name'
+    SYSTEM_KEY = 'rf_profile_id'
+
     # scope
     network_id: Optional[str] = None
     # identity
-    rf_profile_id: Optional[str] = None
+    rf_profile_id: Optional[str] = field(default=None, metadata={"description": "Server-assigned ID, resolved automatically by matching on C(name). Provide only to disambiguate when duplicate names exist."})
     # fields
-    name: Optional[str] = None
-    two_four_ghz_settings: Optional[Dict[str, Any]] = None
-    five_ghz_settings: Optional[Dict[str, Any]] = None
-    per_ssid_settings: Optional[Dict[str, Any]] = None
-    assigned: Optional[List[Dict[str, Any]]] = None
+    name: Optional[str] = field(default=None, metadata={"description": "Name of the profile. Required for create."})
+    two_four_ghz_settings: Optional[Dict[str, Any]] = field(default=None, metadata={"description": "Settings for 2.4GHz band."})
+    five_ghz_settings: Optional[Dict[str, Any]] = field(default=None, metadata={"description": "Settings for 5GHz band."})
+    per_ssid_settings: Optional[Dict[str, Any]] = field(default=None, metadata={"description": "Per-SSID radio settings by number."})
+    assigned: Optional[List[Dict[str, Any]]] = field(default=None, metadata={"description": "Assigned RF profiles."})
 
     _field_mapping = {
         'rf_profile_id': 'id',
