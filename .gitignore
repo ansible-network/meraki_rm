@@ -204,6 +204,9 @@ cython_debug/
 # Local Ansible config (dev-only, not needed in collection)
 ansible.cfg
 
+# Installed collection symlink tree (created by ansible-galaxy collection install)
+collections/
+
 # ansible-doc-renderer build output
 tools/ansible-doc-renderer/out/
 tools/ansible-doc-renderer/node_modules/

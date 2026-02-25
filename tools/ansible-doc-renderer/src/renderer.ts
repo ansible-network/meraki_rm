@@ -426,10 +426,10 @@ export function renderIndexPage(opts: IndexPageOptions): string {
         <button class="toolbar-btn" id="theme-btn" title="Toggle theme">auto</button>
     </div>
     
-    <nav class="nav-bar" style="padding: 0.75rem 2rem; border-bottom: 1px solid var(--border-color, #444);">
-        <a href="index.html" style="color: var(--accent-color, #4a9eff); text-decoration: none; margin-right: 1.5rem; font-weight: 600;">Modules</a>
-        <a href="mcp-server.html" style="color: var(--accent-color, #4a9eff); text-decoration: none; margin-right: 1.5rem;">MCP Server</a>
-        <a href="cli.html" style="color: var(--accent-color, #4a9eff); text-decoration: none; margin-right: 1.5rem;">CLI</a>
+    <nav style="padding: 8px 16px; border-bottom: 1px solid var(--border); background: var(--surface);">
+        <a href="index.html" style="color: var(--accent); text-decoration: none; margin-right: 16px; font-size: 12px; font-weight: 600;">Modules</a>
+        <a href="mcp-server.html" style="color: var(--text-muted); text-decoration: none; margin-right: 16px; font-size: 12px;">MCP Server</a>
+        <a href="cli.html" style="color: var(--text-muted); text-decoration: none; margin-right: 16px; font-size: 12px;">CLI</a>
     </nav>
 
     <div class="container">

@@ -42,7 +42,9 @@ jobs:
       - name: Install collection
         run: |
           ansible-galaxy collection build --force
-          ansible-galaxy collection install cisco-meraki_rm-*.tar.gz
+          ansible-galaxy collection install cisco-meraki_rm-*.tar.gz -p /tmp/collections
+        env:
+          ANSIBLE_COLLECTIONS_PATH: /tmp/collections
 
       - name: Build renderer
         working-directory: tools/ansible-doc-renderer
@@ -51,6 +53,8 @@ jobs:
           npm run build
 
       - name: Generate module docs
+        env:
+          ANSIBLE_COLLECTIONS_PATH: /tmp/collections
         run: |
           ansible-doc --metadata-dump -t module --no-fail-on-errors cisco.meraki_rm > /tmp/meraki-docs.json
           node tools/ansible-doc-renderer/out/cli.js \

@@ -172,28 +172,69 @@ def _wrap_html(title: str, body: str, css_path: str | None = None) -> str:
     <title>{html.escape(title)}</title>
     {style_tag}
     <style>
-        .md-content {{ max-width: 960px; margin: 0 auto; padding: 2rem; }}
-        .md-content table {{ border-collapse: collapse; width: 100%; margin: 1rem 0; }}
-        .md-content th, .md-content td {{ border: 1px solid var(--border-color, #444);
-            padding: 0.5rem 0.75rem; text-align: left; }}
-        .md-content th {{ background: var(--bg-lighter, #2a2a2e); font-weight: 600; }}
-        .md-content pre {{ background: var(--bg-lighter, #2a2a2e); padding: 1rem;
-            border-radius: 6px; overflow-x: auto; }}
-        .md-content code {{ font-family: 'JetBrains Mono', 'Fira Code', monospace;
-            font-size: 0.9em; }}
-        .md-content p code {{ background: var(--bg-lighter, #2a2a2e);
-            padding: 0.15rem 0.35rem; border-radius: 3px; }}
-        .md-content hr {{ border: 0; border-top: 1px solid var(--border-color, #444);
-            margin: 2rem 0; }}
-        .md-content h1 {{ border-bottom: 2px solid var(--accent-color, #4a9eff);
-            padding-bottom: 0.5rem; }}
-        .md-content h2 {{ border-bottom: 1px solid var(--border-color, #444);
-            padding-bottom: 0.3rem; margin-top: 2rem; }}
-        .md-content h3 {{ margin-top: 1.5rem; }}
-        .nav-bar {{ padding: 0.75rem 2rem; border-bottom: 1px solid var(--border-color, #444); }}
-        .nav-bar a {{ color: var(--accent-color, #4a9eff); text-decoration: none;
-            margin-right: 1.5rem; }}
-        .nav-bar a:hover {{ text-decoration: underline; }}
+        .md-content {{ max-width: 960px; margin: 0 auto; padding: 16px; }}
+        .md-content table {{
+            border-collapse: collapse; width: 100%; margin: 12px 0;
+            font-size: 12px;
+        }}
+        .md-content th, .md-content td {{
+            border: 1px solid var(--border);
+            padding: 6px 10px; text-align: left;
+        }}
+        .md-content th {{
+            background: var(--surface);
+            font-weight: 600; font-size: 12px;
+        }}
+        .md-content pre {{
+            background: var(--code-bg);
+            border: 1px solid var(--border);
+            padding: 12px; border-radius: 4px;
+            overflow-x: auto; margin: 10px 0;
+        }}
+        .md-content pre code {{
+            font-family: 'SFMono-Regular', Consolas, monospace;
+            font-size: 12px; line-height: 1.5;
+            background: none; padding: 0; border-radius: 0;
+        }}
+        .md-content code {{
+            background: var(--code-bg);
+            padding: 1px 4px; border-radius: 3px;
+            font-family: 'SFMono-Regular', Consolas, monospace;
+            font-size: 0.9em;
+        }}
+        .md-content hr {{
+            border: 0; border-top: 1px solid var(--border);
+            margin: 20px 0;
+        }}
+        .md-content h1 {{
+            font-size: 18px; font-weight: 600;
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 12px; margin-bottom: 16px;
+        }}
+        .md-content h2 {{
+            font-size: 14px; font-weight: 600;
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 8px; margin-top: 20px; margin-bottom: 10px;
+        }}
+        .md-content h3 {{
+            font-size: 13px; font-weight: 600;
+            margin-top: 16px; margin-bottom: 8px;
+        }}
+        .md-content p {{ font-size: 12px; margin-bottom: 8px; color: var(--text); }}
+        .md-content ul {{ font-size: 12px; padding-left: 16px; margin: 8px 0; }}
+        .md-content li {{ margin-bottom: 4px; }}
+        .md-content strong {{ font-weight: 600; }}
+        .nav-bar {{
+            padding: 8px 16px;
+            border-bottom: 1px solid var(--border);
+            background: var(--surface);
+        }}
+        .nav-bar a {{
+            color: var(--text-muted); text-decoration: none;
+            margin-right: 16px; font-size: 12px;
+        }}
+        .nav-bar a:hover {{ color: var(--text); text-decoration: underline; }}
+        .nav-bar a.active {{ color: var(--accent); font-weight: 600; }}
     </style>
 </head>
 <body>
