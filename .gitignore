@@ -201,6 +201,11 @@ cython_debug/
 .cursorignore
 .cursorindexingignore
 
+# ansible-doc-renderer build output
+tools/ansible-doc-renderer/out/
+tools/ansible-doc-renderer/node_modules/
+docs/_site/
+
 # Marimo
 marimo/_static/
 marimo/_lsp/
