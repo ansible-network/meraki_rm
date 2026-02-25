@@ -1,5 +1,5 @@
 ---
-expected_config: &id001
+expected_config:
   number: 1
   name: Test-Config
   enabled: true
@@ -8,4 +8,12 @@ expected_config: &id001
   psk: testpassword123
   default_vlan_id: 1
   visible: true
-prepare_config: *id001
+prepare_config:
+  number: 1
+  name: Replaced-Config
+  enabled: false
+  auth_mode: open
+  encryption_mode: wpa
+  psk: testpassword123
+  default_vlan_id: 1
+  visible: true

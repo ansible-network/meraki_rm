@@ -349,27 +349,59 @@ def _cleanup_singleton_yml(module_name: str) -> str:
 def _build_vars(
     merged_vars: dict,
     gathered_vars: dict | None,
+    replaced_vars: dict | None,
     is_singleton: bool,
 ) -> dict:
     """Build the vars.yml content for the check scenario.
 
     For collections:  expected_config = merged config (the desired change).
-    For singletons:   prepare_config  = gathered config (baseline to seed),
+    For singletons:   prepare_config  = baseline config (must differ from expected),
                       expected_config = merged config (the desired change).
+
+    The baseline is sourced from gathered, then replaced (which has
+    REPLACED_OVERRIDES applied), then a mutated copy of expected_config
+    as a last resort.  The baseline MUST differ from expected_config so
+    check mode predicts ``changed=true``.
     """
-    result = {"expected_config": merged_vars["expected_config"]}
+    expected = merged_vars["expected_config"]
+    result = {"expected_config": expected}
 
     if is_singleton:
-        if gathered_vars:
-            result["prepare_config"] = gathered_vars["expected_config"]
-        else:
-            result["prepare_config"] = merged_vars["expected_config"]
+        baseline = None
+        if gathered_vars and gathered_vars.get("expected_config") != expected:
+            baseline = gathered_vars["expected_config"]
+        if baseline is None and replaced_vars:
+            candidate = replaced_vars.get("expected_config")
+            if candidate and candidate != expected:
+                baseline = candidate
+        if baseline is None:
+            baseline = _mutate_baseline(expected)
+        result["prepare_config"] = baseline
 
     pk = merged_vars.get("server_assigned_pk")
     if pk:
         result["server_assigned_pk"] = pk
 
     return result
+
+
+def _mutate_baseline(config: dict) -> dict:
+    """Produce a config that is guaranteed to differ from *config*.
+
+    Flips booleans, tweaks numbers, and appends to strings so check mode
+    will always detect a change.
+    """
+    mutated = {}
+    for key, val in config.items():
+        if isinstance(val, bool):
+            mutated[key] = not val
+        elif isinstance(val, int):
+            mutated[key] = val + 1
+        elif isinstance(val, str):
+            mutated[key] = val + "_baseline"
+        else:
+            mutated[key] = val
+    return mutated
 
 
 def generate_check_scenario(module_name: str, dry_run: bool = False) -> list[str]:
@@ -397,10 +429,14 @@ def generate_check_scenario(module_name: str, dry_run: bool = False) -> list[str
     scope_value = make_scope_id(scope_param, module_name, "check")
 
     gathered_vars = None
+    replaced_vars = None
     if is_singleton:
         gathered_vars_file = module_dir / "gathered" / "vars.yml"
         if gathered_vars_file.exists():
             gathered_vars = yaml.safe_load(gathered_vars_file.read_text())
+        replaced_vars_file = module_dir / "replaced" / "vars.yml"
+        if replaced_vars_file.exists():
+            replaced_vars = yaml.safe_load(replaced_vars_file.read_text())
 
     check_dir = module_dir / "check"
     actions = [f"CREATE {check_dir}"]
@@ -412,7 +448,7 @@ def generate_check_scenario(module_name: str, dry_run: bool = False) -> list[str
 
     (check_dir / "molecule.yml").write_text(_molecule_yml())
 
-    vars_data = _build_vars(merged_vars, gathered_vars, is_singleton)
+    vars_data = _build_vars(merged_vars, gathered_vars, replaced_vars, is_singleton)
     (check_dir / "vars.yml").write_text("---\n" + yaml_dump(vars_data))
 
     (check_dir / "converge.yml").write_text(

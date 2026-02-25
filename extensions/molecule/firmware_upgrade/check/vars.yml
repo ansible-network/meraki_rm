@@ -1,4 +1,5 @@
 ---
-expected_config: &id001
+expected_config:
   timezone: America/Los_Angeles
-prepare_config: *id001
+prepare_config:
+  timezone: UTC

@@ -1,6 +1,9 @@
 ---
-expected_config: &id001
+expected_config:
   syslog_default_rule: true
   access: example
   service: example
-prepare_config: *id001
+prepare_config:
+  syslog_default_rule: false
+  access: example_baseline
+  service: example_baseline

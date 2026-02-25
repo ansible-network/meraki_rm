@@ -398,9 +398,14 @@ class BaseResourceActionPlugin(ActionBase):
         Uses ``before`` to decide create vs update and to skip no-ops.
         When SYSTEM_KEY is set, injects the resolved system key from
         matched ``before`` items so the platform manager can route API calls.
+
+        For Category C resources (system key only, no canonical key) with
+        ``replaced``, falls back to positional matching when content-based
+        matching fails — the Nth desired item maps to the Nth existing item.
         """
         operation = self._detect_operation({'state': state})
         match_key = self._match_key
+        cat_c = not self.CANONICAL_KEY and self.SYSTEM_KEY
 
         before_by_key = (
             self._index_by_key(before, match_key) if match_key else {}
@@ -410,15 +415,26 @@ class BaseResourceActionPlugin(ActionBase):
             if self.SYSTEM_KEY else {}
         )
 
-        for item in config:
+        cat_c_used = set()
+
+        for i, item in enumerate(config):
             current = None
 
             if self.SYSTEM_KEY and item.get(self.SYSTEM_KEY):
                 current = before_by_sys.get(str(item[self.SYSTEM_KEY]))
             elif match_key and item.get(match_key):
                 current = before_by_key.get(str(item[match_key]))
-            elif not self.CANONICAL_KEY and self.SYSTEM_KEY:
+            elif cat_c:
                 current = self._match_by_content(item, before)
+                if current is None and state != 'merged':
+                    for b in before:
+                        b_key = str(b.get(match_key, ''))
+                        if b_key and b_key not in cat_c_used:
+                            current = b
+                            cat_c_used.add(b_key)
+                            break
+                elif current is not None and current.get(match_key):
+                    cat_c_used.add(str(current[match_key]))
 
             if match_key:
                 if current is not None:
@@ -494,7 +510,8 @@ class BaseResourceActionPlugin(ActionBase):
             user_data = self._prepare_user_data(
                 item, current, scope_value, user_cls,
             )
-            manager.execute('replace', self.MODULE_NAME, user_data)
+            op = 'replace' if current is not None else 'create'
+            manager.execute(op, self.MODULE_NAME, user_data)
 
     @staticmethod
     def _config_matches(desired: dict, current: dict) -> bool:
@@ -597,7 +614,11 @@ class BaseResourceActionPlugin(ActionBase):
         return result
 
     def _predict_replaced(self, before, config, before_by_key):
-        """Predict replaced: item-level replacement, untouched items preserved."""
+        """Predict replaced: item-level replacement, untouched items preserved.
+
+        For Category C resources, falls back to positional replacement when
+        content-based matching fails (the desired values differ from current).
+        """
         match_key = self._match_key
         result = [dict(item) for item in before]
         result_by_key = {}
@@ -607,7 +628,10 @@ class BaseResourceActionPlugin(ActionBase):
                 if k:
                     result_by_key[k] = i
 
-        for item in config:
+        cat_c = not self.CANONICAL_KEY and self.SYSTEM_KEY
+        cat_c_used = set()
+
+        for i, item in enumerate(config):
             if match_key and item.get(match_key):
                 key = str(item[match_key])
                 idx = result_by_key.get(key)
@@ -616,13 +640,22 @@ class BaseResourceActionPlugin(ActionBase):
                 else:
                     result.append(dict(item))
                     result_by_key[key] = len(result) - 1
-            elif not self.CANONICAL_KEY and self.SYSTEM_KEY:
+            elif cat_c:
                 matched = self._match_by_content(item, result)
                 if matched is not None:
                     idx = result.index(matched)
                     result[idx] = dict(item)
+                    if matched.get(match_key):
+                        cat_c_used.add(str(matched[match_key]))
                 else:
-                    result.append(dict(item))
+                    for j, r in enumerate(result):
+                        r_key = str(r.get(match_key, ''))
+                        if r_key and r_key not in cat_c_used:
+                            result[j] = dict(item)
+                            cat_c_used.add(r_key)
+                            break
+                    else:
+                        result.append(dict(item))
             elif not match_key and before:
                 result[0] = dict(item)
             else:

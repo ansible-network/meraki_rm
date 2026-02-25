@@ -1,5 +1,7 @@
 ---
-expected_config: &id001
+expected_config:
   mode: none
   ids_rulesets: example
-prepare_config: *id001
+prepare_config:
+  mode: spoke
+  ids_rulesets: example

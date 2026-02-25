@@ -1,7 +1,11 @@
 ---
-expected_config: &id001
+expected_config:
   local_status_page_enabled: true
   remote_status_page_enabled: true
   reporting_enabled: true
   mode: none
-prepare_config: *id001
+prepare_config:
+  local_status_page_enabled: true
+  remote_status_page_enabled: true
+  reporting_enabled: true
+  mode: spoke

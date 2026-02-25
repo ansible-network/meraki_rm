@@ -1,8 +1,13 @@
 ---
-expected_config: &id001
+expected_config:
   mode: none
   subnet: 192.168.128.0/24
   enabled: true
   as_number: 1
   ibgp_hold_timer: 1
-prepare_config: *id001
+prepare_config:
+  mode: spoke
+  subnet: 10.20.0.0/24
+  enabled: false
+  as_number: 1
+  ibgp_hold_timer: 1

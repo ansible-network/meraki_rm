@@ -1,7 +1,11 @@
 ---
-expected_config: &id001
+expected_config:
   default_rules_enabled: true
   default_uplink: example
   load_balancing_enabled: true
   active_active_auto_vpn_enabled: true
-prepare_config: *id001
+prepare_config:
+  default_rules_enabled: false
+  default_uplink: example_baseline
+  load_balancing_enabled: false
+  active_active_auto_vpn_enabled: false

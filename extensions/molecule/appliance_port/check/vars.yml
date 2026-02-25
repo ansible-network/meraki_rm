@@ -1,5 +1,5 @@
 ---
-expected_config: &id001
+expected_config:
   port_id: '1'
   enabled: true
   type: access
@@ -7,4 +7,11 @@ expected_config: &id001
   allowed_vlans: all
   access_policy: example
   drop_untagged_traffic: true
-prepare_config: *id001
+prepare_config:
+  port_id: '1'
+  enabled: false
+  type: trunk
+  vlan: 20
+  allowed_vlans: all
+  access_policy: example
+  drop_untagged_traffic: true
