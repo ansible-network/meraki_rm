@@ -1,27 +1,14 @@
 ---
-- name: "Converge — organization_admins (overridden)"
+- name: "Converge \u2014 organization_admins (overridden)"
   hosts: localhost
   gather_facts: false
   vars_files:
   - vars.yml
   tasks:
-  - name: Gather current organization_admins to get server-assigned IDs
+  - name: "Override all organization_admins \u2014 desired state only"
     cisco.meraki_rm.meraki_organization_admins:
-      organization_id: 'org_organization_admins_overridden'
-      state: gathered
-    register: current
-
-  - name: Build config with actual server-assigned PK
-    ansible.builtin.set_fact:
-      overridden_config: >-
-        {{ expected_config | combine({'admin_id': current.gathered[0].admin_id}) }}
-    when: current.gathered | length > 0
-
-  - name: Override organization_admins configuration
-    cisco.meraki_rm.meraki_organization_admins:
-      organization_id: 'org_organization_admins_overridden'
+      organization_id: org_organization_admins_overridden
       state: overridden
       config:
-      - "{{ overridden_config }}"
-    register: overridden_result
-    when: overridden_config is defined
+      - '{{ expected_config }}'
+    register: override_result

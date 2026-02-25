@@ -8,9 +8,7 @@
       network_id: N_appliance_prefixes_overridden
       state: merged
       config:
-      - static_delegated_prefix_id: example
-        prefix: example
+      - prefix: example
         description: Managed by Ansible
-      - static_delegated_prefix_id: '999'
-        prefix: example
+      - prefix: 10.255.255.0/24
         description: Managed by Ansible

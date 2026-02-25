@@ -5,7 +5,6 @@
 - name: Define desired-state configuration
   ansible.builtin.set_fact:
     expected_config:
-      profile_id: example
       name: Replaced-Config
       is_default: true
 

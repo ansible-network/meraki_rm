@@ -1,5 +1,4 @@
 ---
 expected_config:
-  prefix: 192.168.1.0/24
+  prefix: example
   description: Managed by Ansible
-server_assigned_pk: static_delegated_prefix_id

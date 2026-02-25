@@ -8,5 +8,5 @@
       organization_id: org_organization_policy_objects_merged
       state: deleted
       config:
-      - policy_object_id: example
+      - name: Test-Config
     ignore_errors: true

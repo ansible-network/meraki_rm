@@ -4,7 +4,6 @@
 - name: Define replacement configuration
   ansible.builtin.set_fact:
     expected_config:
-      link_aggregation_id: example
 
 - name: Replace switch_link_aggregations configuration
   cisco.meraki_rm.meraki_switch_link_aggregations:

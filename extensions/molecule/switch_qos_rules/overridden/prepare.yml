@@ -8,16 +8,7 @@
       network_id: N_switch_qos_rules_overridden
       state: merged
       config:
-      - qos_rule_id: example
-        dscp: 1
-        vlan: 1
-        protocol: TCP
-        src_port: 1
-        dst_port: 1
-        src_port_range: example
-        dst_port_range: example
-      - qos_rule_id: '999'
-        dscp: 1
+      - dscp: 1
         vlan: 1
         protocol: TCP
         src_port: 1

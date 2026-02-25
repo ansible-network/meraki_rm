@@ -8,5 +8,5 @@
       organization_id: org_organization_admins_gathered
       state: deleted
       config:
-      - admin_id: example
+      - email: admin@example.com
     ignore_errors: true

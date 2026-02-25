@@ -8,8 +8,7 @@
       network_id: N_floor_plans_deleted
       state: merged
       config:
-      - floor_plan_id: example
-        name: Test-Config
+      - name: Test-Config
         width: 0.0
         height: 0.0
         floor_number: 0.0

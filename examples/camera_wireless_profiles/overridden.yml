@@ -5,7 +5,6 @@
 - name: Define desired-state configuration
   ansible.builtin.set_fact:
     expected_config:
-      wireless_profile_id: example
       name: Replaced-Config
 
 - name: Override all camera_wireless_profiles — desired state only

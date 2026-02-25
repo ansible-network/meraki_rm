@@ -8,5 +8,5 @@
       network_id: N_wireless_rf_profiles_merged
       state: deleted
       config:
-      - rf_profile_id: example
+      - name: Test-Config
     ignore_errors: true

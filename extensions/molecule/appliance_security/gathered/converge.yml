@@ -2,6 +2,8 @@
 - name: "Converge \u2014 appliance_security (gathered)"
   hosts: localhost
   gather_facts: false
+  vars_files:
+  - vars.yml
   tasks:
   - name: Gather current appliance_security configuration
     cisco.meraki_rm.meraki_appliance_security:

@@ -9,6 +9,7 @@ expected_config:
   address: 500 Terry Francine Street
   notes: example
   move_map_marker: true
+  floor_plan_id: example
 prepare_config:
   name: Test-Config Gathered
   tags:

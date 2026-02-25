@@ -8,6 +8,5 @@
       network_id: N_group_policies_deleted
       state: merged
       config:
-      - group_policy_id: example
-        name: Test-Config
+      - name: Test-Config
         splash_auth_settings: example

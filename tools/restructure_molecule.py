@@ -16,6 +16,7 @@ Usage:
 from __future__ import annotations
 
 import argparse
+import ast
 import os
 import shutil
 from pathlib import Path
@@ -24,6 +25,7 @@ import yaml
 
 ROOT = Path(__file__).resolve().parent.parent
 EXAMPLES_DIR = ROOT / "examples"
+ACTION_DIR = ROOT / "plugins" / "action"
 MOLECULE_DIR = ROOT / "extensions" / "molecule"
 
 STATES_NEEDING_PREPARE = {"replaced", "overridden", "deleted"}
@@ -35,6 +37,37 @@ _SCOPE_PREFIXES = {
     "organization_id": "org",
     "serial": "Q2XX",
 }
+
+
+CANONICAL_KEY_ALTERNATES = {
+    "name": "Extra-To-Delete",
+    "email": "extra@example.com",
+    "prefix": "10.255.255.0/24",
+    "iname": "extra_profile",
+}
+
+
+def parse_action_keys(module_name: str) -> dict:
+    """Parse CANONICAL_KEY and SYSTEM_KEY from the action plugin."""
+    action_file = ACTION_DIR / f"meraki_{module_name}.py"
+    if not action_file.exists():
+        return {}
+    source = action_file.read_text()
+    try:
+        tree = ast.parse(source)
+    except SyntaxError:
+        return {}
+    result: dict = {"CANONICAL_KEY": None, "SYSTEM_KEY": None}
+    for node in ast.walk(tree):
+        if isinstance(node, ast.ClassDef) and node.name == "ActionModule":
+            for item in node.body:
+                if isinstance(item, ast.Assign):
+                    for target in item.targets:
+                        if isinstance(target, ast.Name) and target.id in result:
+                            if isinstance(item.value, ast.Constant):
+                                result[target.id] = item.value.value
+            break
+    return result
 
 
 def make_scope_id(scope_param: str, module_name: str, state: str) -> str:
@@ -390,26 +423,23 @@ def process_module(module_name: str, dry_run: bool = False) -> list[str]:
 
         if state in STATES_NEEDING_PREPARE and merged_config:
             if state == "overridden" and merged_config:
+                action_keys = parse_action_keys(module_name)
+                canonical_key = action_keys.get("CANONICAL_KEY")
                 extra_seed = dict(merged_config)
-                # Vary the canonical key (name/email/prefix) to create a
-                # second resource.  Fall back to system key (_id) if no
-                # canonical key exists (Category C).
-                if "name" in extra_seed:
-                    extra_seed["name"] = "Extra-To-Delete"
-                    seed_config = [merged_config, extra_seed]
-                elif "email" in extra_seed:
-                    extra_seed["email"] = "extra@example.com"
-                    seed_config = [merged_config, extra_seed]
-                elif "prefix" in extra_seed:
-                    extra_seed["prefix"] = "10.255.255.0/24"
-                    seed_config = [merged_config, extra_seed]
-                elif "iname" in extra_seed:
-                    extra_seed["iname"] = "extra_profile"
+                if canonical_key and canonical_key in extra_seed:
+                    alt = CANONICAL_KEY_ALTERNATES.get(
+                        canonical_key, f"extra-{canonical_key}-value",
+                    )
+                    extra_seed[canonical_key] = alt
                     seed_config = [merged_config, extra_seed]
                 else:
-                    pk = next((k for k in extra_seed if k.endswith("_id") or k == "id"), None)
-                    if pk and isinstance(extra_seed.get(pk), str):
-                        extra_seed[pk] = "999"
+                    fallback = next(
+                        (k for k in ("name", "email", "prefix", "iname")
+                         if k in extra_seed),
+                        None,
+                    )
+                    if fallback:
+                        extra_seed[fallback] = CANONICAL_KEY_ALTERNATES[fallback]
                         seed_config = [merged_config, extra_seed]
                     else:
                         seed_config = merged_config

@@ -1,13 +1,28 @@
 ---
-- name: "Prepare — organization_admins (overridden)"
+- name: "Prepare \u2014 organization_admins (overridden)"
   hosts: localhost
   gather_facts: false
-  vars_files:
-    - ../merged/vars.yml
   tasks:
-    - name: Seed resource via merged (prerequisite for overridden)
-      cisco.meraki_rm.meraki_organization_admins:
-        organization_id: 'org_organization_admins_overridden'
-        state: merged
-        config:
-          - "{{ expected_config }}"
+  - name: Seed resource via merged (prerequisite for overridden)
+    cisco.meraki_rm.meraki_organization_admins:
+      organization_id: org_organization_admins_overridden
+      state: merged
+      config:
+      - name: Test-Config
+        email: admin@example.com
+        org_access: full
+        tags: &id001
+        - ansible
+        - test
+        authentication_method: Email
+        account_status: example
+        two_factor_auth_enabled: true
+        has_api_key: true
+      - name: Test-Config
+        email: extra@example.com
+        org_access: full
+        tags: *id001
+        authentication_method: Email
+        account_status: example
+        two_factor_auth_enabled: true
+        has_api_key: true

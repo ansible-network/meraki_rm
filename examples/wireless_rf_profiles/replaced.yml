@@ -4,7 +4,6 @@
 - name: Define replacement configuration
   ansible.builtin.set_fact:
     expected_config:
-      rf_profile_id: example
       name: Replaced-Config
       band_selection_type: example
       client_balancing_enabled: true

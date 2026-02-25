@@ -3,6 +3,6 @@ expected_config:
   name: Test-Config
   subnet: 192.168.128.0/24
   gateway_ip: 10.0.0.1
+  gateway_vlan_id: 1
   enabled: true
   ip_version: 1
-server_assigned_pk: static_route_id

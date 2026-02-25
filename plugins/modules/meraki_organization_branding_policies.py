@@ -79,7 +79,6 @@ EXAMPLES = r'''
 - name: Define expected configuration
   ansible.builtin.set_fact:
     expected_config:
-      branding_policy_id: example
       name: Test-Config
       enabled: true
 
@@ -97,12 +96,89 @@ EXAMPLES = r'''
       - merge_result is changed
       - merge_result.config | length == 1
 
-- name: Compare expected paths to result (subset: expected contained in result)
+- name: Compare expected paths to result (subset check)
   ansible.builtin.set_fact:
-    path_check: "{{ expected_paths | path_contained_in(result_paths) }}"
+    path_check: "{{ expected_paths | cisco.meraki_rm.path_contained_in(result_paths) }}"
   vars:
     expected_paths: "{{ expected_config | ansible.utils.to_paths }}"
     result_paths: "{{ merge_result.config[0] | ansible.utils.to_paths }}"
+
+- name: Assert all expected fields are present and match
+  ansible.builtin.assert:
+    that: path_check.contained | bool
+    success_msg: "{{ success_msg }}"
+    fail_msg: "{{ fail_msg }}"
+  vars:
+    success_msg: "All expected fields match. Extras: {{ path_check.extras }}"
+    fail_msg: "Missing or mismatch: {{ path_check.missing }}. Extras: {{ path_check.extras }}"
+
+# Manage Meraki organization branding policies — full resource replacement
+
+- name: Define replacement configuration
+  ansible.builtin.set_fact:
+    expected_config:
+      name: Replaced-Config
+      enabled: false
+
+- name: Replace organization_branding_policies configuration
+  cisco.meraki_rm.meraki_organization_branding_policies:
+    organization_id: "123456"
+    state: replaced
+    config:
+      - "{{ expected_config }}"
+  register: replace_result
+
+- name: Assert resource was replaced
+  ansible.builtin.assert:
+    that:
+      - replace_result is changed
+      - replace_result.config | length == 1
+
+- name: Compare expected paths to result (subset check)
+  ansible.builtin.set_fact:
+    path_check: "{{ expected_paths | cisco.meraki_rm.path_contained_in(result_paths) }}"
+  vars:
+    expected_paths: "{{ expected_config | ansible.utils.to_paths }}"
+    result_paths: "{{ replace_result.config[0] | ansible.utils.to_paths }}"
+
+- name: Assert all expected fields are present and match
+  ansible.builtin.assert:
+    that: path_check.contained | bool
+    success_msg: "{{ success_msg }}"
+    fail_msg: "{{ fail_msg }}"
+  vars:
+    success_msg: "All expected fields match. Extras: {{ path_check.extras }}"
+    fail_msg: "Missing or mismatch: {{ path_check.missing }}. Extras: {{ path_check.extras }}"
+
+# Manage Meraki organization branding policies — override all instances
+# Ensures ONLY these resources exist; any not listed are deleted.
+
+- name: Define desired-state configuration
+  ansible.builtin.set_fact:
+    expected_config:
+      name: Replaced-Config
+      enabled: false
+
+- name: Override all organization_branding_policies — desired state only
+  cisco.meraki_rm.meraki_organization_branding_policies:
+    organization_id: "123456"
+    state: overridden
+    config:
+      - "{{ expected_config }}"
+  register: override_result
+
+- name: Assert resources were overridden
+  ansible.builtin.assert:
+    that:
+      - override_result is changed
+      - override_result.config | length == 1
+
+- name: Compare expected paths to result (subset check)
+  ansible.builtin.set_fact:
+    path_check: "{{ expected_paths | cisco.meraki_rm.path_contained_in(result_paths) }}"
+  vars:
+    expected_paths: "{{ expected_config | ansible.utils.to_paths }}"
+    result_paths: "{{ override_result.config[0] | ansible.utils.to_paths }}"
 
 - name: Assert all expected fields are present and match
   ansible.builtin.assert:
@@ -137,7 +213,7 @@ EXAMPLES = r'''
 - name: Define resource to delete
   ansible.builtin.set_fact:
     expected_config:
-      branding_policy_id: example
+      name: Test-Config
 
 - name: Delete organization_branding_policies configuration
   cisco.meraki_rm.meraki_organization_branding_policies:

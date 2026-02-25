@@ -11,3 +11,6 @@
       - iname: example
         name: Test-Config
         is_default: true
+      - iname: extra_profile
+        name: Test-Config
+        is_default: true

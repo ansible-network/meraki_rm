@@ -8,8 +8,7 @@
       organization_id: org_organization_admins_deleted
       state: merged
       config:
-      - admin_id: example
-        name: Test-Config
+      - name: Test-Config
         email: admin@example.com
         org_access: full
         tags:
@@ -18,3 +17,4 @@
         authentication_method: Email
         account_status: example
         two_factor_auth_enabled: true
+        has_api_key: true

@@ -4,7 +4,6 @@
 - name: Define expected configuration
   ansible.builtin.set_fact:
     expected_config:
-      rule_id: example
       type: access
       default_policy: example
       ssid: example

@@ -172,19 +172,107 @@ EXAMPLES = r'''
       - "{{ expected_config }}"
   register: merge_result
 
-- name: Assert merge succeeded
+- name: Assert resource was created
   ansible.builtin.assert:
     that:
-      - merge_result is not failed
-      - merge_result.after | length > 0
-      - merge_result.before is defined
+      - merge_result is changed
+      - merge_result.config | length == 1
 
-- name: Compare expected paths to after state (subset check)
+- name: Compare expected paths to result (subset check)
   ansible.builtin.set_fact:
     path_check: "{{ expected_paths | cisco.meraki_rm.path_contained_in(result_paths) }}"
   vars:
     expected_paths: "{{ expected_config | ansible.utils.to_paths }}"
-    result_paths: "{{ merge_result.after[0] | ansible.utils.to_paths }}"
+    result_paths: "{{ merge_result.config[0] | ansible.utils.to_paths }}"
+
+- name: Assert all expected fields are present and match
+  ansible.builtin.assert:
+    that: path_check.contained | bool
+    success_msg: "{{ success_msg }}"
+    fail_msg: "{{ fail_msg }}"
+  vars:
+    success_msg: "All expected fields match. Extras: {{ path_check.extras }}"
+    fail_msg: "Missing or mismatch: {{ path_check.missing }}. Extras: {{ path_check.extras }}"
+
+# Manage Meraki appliance VLANs — full resource replacement
+
+- name: Define replacement configuration
+  ansible.builtin.set_fact:
+    expected_config:
+      vlan_id: "100"
+      name: Replaced-Config
+      subnet: 10.20.0.0/24
+      appliance_ip: 10.20.0.1
+      group_policy_id: example
+      template_vlan_type: unique
+      cidr: 192.168.128.0/24
+      mask: 24
+
+- name: Replace appliance_vlans configuration
+  cisco.meraki_rm.meraki_appliance_vlans:
+    network_id: "N_123456789012345678"
+    state: replaced
+    config:
+      - "{{ expected_config }}"
+  register: replace_result
+
+- name: Assert resource was replaced
+  ansible.builtin.assert:
+    that:
+      - replace_result is changed
+      - replace_result.config | length == 1
+
+- name: Compare expected paths to result (subset check)
+  ansible.builtin.set_fact:
+    path_check: "{{ expected_paths | cisco.meraki_rm.path_contained_in(result_paths) }}"
+  vars:
+    expected_paths: "{{ expected_config | ansible.utils.to_paths }}"
+    result_paths: "{{ replace_result.config[0] | ansible.utils.to_paths }}"
+
+- name: Assert all expected fields are present and match
+  ansible.builtin.assert:
+    that: path_check.contained | bool
+    success_msg: "{{ success_msg }}"
+    fail_msg: "{{ fail_msg }}"
+  vars:
+    success_msg: "All expected fields match. Extras: {{ path_check.extras }}"
+    fail_msg: "Missing or mismatch: {{ path_check.missing }}. Extras: {{ path_check.extras }}"
+
+# Manage Meraki appliance VLANs — override all instances
+# Ensures ONLY these resources exist; any not listed are deleted.
+
+- name: Define desired-state configuration
+  ansible.builtin.set_fact:
+    expected_config:
+      vlan_id: "100"
+      name: Replaced-Config
+      subnet: 10.20.0.0/24
+      appliance_ip: 10.20.0.1
+      group_policy_id: example
+      template_vlan_type: unique
+      cidr: 192.168.128.0/24
+      mask: 24
+
+- name: Override all appliance_vlans — desired state only
+  cisco.meraki_rm.meraki_appliance_vlans:
+    network_id: "N_123456789012345678"
+    state: overridden
+    config:
+      - "{{ expected_config }}"
+  register: override_result
+
+- name: Assert resources were overridden
+  ansible.builtin.assert:
+    that:
+      - override_result is changed
+      - override_result.config | length == 1
+
+- name: Compare expected paths to result (subset check)
+  ansible.builtin.set_fact:
+    path_check: "{{ expected_paths | cisco.meraki_rm.path_contained_in(result_paths) }}"
+  vars:
+    expected_paths: "{{ expected_config | ansible.utils.to_paths }}"
+    result_paths: "{{ override_result.config[0] | ansible.utils.to_paths }}"
 
 - name: Assert all expected fields are present and match
   ansible.builtin.assert:
@@ -206,13 +294,13 @@ EXAMPLES = r'''
 - name: Assert gathered config is not empty
   ansible.builtin.assert:
     that:
-      - gathered.gathered is defined
-      - gathered.gathered | length > 0
+      - gathered.config is defined
+      - gathered.config | length > 0
     fail_msg: "Gathered config is empty — expected at least one resource"
 
 - name: Display gathered configuration
   ansible.builtin.debug:
-    var: gathered.gathered
+    var: gathered.config
 
 # Manage Meraki appliance VLANs — remove configuration
 
@@ -220,7 +308,6 @@ EXAMPLES = r'''
   ansible.builtin.set_fact:
     expected_config:
       vlan_id: "100"
-      group_policy_id: example
 
 - name: Delete appliance_vlans configuration
   cisco.meraki_rm.meraki_appliance_vlans:
@@ -230,12 +317,11 @@ EXAMPLES = r'''
       - "{{ expected_config }}"
   register: delete_result
 
-- name: Assert delete succeeded
+- name: Assert resource was deleted
   ansible.builtin.assert:
     that:
+      - delete_result is changed
       - delete_result is not failed
-      - delete_result.before is defined
-      - delete_result.after is defined
 '''
 
 RETURN = r'''

@@ -1,13 +1,13 @@
 ---
-- name: "Prepare — organization_alert_profiles (overridden)"
+- name: "Prepare \u2014 organization_alert_profiles (overridden)"
   hosts: localhost
   gather_facts: false
-  vars_files:
-    - ../merged/vars.yml
   tasks:
-    - name: Seed resource via merged (prerequisite for overridden)
-      cisco.meraki_rm.meraki_organization_alert_profiles:
-        organization_id: 'org_organization_alert_profiles_overridden'
-        state: merged
-        config:
-          - "{{ expected_config }}"
+  - name: Seed resource via merged (prerequisite for overridden)
+    cisco.meraki_rm.meraki_organization_alert_profiles:
+      organization_id: org_organization_alert_profiles_overridden
+      state: merged
+      config:
+      - type: access
+        enabled: true
+        description: Managed by Ansible

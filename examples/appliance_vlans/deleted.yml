@@ -5,7 +5,6 @@
   ansible.builtin.set_fact:
     expected_config:
       vlan_id: "100"
-      group_policy_id: example
 
 - name: Delete appliance_vlans configuration
   cisco.meraki_rm.meraki_appliance_vlans:
@@ -15,9 +14,8 @@
       - "{{ expected_config }}"
   register: delete_result
 
-- name: Assert delete succeeded
+- name: Assert resource was deleted
   ansible.builtin.assert:
     that:
+      - delete_result is changed
       - delete_result is not failed
-      - delete_result.before is defined
-      - delete_result.after is defined

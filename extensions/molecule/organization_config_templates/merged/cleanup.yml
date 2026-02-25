@@ -8,6 +8,5 @@
       organization_id: org_organization_config_templates_merged
       state: deleted
       config:
-      - config_template_id: example
-        copy_from_network_id: example
+      - name: Test-Config
     ignore_errors: true

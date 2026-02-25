@@ -4,7 +4,6 @@
 - name: Define expected configuration
   ansible.builtin.set_fact:
     expected_config:
-      http_server_id: example
       name: Test-Config
       url: "https://example.com/webhook"
       shared_secret: example

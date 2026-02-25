@@ -4,7 +4,6 @@
 - name: Define expected configuration
   ansible.builtin.set_fact:
     expected_config:
-      wireless_profile_id: example
       name: Test-Config
 
 - name: Create camera_wireless_profiles with merged state

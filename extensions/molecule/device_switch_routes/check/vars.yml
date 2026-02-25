@@ -4,5 +4,6 @@ expected_config:
   subnet: 192.168.128.0/24
   interface_ip: 10.0.0.1
   default_gateway: 10.0.0.1
-  multicast_routing: disabled
-server_assigned_pk: interface_id
+  vlan_id: '100'
+  multicast_routing: example
+  dhcp_mode: example

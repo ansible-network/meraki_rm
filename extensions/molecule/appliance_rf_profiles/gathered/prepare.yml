@@ -8,5 +8,4 @@
       network_id: N_appliance_rf_profiles_gathered
       state: merged
       config:
-      - rf_profile_id: example
-        name: Test-Config
+      - name: Test-Config

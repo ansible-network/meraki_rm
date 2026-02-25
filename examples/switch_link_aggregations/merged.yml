@@ -4,7 +4,6 @@
 - name: Define expected configuration
   ansible.builtin.set_fact:
     expected_config:
-      link_aggregation_id: example
 
 - name: Create switch_link_aggregations with merged state
   cisco.meraki_rm.meraki_switch_link_aggregations:

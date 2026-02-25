@@ -8,8 +8,7 @@
       network_id: N_camera_quality_retention_profiles_gathered
       state: merged
       config:
-      - quality_retention_profile_id: example
-        name: Test-Config
+      - name: Test-Config
         max_retention_days: 30
         motion_based_retention_enabled: true
         restricted_bandwidth_mode_enabled: true

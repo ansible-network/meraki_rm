@@ -8,11 +8,9 @@
       network_id: N_webhooks_overridden
       state: merged
       config:
-      - http_server_id: example
-        name: Test-Config
+      - name: Test-Config
         url: https://example.com/webhook
         shared_secret: example
-      - http_server_id: '999'
-        name: Extra-To-Delete
+      - name: Extra-To-Delete
         url: https://example.com/webhook
         shared_secret: example

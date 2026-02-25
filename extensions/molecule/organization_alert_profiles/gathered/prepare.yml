@@ -8,7 +8,6 @@
       organization_id: org_organization_alert_profiles_gathered
       state: merged
       config:
-      - alert_config_id: example
-        type: access
+      - type: access
         enabled: true
         description: Managed by Ansible

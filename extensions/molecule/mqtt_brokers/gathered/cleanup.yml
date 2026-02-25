@@ -8,5 +8,5 @@
       network_id: N_mqtt_brokers_gathered
       state: deleted
       config:
-      - mqtt_broker_id: example
+      - name: Test-Config
     ignore_errors: true

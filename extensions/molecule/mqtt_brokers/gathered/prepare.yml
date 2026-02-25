@@ -8,7 +8,6 @@
       network_id: N_mqtt_brokers_gathered
       state: merged
       config:
-      - mqtt_broker_id: example
-        name: Test-Config
+      - name: Test-Config
         host: mqtt.example.com
         port: 1883

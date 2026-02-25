@@ -8,8 +8,7 @@
       network_id: N_auth_users_replaced
       state: merged
       config:
-      - meraki_auth_user_id: example
-        name: Test-Config
+      - name: Test-Config
         email: admin@example.com
         password: example
         account_type: example

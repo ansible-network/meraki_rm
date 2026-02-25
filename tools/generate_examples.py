@@ -18,6 +18,7 @@ These files serve as:
   2. ansible-doc examples (concatenated by tools/inject_examples.py)
 """
 
+import ast
 import os
 import re
 import sys
@@ -26,6 +27,7 @@ from pathlib import Path
 
 PROJECT_ROOT = Path(__file__).parent.parent
 MODULES_DIR = PROJECT_ROOT / 'plugins' / 'modules'
+ACTION_DIR = PROJECT_ROOT / 'plugins' / 'action'
 EXAMPLES_DIR = PROJECT_ROOT / 'examples'
 
 
@@ -169,10 +171,35 @@ def format_config(items, base_indent=6):
     return '\n'.join(lines)
 
 
-def build_items(subopts, replaced=False, max_fields=8):
-    """Build (key, value) pairs from suboptions."""
+def parse_action_keys(module_name: str) -> dict:
+    """Parse CANONICAL_KEY and SYSTEM_KEY from the corresponding action plugin."""
+    action_file = ACTION_DIR / f'{module_name}.py'
+    if not action_file.exists():
+        return {}
+    source = action_file.read_text()
+    try:
+        tree = ast.parse(source)
+    except SyntaxError:
+        return {}
+    result = {'CANONICAL_KEY': None, 'SYSTEM_KEY': None}
+    for node in ast.walk(tree):
+        if isinstance(node, ast.ClassDef) and node.name == 'ActionModule':
+            for item in node.body:
+                if isinstance(item, ast.Assign):
+                    for target in item.targets:
+                        if isinstance(target, ast.Name) and target.id in result:
+                            if isinstance(item.value, ast.Constant):
+                                result[target.id] = item.value.value
+            break
+    return result
+
+
+def build_items(subopts, replaced=False, max_fields=8, system_key=None):
+    """Build (key, value) pairs from suboptions, skipping the system key."""
     items = []
     for fname, fspec in subopts.items():
+        if fname == system_key:
+            continue
         ftype = fspec.get('type', 'str')
         choices = fspec.get('choices')
         if ftype == 'dict' and fname not in FIELD_SAMPLES:
@@ -185,10 +212,16 @@ def build_items(subopts, replaced=False, max_fields=8):
     return items
 
 
-def id_items(subopts):
-    """Extract only identity/key fields for delete operations."""
+def id_items(subopts, canonical_key=None, system_key=None):
+    """Extract identity fields for delete operations using the canonical key."""
+    if canonical_key and canonical_key in subopts:
+        fspec = subopts[canonical_key]
+        return [(canonical_key, sample_value(canonical_key, fspec.get('type', 'str')))]
+
     items = []
     for fname, fspec in subopts.items():
+        if fname == system_key:
+            continue
         if fspec.get('required') or fname.endswith('_id') or fname == 'number':
             items.append((fname, sample_value(fname, fspec.get('type', 'str'))))
             if len(items) >= 2:
@@ -233,6 +266,8 @@ def parse_module(filepath):
         scope = 'organization_id'
         scope_value = '123456'
 
+    action_keys = parse_action_keys(module_name)
+
     return {
         'module_name': module_name,
         'fqcn': f'cisco.meraki_rm.{module_name}',
@@ -242,6 +277,8 @@ def parse_module(filepath):
         'config_subopts': config_subopts,
         'is_facts': is_facts,
         'short_desc': doc.get('short_description', module_name),
+        'canonical_key': action_keys.get('CANONICAL_KEY'),
+        'system_key': action_keys.get('SYSTEM_KEY'),
     }
 
 
@@ -291,7 +328,7 @@ def assert_block(result_var):
 def gen_merged(meta):
     fqcn, scope, sv = meta['fqcn'], meta['scope'], meta['scope_value']
     short = meta['short_desc']
-    items = build_items(meta['config_subopts'])
+    items = build_items(meta['config_subopts'], system_key=meta.get('system_key'))
     fact_block = format_set_fact(items)
     return f"""---
 # {short} — create or update
@@ -320,7 +357,7 @@ def gen_merged(meta):
 def gen_replaced(meta):
     fqcn, scope, sv = meta['fqcn'], meta['scope'], meta['scope_value']
     short = meta['short_desc']
-    items = build_items(meta['config_subopts'], replaced=True)
+    items = build_items(meta['config_subopts'], replaced=True, system_key=meta.get('system_key'))
     fact_block = format_set_fact(items)
     return f"""---
 # {short} — full resource replacement
@@ -349,7 +386,7 @@ def gen_replaced(meta):
 def gen_overridden(meta):
     fqcn, scope, sv = meta['fqcn'], meta['scope'], meta['scope_value']
     short = meta['short_desc']
-    items = build_items(meta['config_subopts'], replaced=True)
+    items = build_items(meta['config_subopts'], replaced=True, system_key=meta.get('system_key'))
     fact_block = format_set_fact(items)
     return f"""---
 # {short} — override all instances
@@ -404,7 +441,9 @@ def gen_gathered(meta):
 def gen_deleted(meta):
     fqcn, scope, sv = meta['fqcn'], meta['scope'], meta['scope_value']
     short = meta['short_desc']
-    items = id_items(meta['config_subopts'])
+    items = id_items(meta['config_subopts'],
+                     canonical_key=meta.get('canonical_key'),
+                     system_key=meta.get('system_key'))
     fact_block = format_set_fact(items)
     return f"""---
 # {short} — remove configuration

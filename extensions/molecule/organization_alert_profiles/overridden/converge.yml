@@ -1,27 +1,14 @@
 ---
-- name: "Converge — organization_alert_profiles (overridden)"
+- name: "Converge \u2014 organization_alert_profiles (overridden)"
   hosts: localhost
   gather_facts: false
   vars_files:
   - vars.yml
   tasks:
-  - name: Gather current organization_alert_profiles to get server-assigned IDs
+  - name: "Override all organization_alert_profiles \u2014 desired state only"
     cisco.meraki_rm.meraki_organization_alert_profiles:
-      organization_id: 'org_organization_alert_profiles_overridden'
-      state: gathered
-    register: current
-
-  - name: Build config with actual server-assigned PK
-    ansible.builtin.set_fact:
-      overridden_config: >-
-        {{ expected_config | combine({'alert_config_id': current.gathered[0].alert_config_id}) }}
-    when: current.gathered | length > 0
-
-  - name: Override organization_alert_profiles configuration
-    cisco.meraki_rm.meraki_organization_alert_profiles:
-      organization_id: 'org_organization_alert_profiles_overridden'
+      organization_id: org_organization_alert_profiles_overridden
       state: overridden
       config:
-      - "{{ overridden_config }}"
-    register: overridden_result
-    when: overridden_config is defined
+      - '{{ expected_config }}'
+    register: override_result

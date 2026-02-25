@@ -1,4 +1,4 @@
+---
 expected_config:
   name: Replaced-Config
   enabled: false
-server_assigned_pk: branding_policy_id

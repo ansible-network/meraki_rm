@@ -8,6 +8,5 @@
       network_id: N_appliance_prefixes_replaced
       state: merged
       config:
-      - static_delegated_prefix_id: example
-        prefix: example
+      - prefix: example
         description: Managed by Ansible

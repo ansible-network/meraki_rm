@@ -8,5 +8,5 @@
       network_id: N_group_policies_gathered
       state: deleted
       config:
-      - group_policy_id: example
+      - name: Test-Config
     ignore_errors: true

@@ -5,7 +5,6 @@
 - name: Define desired-state configuration
   ansible.builtin.set_fact:
     expected_config:
-      link_aggregation_id: example
 
 - name: Override all switch_link_aggregations — desired state only
   cisco.meraki_rm.meraki_switch_link_aggregations:

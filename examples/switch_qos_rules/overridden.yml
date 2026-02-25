@@ -5,7 +5,6 @@
 - name: Define desired-state configuration
   ansible.builtin.set_fact:
     expected_config:
-      qos_rule_id: example
       dscp: 1
       vlan: 20
       protocol: TCP

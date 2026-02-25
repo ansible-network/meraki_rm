@@ -1,5 +1,5 @@
 ---
-- name: "Converge — switch_acl (replaced)"
+- name: "Converge \u2014 switch_acl (replaced)"
   hosts: localhost
   gather_facts: false
   vars_files:

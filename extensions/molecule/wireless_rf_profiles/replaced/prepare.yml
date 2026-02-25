@@ -8,8 +8,7 @@
       network_id: N_wireless_rf_profiles_replaced
       state: merged
       config:
-      - rf_profile_id: example
-        name: Test-Config
+      - name: Test-Config
         band_selection_type: example
         client_balancing_enabled: true
         is_indoor_default: true

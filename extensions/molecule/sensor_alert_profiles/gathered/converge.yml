@@ -2,6 +2,8 @@
 - name: "Converge \u2014 sensor_alert_profiles (gathered)"
   hosts: localhost
   gather_facts: false
+  vars_files:
+  - vars.yml
   tasks:
   - name: Gather current sensor_alert_profiles configuration
     cisco.meraki_rm.meraki_sensor_alert_profiles:

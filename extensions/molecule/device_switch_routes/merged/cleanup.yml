@@ -8,6 +8,5 @@
       serial: Q2XX-device_switch_routes-merged
       state: deleted
       config:
-      - interface_id: example
-        vlan_id: '100'
+      - name: Test-Config
     ignore_errors: true

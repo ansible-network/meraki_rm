@@ -1,6 +1,5 @@
+---
 expected_config:
-  type: wanStatus
-  enabled: true
-  description: Managed by Ansible
-  alert_config_id: example
-server_assigned_pk: alert_config_id
+  type: access
+  enabled: false
+  description: Replaced by Ansible

@@ -5,7 +5,6 @@
 - name: Define desired-state configuration
   ansible.builtin.set_fact:
     expected_config:
-      static_route_id: example
       name: Replaced-Config
       subnet: 10.20.0.0/24
       gateway_ip: 10.0.0.1

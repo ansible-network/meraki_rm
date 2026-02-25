@@ -1,4 +1,5 @@
 ---
 expected_config:
   name: Test-Config
-server_assigned_pk: id
+  message: example
+  include_sensor_url: true

@@ -1,27 +1,14 @@
 ---
-- name: "Converge — organization_config_templates (replaced)"
+- name: "Converge \u2014 organization_config_templates (replaced)"
   hosts: localhost
   gather_facts: false
   vars_files:
   - vars.yml
   tasks:
-  - name: Gather current organization_config_templates to get server-assigned IDs
-    cisco.meraki_rm.meraki_organization_config_templates:
-      organization_id: 'org_organization_config_templates_replaced'
-      state: gathered
-    register: current
-
-  - name: Build config with actual server-assigned PK
-    ansible.builtin.set_fact:
-      replaced_config: >-
-        {{ expected_config | combine({'config_template_id': current.gathered[0].config_template_id}) }}
-    when: current.gathered | length > 0
-
   - name: Replace organization_config_templates configuration
     cisco.meraki_rm.meraki_organization_config_templates:
-      organization_id: 'org_organization_config_templates_replaced'
+      organization_id: org_organization_config_templates_replaced
       state: replaced
       config:
-      - "{{ replaced_config }}"
-    register: replaced_result
-    when: replaced_config is defined
+      - '{{ expected_config }}'
+    register: replace_result

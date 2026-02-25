@@ -8,7 +8,6 @@
       organization_id: org_organization_config_templates_deleted
       state: merged
       config:
-      - config_template_id: example
-        name: Test-Config
+      - name: Test-Config
         time_zone: example
         copy_from_network_id: example

@@ -8,7 +8,6 @@
       network_id: N_sensor_alert_profiles_gathered
       state: merged
       config:
-      - id: example
-        name: Test-Config
+      - name: Test-Config
         message: example
         include_sensor_url: true

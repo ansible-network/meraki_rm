@@ -8,6 +8,5 @@
       organization_id: org_organization_branding_policies_gathered
       state: merged
       config:
-      - branding_policy_id: example
-        name: Test-Config
+      - name: Test-Config
         enabled: true

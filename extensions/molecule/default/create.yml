@@ -12,7 +12,8 @@
     - name: Start mock server in background
       ansible.builtin.command:
         cmd: >-
-          python -m tools.mock_server.server
+          {{ lookup('env', 'MOLECULE_PROJECT_DIRECTORY') }}/venv/bin/python
+          -m tools.mock_server.server
           --spec {{ mock_server_spec }}
           --port {{ mock_server_port }}
           --daemon

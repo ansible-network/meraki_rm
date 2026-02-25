@@ -1,13 +1,14 @@
 ---
-- name: "Prepare — organization_branding_policies (overridden)"
+- name: "Prepare \u2014 organization_branding_policies (overridden)"
   hosts: localhost
   gather_facts: false
-  vars_files:
-    - ../merged/vars.yml
   tasks:
-    - name: Seed resource via merged (prerequisite for overridden)
-      cisco.meraki_rm.meraki_organization_branding_policies:
-        organization_id: 'org_organization_branding_policies_overridden'
-        state: merged
-        config:
-          - "{{ expected_config }}"
+  - name: Seed resource via merged (prerequisite for overridden)
+    cisco.meraki_rm.meraki_organization_branding_policies:
+      organization_id: org_organization_branding_policies_overridden
+      state: merged
+      config:
+      - name: Test-Config
+        enabled: true
+      - name: Extra-To-Delete
+        enabled: true

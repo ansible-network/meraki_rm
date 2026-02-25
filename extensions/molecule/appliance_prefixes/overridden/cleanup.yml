@@ -8,5 +8,5 @@
       network_id: N_appliance_prefixes_overridden
       state: deleted
       config:
-      - static_delegated_prefix_id: example
+      - prefix: example
     ignore_errors: true

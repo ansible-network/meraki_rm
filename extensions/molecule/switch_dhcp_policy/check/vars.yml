@@ -1,5 +1,5 @@
 ---
 expected_config:
-  default_policy: allow
+  default_policy: example
 prepare_config:
   default_policy: block

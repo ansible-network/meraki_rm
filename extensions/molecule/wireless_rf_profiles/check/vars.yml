@@ -1,6 +1,7 @@
 ---
 expected_config:
   name: Test-Config
-  band_selection_type: ssid
+  band_selection_type: example
   client_balancing_enabled: true
-server_assigned_pk: rf_profile_id
+  is_indoor_default: true
+  is_outdoor_default: true

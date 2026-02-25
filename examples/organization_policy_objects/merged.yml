@@ -4,7 +4,6 @@
 - name: Define expected configuration
   ansible.builtin.set_fact:
     expected_config:
-      policy_object_id: example
       name: Test-Config
       category: adaptivePolicy
       type: adaptivePolicyIpv4Cidr

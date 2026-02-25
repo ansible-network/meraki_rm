@@ -1,0 +1,5 @@
+---
+expected_config:
+  name: Replaced-Config
+  is_monitor_only: true
+  virtual_mac: example

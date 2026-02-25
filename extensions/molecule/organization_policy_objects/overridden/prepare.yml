@@ -1,13 +1,24 @@
 ---
-- name: "Prepare — organization_policy_objects (overridden)"
+- name: "Prepare \u2014 organization_policy_objects (overridden)"
   hosts: localhost
   gather_facts: false
-  vars_files:
-    - ../merged/vars.yml
   tasks:
-    - name: Seed resource via merged (prerequisite for overridden)
-      cisco.meraki_rm.meraki_organization_policy_objects:
-        organization_id: 'org_organization_policy_objects_overridden'
-        state: merged
-        config:
-          - "{{ expected_config }}"
+  - name: Seed resource via merged (prerequisite for overridden)
+    cisco.meraki_rm.meraki_organization_policy_objects:
+      organization_id: org_organization_policy_objects_overridden
+      state: merged
+      config:
+      - name: Test-Config
+        category: adaptivePolicy
+        type: adaptivePolicyIpv4Cidr
+        cidr: 192.168.128.0/24
+        fqdn: example.com
+        ip: 10.0.0.1
+        mask: 24
+      - name: Extra-To-Delete
+        category: adaptivePolicy
+        type: adaptivePolicyIpv4Cidr
+        cidr: 192.168.128.0/24
+        fqdn: example.com
+        ip: 10.0.0.1
+        mask: 24

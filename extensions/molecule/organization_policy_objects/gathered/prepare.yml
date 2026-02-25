@@ -8,8 +8,7 @@
       organization_id: org_organization_policy_objects_gathered
       state: merged
       config:
-      - policy_object_id: example
-        name: Test-Config
+      - name: Test-Config
         category: adaptivePolicy
         type: adaptivePolicyIpv4Cidr
         cidr: 192.168.128.0/24

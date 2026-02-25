@@ -1,4 +1,4 @@
 ---
 expected_config:
   name: Test-Config
-server_assigned_pk: profile_id
+  is_default: true

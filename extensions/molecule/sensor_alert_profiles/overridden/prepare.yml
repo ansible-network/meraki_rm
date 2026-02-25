@@ -8,11 +8,9 @@
       network_id: N_sensor_alert_profiles_overridden
       state: merged
       config:
-      - id: example
-        name: Test-Config
+      - name: Test-Config
         message: example
         include_sensor_url: true
-      - id: '999'
-        name: Extra-To-Delete
+      - name: Extra-To-Delete
         message: example
         include_sensor_url: true

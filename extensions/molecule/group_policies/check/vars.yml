@@ -1,5 +1,4 @@
 ---
 expected_config:
   name: Test-Config
-  splash_auth_settings: bypass
-server_assigned_pk: group_policy_id
+  splash_auth_settings: example

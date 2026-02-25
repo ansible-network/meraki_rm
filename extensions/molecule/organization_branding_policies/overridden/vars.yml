@@ -1,4 +1,4 @@
+---
 expected_config:
-  name: Test-Config
-  enabled: true
-server_assigned_pk: branding_policy_id
+  name: Replaced-Config
+  enabled: false

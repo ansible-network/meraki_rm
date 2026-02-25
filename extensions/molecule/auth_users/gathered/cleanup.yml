@@ -8,5 +8,5 @@
       network_id: N_auth_users_gathered
       state: deleted
       config:
-      - meraki_auth_user_id: example
+      - email: admin@example.com
     ignore_errors: true

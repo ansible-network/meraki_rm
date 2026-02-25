@@ -5,7 +5,6 @@
 - name: Define desired-state configuration
   ansible.builtin.set_fact:
     expected_config:
-      quality_retention_profile_id: example
       name: Replaced-Config
       max_retention_days: 30
       motion_based_retention_enabled: true

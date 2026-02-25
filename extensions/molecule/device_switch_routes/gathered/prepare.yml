@@ -8,8 +8,7 @@
       serial: Q2XX-device_switch_routes-gathered
       state: merged
       config:
-      - interface_id: example
-        name: Test-Config
+      - name: Test-Config
         subnet: 192.168.128.0/24
         interface_ip: 10.0.0.1
         default_gateway: 10.0.0.1

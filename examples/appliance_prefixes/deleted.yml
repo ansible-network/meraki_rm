@@ -4,7 +4,7 @@
 - name: Define resource to delete
   ansible.builtin.set_fact:
     expected_config:
-      static_delegated_prefix_id: example
+      prefix: example
 
 - name: Delete appliance_prefixes configuration
   cisco.meraki_rm.meraki_appliance_prefixes:

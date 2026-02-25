@@ -15,3 +15,10 @@
         radius_accounting_enabled: true
         radius_coa_support_enabled: true
         guest_vlan_id: 1
+      - access_policy_number: extra-access_policy_number-value
+        name: Test-Config
+        access_policy_type: example
+        host_mode: example
+        radius_accounting_enabled: true
+        radius_coa_support_enabled: true
+        guest_vlan_id: 1

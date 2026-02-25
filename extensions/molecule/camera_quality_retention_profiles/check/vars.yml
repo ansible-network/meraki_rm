@@ -6,4 +6,4 @@ expected_config:
   restricted_bandwidth_mode_enabled: true
   audio_recording_enabled: true
   cloud_archive_enabled: true
-server_assigned_pk: quality_retention_profile_id
+  schedule_id: example

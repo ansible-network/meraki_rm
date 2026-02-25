@@ -1,8 +1,8 @@
 ---
 expected_config:
   syslog_default_rule: true
-  access: unrestricted
-  service: blocked
+  access: example
+  service: example
 prepare_config:
   syslog_default_rule: false
   access: blocked

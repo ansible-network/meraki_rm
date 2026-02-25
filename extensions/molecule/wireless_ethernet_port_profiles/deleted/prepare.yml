@@ -8,6 +8,5 @@
       network_id: N_wireless_ethernet_port_profiles_deleted
       state: merged
       config:
-      - profile_id: example
-        name: Test-Config
+      - name: Test-Config
         is_default: true

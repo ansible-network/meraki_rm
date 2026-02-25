@@ -21,19 +21,18 @@
       - "{{ expected_config }}"
   register: merge_result
 
-- name: Assert merge succeeded
+- name: Assert resource was created
   ansible.builtin.assert:
     that:
-      - merge_result is not failed
-      - merge_result.after | length > 0
-      - merge_result.before is defined
+      - merge_result is changed
+      - merge_result.config | length == 1
 
-- name: Compare expected paths to after state (subset check)
+- name: Compare expected paths to result (subset check)
   ansible.builtin.set_fact:
     path_check: "{{ expected_paths | cisco.meraki_rm.path_contained_in(result_paths) }}"
   vars:
     expected_paths: "{{ expected_config | ansible.utils.to_paths }}"
-    result_paths: "{{ merge_result.after[0] | ansible.utils.to_paths }}"
+    result_paths: "{{ merge_result.config[0] | ansible.utils.to_paths }}"
 
 - name: Assert all expected fields are present and match
   ansible.builtin.assert:

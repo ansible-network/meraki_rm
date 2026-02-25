@@ -8,6 +8,5 @@
       network_id: N_appliance_static_routes_merged
       state: deleted
       config:
-      - static_route_id: example
-        gateway_vlan_id: 1
+      - name: Test-Config
     ignore_errors: true

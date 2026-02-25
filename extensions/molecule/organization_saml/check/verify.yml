@@ -7,7 +7,7 @@
   tasks:
   - name: Gather actual state (should match prepare baseline)
     cisco.meraki_rm.meraki_organization_saml:
-      organization_id: 'org_organization_saml_check'
+      organization_id: org_organization_saml_check
       state: gathered
     register: actual
   - name: Assert gathered state is not empty

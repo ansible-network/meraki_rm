@@ -1,4 +1,3 @@
 ---
 expected_config:
   name: Test-Config
-server_assigned_pk: wireless_profile_id

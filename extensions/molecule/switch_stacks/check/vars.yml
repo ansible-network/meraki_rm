@@ -1,7 +1,5 @@
 ---
 expected_config:
   name: Test-Config
-  serials:
-  - Q2XX-XXXX-0001
-  - Q2XX-XXXX-0002
-server_assigned_pk: switch_stack_id
+  is_monitor_only: true
+  virtual_mac: example

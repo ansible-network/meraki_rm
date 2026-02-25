@@ -1,5 +1,12 @@
+---
 expected_config:
   name: Replaced-Config
-  email: admin@example.com
+  email: replaced-admin@example.com
   org_access: read-only
-server_assigned_pk: admin_id
+  tags:
+  - ansible
+  - replaced
+  authentication_method: Cisco SecureX Sign-On
+  account_status: example
+  two_factor_auth_enabled: true
+  has_api_key: true

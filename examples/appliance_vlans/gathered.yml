@@ -10,10 +10,10 @@
 - name: Assert gathered config is not empty
   ansible.builtin.assert:
     that:
-      - gathered.gathered is defined
-      - gathered.gathered | length > 0
+      - gathered.config is defined
+      - gathered.config | length > 0
     fail_msg: "Gathered config is empty — expected at least one resource"
 
 - name: Display gathered configuration
   ansible.builtin.debug:
-    var: gathered.gathered
+    var: gathered.config

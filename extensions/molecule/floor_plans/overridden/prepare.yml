@@ -8,15 +8,13 @@
       network_id: N_floor_plans_overridden
       state: merged
       config:
-      - floor_plan_id: example
-        name: Test-Config
+      - name: Test-Config
         width: 0.0
         height: 0.0
         floor_number: 0.0
         image_contents: example
         image_extension: example
-      - floor_plan_id: '999'
-        name: Extra-To-Delete
+      - name: Extra-To-Delete
         width: 0.0
         height: 0.0
         floor_number: 0.0

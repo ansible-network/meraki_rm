@@ -4,7 +4,6 @@
 - name: Define replacement configuration
   ansible.builtin.set_fact:
     expected_config:
-      static_delegated_prefix_id: example
       prefix: example
       description: Replaced by Ansible
 

@@ -8,16 +8,14 @@
       serial: Q2XX-device_switch_routes-overridden
       state: merged
       config:
-      - interface_id: example
-        name: Test-Config
+      - name: Test-Config
         subnet: 192.168.128.0/24
         interface_ip: 10.0.0.1
         default_gateway: 10.0.0.1
         vlan_id: '100'
         multicast_routing: example
         dhcp_mode: example
-      - interface_id: '999'
-        name: Extra-To-Delete
+      - name: Extra-To-Delete
         subnet: 192.168.128.0/24
         interface_ip: 10.0.0.1
         default_gateway: 10.0.0.1

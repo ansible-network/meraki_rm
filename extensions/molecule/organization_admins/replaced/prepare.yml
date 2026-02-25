@@ -1,13 +1,20 @@
 ---
-- name: "Prepare — organization_admins (replaced)"
+- name: "Prepare \u2014 organization_admins (replaced)"
   hosts: localhost
   gather_facts: false
-  vars_files:
-    - ../merged/vars.yml
   tasks:
-    - name: Seed resource via merged (prerequisite for replaced)
-      cisco.meraki_rm.meraki_organization_admins:
-        organization_id: 'org_organization_admins_replaced'
-        state: merged
-        config:
-          - "{{ expected_config }}"
+  - name: Seed resource via merged (prerequisite for replaced)
+    cisco.meraki_rm.meraki_organization_admins:
+      organization_id: org_organization_admins_replaced
+      state: merged
+      config:
+      - name: Test-Config
+        email: admin@example.com
+        org_access: full
+        tags:
+        - ansible
+        - test
+        authentication_method: Email
+        account_status: example
+        two_factor_auth_enabled: true
+        has_api_key: true

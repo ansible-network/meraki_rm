@@ -8,5 +8,5 @@
       network_id: N_camera_wireless_profiles_merged
       state: deleted
       config:
-      - wireless_profile_id: example
+      - name: Test-Config
     ignore_errors: true

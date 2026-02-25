@@ -8,6 +8,5 @@
       network_id: N_camera_quality_retention_profiles_overridden
       state: deleted
       config:
-      - quality_retention_profile_id: example
-        schedule_id: example
+      - name: Test-Config
     ignore_errors: true

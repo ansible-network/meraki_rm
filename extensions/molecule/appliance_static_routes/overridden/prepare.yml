@@ -8,15 +8,13 @@
       network_id: N_appliance_static_routes_overridden
       state: merged
       config:
-      - static_route_id: example
-        name: Test-Config
+      - name: Test-Config
         subnet: 192.168.128.0/24
         gateway_ip: 10.0.0.1
         gateway_vlan_id: 1
         enabled: true
         ip_version: 1
-      - static_route_id: '999'
-        name: Extra-To-Delete
+      - name: Extra-To-Delete
         subnet: 192.168.128.0/24
         gateway_ip: 10.0.0.1
         gateway_vlan_id: 1

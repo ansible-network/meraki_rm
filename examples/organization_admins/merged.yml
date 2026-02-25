@@ -4,7 +4,6 @@
 - name: Define expected configuration
   ansible.builtin.set_fact:
     expected_config:
-      admin_id: example
       name: Test-Config
       email: "admin@example.com"
       org_access: full
@@ -14,6 +13,7 @@
       authentication_method: Email
       account_status: example
       two_factor_auth_enabled: true
+      has_api_key: true
 
 - name: Create organization_admins with merged state
   cisco.meraki_rm.meraki_organization_admins:

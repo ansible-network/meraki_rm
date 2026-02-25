@@ -8,5 +8,5 @@
       organization_id: org_organization_branding_policies_merged
       state: deleted
       config:
-      - branding_policy_id: example
+      - name: Test-Config
     ignore_errors: true

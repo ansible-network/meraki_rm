@@ -4,7 +4,6 @@
 - name: Define expected configuration
   ansible.builtin.set_fact:
     expected_config:
-      meraki_auth_users_id: example
       name: Test-Config
       email: "admin@example.com"
       password: example

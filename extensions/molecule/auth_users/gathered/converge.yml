@@ -2,6 +2,8 @@
 - name: "Converge \u2014 auth_users (gathered)"
   hosts: localhost
   gather_facts: false
+  vars_files:
+  - vars.yml
   tasks:
   - name: Gather current auth_users configuration
     cisco.meraki_rm.meraki_auth_users:

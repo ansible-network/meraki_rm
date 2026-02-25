@@ -8,7 +8,6 @@
       network_id: N_wireless_air_marshal_rules_deleted
       state: merged
       config:
-      - rule_id: example
-        type: access
+      - type: access
         default_policy: example
         ssid: example

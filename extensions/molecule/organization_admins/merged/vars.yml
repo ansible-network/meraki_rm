@@ -9,3 +9,4 @@ expected_config:
   authentication_method: Email
   account_status: example
   two_factor_auth_enabled: true
+  has_api_key: true

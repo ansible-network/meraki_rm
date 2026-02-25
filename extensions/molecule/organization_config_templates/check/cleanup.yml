@@ -5,12 +5,12 @@
   tasks:
   - name: Gather remaining organization_config_templates resources
     cisco.meraki_rm.meraki_organization_config_templates:
-      organization_id: 'org_organization_config_templates_check'
+      organization_id: org_organization_config_templates_check
       state: gathered
     register: current
   - name: Remove all test resources
     cisco.meraki_rm.meraki_organization_config_templates:
-      organization_id: 'org_organization_config_templates_check'
+      organization_id: org_organization_config_templates_check
       state: deleted
       config: '{{ current.gathered }}'
     when: current.gathered | default([]) | length > 0

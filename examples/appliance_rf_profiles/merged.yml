@@ -4,7 +4,6 @@
 - name: Define expected configuration
   ansible.builtin.set_fact:
     expected_config:
-      rf_profile_id: example
       name: Test-Config
 
 - name: Create appliance_rf_profiles with merged state

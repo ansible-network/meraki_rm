@@ -1,0 +1,14 @@
+---
+- name: "Converge \u2014 switch_stacks (overridden)"
+  hosts: localhost
+  gather_facts: false
+  vars_files:
+  - vars.yml
+  tasks:
+  - name: "Override all switch_stacks \u2014 desired state only"
+    cisco.meraki_rm.meraki_switch_stacks:
+      network_id: N_switch_stacks_overridden
+      state: overridden
+      config:
+      - '{{ expected_config }}'
+    register: override_result

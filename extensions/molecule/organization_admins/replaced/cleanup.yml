@@ -1,18 +1,12 @@
 ---
-- name: "Cleanup — organization_admins (replaced)"
+- name: "Cleanup \u2014 organization_admins (replaced)"
   hosts: localhost
   gather_facts: false
   tasks:
-  - name: Gather remaining organization_admins resources
+  - name: Remove test resources
     cisco.meraki_rm.meraki_organization_admins:
-      organization_id: 'org_organization_admins_replaced'
-      state: gathered
-    register: current
-
-  - name: Remove all test resources
-    cisco.meraki_rm.meraki_organization_admins:
-      organization_id: 'org_organization_admins_replaced'
+      organization_id: org_organization_admins_replaced
       state: deleted
-      config: "{{ current.gathered }}"
-    when: current.gathered | default([]) | length > 0
+      config:
+      - email: admin@example.com
     ignore_errors: true

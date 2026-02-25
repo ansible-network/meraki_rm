@@ -71,7 +71,6 @@ EXAMPLES = r'''
 - name: Define expected configuration
   ansible.builtin.set_fact:
     expected_config:
-      wireless_profile_id: example
       name: Test-Config
 
 - name: Create camera_wireless_profiles with merged state
@@ -88,9 +87,9 @@ EXAMPLES = r'''
       - merge_result is changed
       - merge_result.config | length == 1
 
-- name: Compare expected paths to result (subset: expected contained in result)
+- name: Compare expected paths to result (subset check)
   ansible.builtin.set_fact:
-    path_check: "{{ expected_paths | path_contained_in(result_paths) }}"
+    path_check: "{{ expected_paths | cisco.meraki_rm.path_contained_in(result_paths) }}"
   vars:
     expected_paths: "{{ expected_config | ansible.utils.to_paths }}"
     result_paths: "{{ merge_result.config[0] | ansible.utils.to_paths }}"
@@ -109,7 +108,6 @@ EXAMPLES = r'''
 - name: Define replacement configuration
   ansible.builtin.set_fact:
     expected_config:
-      wireless_profile_id: example
       name: Replaced-Config
 
 - name: Replace camera_wireless_profiles configuration
@@ -126,9 +124,9 @@ EXAMPLES = r'''
       - replace_result is changed
       - replace_result.config | length == 1
 
-- name: Compare expected paths to result (subset: expected contained in result)
+- name: Compare expected paths to result (subset check)
   ansible.builtin.set_fact:
-    path_check: "{{ expected_paths | path_contained_in(result_paths) }}"
+    path_check: "{{ expected_paths | cisco.meraki_rm.path_contained_in(result_paths) }}"
   vars:
     expected_paths: "{{ expected_config | ansible.utils.to_paths }}"
     result_paths: "{{ replace_result.config[0] | ansible.utils.to_paths }}"
@@ -148,7 +146,6 @@ EXAMPLES = r'''
 - name: Define desired-state configuration
   ansible.builtin.set_fact:
     expected_config:
-      wireless_profile_id: example
       name: Replaced-Config
 
 - name: Override all camera_wireless_profiles — desired state only
@@ -165,9 +162,9 @@ EXAMPLES = r'''
       - override_result is changed
       - override_result.config | length == 1
 
-- name: Compare expected paths to result (subset: expected contained in result)
+- name: Compare expected paths to result (subset check)
   ansible.builtin.set_fact:
-    path_check: "{{ expected_paths | path_contained_in(result_paths) }}"
+    path_check: "{{ expected_paths | cisco.meraki_rm.path_contained_in(result_paths) }}"
   vars:
     expected_paths: "{{ expected_config | ansible.utils.to_paths }}"
     result_paths: "{{ override_result.config[0] | ansible.utils.to_paths }}"
@@ -205,7 +202,7 @@ EXAMPLES = r'''
 - name: Define resource to delete
   ansible.builtin.set_fact:
     expected_config:
-      wireless_profile_id: example
+      name: Test-Config
 
 - name: Delete camera_wireless_profiles configuration
   cisco.meraki_rm.meraki_camera_wireless_profiles:

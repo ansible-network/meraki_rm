@@ -1,6 +1,9 @@
+---
 expected_config:
-  name: Test-Config
-  category: adaptivePolicy
-  type: adaptivePolicyIpv4Cidr
+  name: Replaced-Config
+  category: network
+  type: cidr
   cidr: 192.168.128.0/24
-server_assigned_pk: policy_object_id
+  fqdn: example.com
+  ip: 10.0.0.1
+  mask: 24

@@ -8,9 +8,7 @@
       network_id: N_wireless_ethernet_port_profiles_overridden
       state: merged
       config:
-      - profile_id: example
-        name: Test-Config
+      - name: Test-Config
         is_default: true
-      - profile_id: '999'
-        name: Extra-To-Delete
+      - name: Extra-To-Delete
         is_default: true

@@ -8,11 +8,9 @@
       network_id: N_mqtt_brokers_overridden
       state: merged
       config:
-      - mqtt_broker_id: example
-        name: Test-Config
+      - name: Test-Config
         host: mqtt.example.com
         port: 1883
-      - mqtt_broker_id: '999'
-        name: Extra-To-Delete
+      - name: Extra-To-Delete
         host: mqtt.example.com
         port: 1883

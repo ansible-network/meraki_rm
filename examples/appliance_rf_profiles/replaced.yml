@@ -4,7 +4,6 @@
 - name: Define replacement configuration
   ansible.builtin.set_fact:
     expected_config:
-      rf_profile_id: example
       name: Replaced-Config
 
 - name: Replace appliance_rf_profiles configuration
