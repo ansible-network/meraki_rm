@@ -16,6 +16,9 @@ This document covers the **code generation tools** that automate creation of dat
 2. [User Model Dataclass Generator](#section-2-user-model-dataclass-generator)
 3. [API Dataclass Generator (Device Models)](#section-3-api-dataclass-generator-device-models)
 3B. [Field Description Sync Generator](#section-3b-field-description-sync-generator)
+3C. [MCP Server Documentation Generator](#section-3c-mcp-server-documentation-generator)
+3D. [CLI Documentation Generator](#section-3d-cli-documentation-generator)
+3E. [Markdown to HTML Converter](#section-3e-markdown-to-html-converter)
 4. [Usage Examples](#section-4-usage-examples)
 5. [Verification Checklist](#section-5-verification-checklist)
 6. [CI/CD Integration](#section-6-cicd-integration)
@@ -32,6 +35,10 @@ This document covers the **code generation tools** that automate creation of dat
 | User Model Dataclass | DOCUMENTATION string | `plugins/plugin_utils/user_models/` | Once per module |
 | Device Model Dataclass | OpenAPI spec | `plugins/plugin_utils/api/v{X}/generated/` | Once per API version |
 | Transform Mixin skeleton | Manual template | `plugins/plugin_utils/api/v{X}/` | Once per module+version |
+| Field descriptions | DOCUMENTATION string | `plugins/plugin_utils/user_models/` (in-place) | After DOCUMENTATION changes |
+| MCP server docs | User Model introspection | `docs/12-mcp-server.md` | After User Model changes |
+| CLI docs | User Model introspection | `docs/13-cli.md` | After User Model changes |
+| HTML pages | Markdown docs | `docs/_site/*.html` | CI build (GitHub Pages) |
 
 ### What Requires Manual Work
 
@@ -614,7 +621,102 @@ The tool is **idempotent**: running it again updates existing descriptions if th
 
 ### Why This Exists
 
-Module `DOCUMENTATION` strings define field descriptions for `ansible-doc` but are not accessible at Python import time (they are string constants in module files, not importable metadata). The MCP server needs descriptions when generating JSON Schema tool definitions. This generator bridges the gap by copying descriptions into the dataclass `field(metadata=...)` where they are available via `dataclasses.fields()`.
+Module `DOCUMENTATION` strings define field descriptions for `ansible-doc` but are not accessible at Python import time (they are string constants in module files, not importable metadata). The MCP server and CLI need descriptions when generating JSON Schema tool definitions and argparse help text. This generator bridges the gap by copying descriptions into the dataclass `field(metadata=...)` where they are available via `dataclasses.fields()`.
+
+---
+
+## SECTION 3C: MCP Server Documentation Generator
+
+### Tool: `generate_mcp_docs.py`
+
+**Location**: `tools/generate_mcp_docs.py`
+
+**Purpose**: Generate a complete MCP server reference document by introspecting User Model dataclasses. Produces a Markdown file with a tool summary table and detailed per-tool reference including metadata, input schemas, and config field tables.
+
+### How It Works
+
+1. Calls `build_tool_definitions()` from `plugins.plugin_utils.mcp.introspect`
+2. For each of the 48 tools, extracts scope, canonical key, system key, valid states, and JSON Schema
+3. Formats as a structured Markdown document with summary table and per-tool sections
+
+### Usage
+
+```bash
+python tools/generate_mcp_docs.py
+# → docs/12-mcp-server.md (48 tools)
+```
+
+### Output
+
+`docs/12-mcp-server.md` — auto-generated, do not edit manually. Contains:
+
+- Overview and installation instructions
+- Tool summary table (name, scope, canonical key, category, states)
+- Per-tool reference sections with metadata and input schema tables
+
+---
+
+## SECTION 3D: CLI Documentation Generator
+
+### Tool: `generate_cli_docs.py`
+
+**Location**: `tools/generate_cli_docs.py`
+
+**Purpose**: Generate a complete CLI reference document by introspecting User Model dataclasses. Produces a Markdown file with a command summary, usage examples, and per-command argument tables.
+
+### How It Works
+
+1. Calls `build_tool_definitions()` to discover all resources
+2. For each resource, reads field type hints and `metadata["description"]` to build argument tables
+3. Maps Python types to CLI type labels (string, integer, boolean, JSON)
+4. Formats as a structured Markdown document
+
+### Usage
+
+```bash
+python tools/generate_cli_docs.py
+# → docs/13-cli.md (48 commands)
+```
+
+### Output
+
+`docs/13-cli.md` — auto-generated, do not edit manually. Contains:
+
+- Overview, installation, and quick-start examples
+- Global flags reference (`--mock`, `--json`, `--yaml`, `--list`)
+- Complex argument handling (`@file.json` references)
+- Command summary table and per-command argument reference
+
+---
+
+## SECTION 3E: Markdown to HTML Converter
+
+### Tool: `md_to_html.py`
+
+**Location**: `tools/md_to_html.py`
+
+**Purpose**: Convert Markdown documentation files to themed HTML pages that match the ansible-doc-renderer site. Used in the GitHub Pages CI workflow to produce `mcp-server.html` and `cli.html` alongside the module documentation.
+
+### How It Works
+
+1. Parses Markdown using a standard-library-only converter (no external dependencies)
+2. Handles fenced code blocks, tables, headers, bold/italic, inline code, links, and horizontal rules
+3. Wraps output in the same HTML shell as the module docs (toolbar with zoom/theme, nav bar)
+4. Uses the shared `styles.css` CSS variables so pages look consistent in light/dark mode
+
+### Usage
+
+```bash
+python tools/md_to_html.py \
+    --output docs/_site \
+    --css-path styles.css \
+    docs/12-mcp-server.md docs/13-cli.md
+# → docs/_site/mcp-server.html, docs/_site/cli.html
+```
+
+### CI Integration
+
+Called automatically by `.github/workflows/static.yml` after the module docs are generated. The resulting HTML pages are uploaded alongside the module docs as a single GitHub Pages artifact.
 
 ---
 
@@ -807,9 +909,22 @@ After generation, verify:
 
 ## SECTION 6: CI/CD Integration
 
-### Automated Model Regeneration
+### Documentation Site (GitHub Pages)
 
-GitHub Actions workflow that triggers on OpenAPI spec changes:
+The `.github/workflows/static.yml` workflow builds the full documentation site on push to `main`:
+
+1. Builds the Ansible collection and installs it
+2. Runs `ansible-doc --metadata-dump` to extract module documentation
+3. Renders module HTML pages with the TypeScript `ansible-doc-renderer`
+4. Runs `generate_mcp_docs.py` and `generate_cli_docs.py` to produce Markdown
+5. Runs `md_to_html.py` to convert MCP server and CLI docs to themed HTML
+6. Deploys all pages to GitHub Pages
+
+The workflow triggers on changes to `plugins/modules/`, `plugins/plugin_utils/user_models/`, the renderer, or the generator tools.
+
+### Automated Model Regeneration (NovaCom Reference)
+
+For projects with OpenAPI-driven device models, a separate workflow can trigger on spec changes:
 
 ```yaml
 # .github/workflows/regenerate-models.yml
@@ -834,25 +949,21 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.11'
+          python-version: '3.12'
 
       - name: Install datamodel-code-generator
         run: pip install datamodel-code-generator
 
       - name: Regenerate API models
-        run: |
-          cd novacom.dashboard
-          bash tools/generators/generate_api_models.sh
+        run: bash tools/generators/generate_api_models.sh
 
       - name: Check for changes
         id: changes
         run: |
           git diff --exit-code plugins/plugin_utils/api/ || echo "changed=true" >> $GITHUB_OUTPUT
-          git diff --stat plugins/plugin_utils/api/
 
       - name: Run tests
         run: |
-          cd novacom.dashboard
           pip install -e .
           pytest tests/ -v --tb=short
 
@@ -863,9 +974,6 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           commit-message: "chore: regenerate API models from OpenAPI specs"
           title: "Regenerate API models"
-          body: |
-            Auto-generated changes from OpenAPI spec updates.
-            Please review and merge.
           branch: auto/regenerate-models
 ```
 
@@ -964,7 +1072,11 @@ FEATURES (doc 07)
 | 1 | `generate_user_dataclasses.py` | `UserAdmin` in `user_models/admin.py` |
 | 2 | `generate_api_models.sh` | `Admin`, `Organization`, etc. in `api/v1/generated/` |
 | 3 | Manual | `AdminTransformMixin_v1`, `APIAdmin_v1` in `api/v1/admin.py` |
-| 4 | Manual | Action plugin `novacom_organization_admin.py` |
+| 4 | Manual | Action plugin (2-line `USER_MODEL` class in Meraki) |
+| 5 | `generate_model_descriptions.py` | Field descriptions synced into User Model metadata |
+| 6 | `generate_mcp_docs.py` | `docs/12-mcp-server.md` |
+| 7 | `generate_cli_docs.py` | `docs/13-cli.md` |
+| 8 | `md_to_html.py` (CI) | `docs/_site/mcp-server.html`, `docs/_site/cli.html` |
 
 ---
 

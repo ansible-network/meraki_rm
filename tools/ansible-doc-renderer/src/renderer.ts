@@ -423,6 +423,10 @@ export function renderIndexPage(opts: IndexPageOptions): string {
 </head>
 <body>
     <div class="toolbar">
+        <button class="toolbar-btn" id="zoom-out-btn" title="Zoom out">\u2212</button>
+        <span class="zoom-label" id="zoom-level">100%</span>
+        <button class="toolbar-btn" id="zoom-in-btn" title="Zoom in">+</button>
+        <div class="toolbar-divider"></div>
         <button class="toolbar-btn" id="theme-btn" title="Toggle theme">auto</button>
     </div>
     
@@ -463,6 +467,21 @@ export function renderIndexPage(opts: IndexPageOptions): string {
                 group.style.display = anyVisible ? '' : 'none';
             });
         });
+    })();
+
+    // Zoom
+    (function() {
+        var currentZoom = 100;
+        var container = document.querySelector('.container');
+        var zoomLevel = document.getElementById('zoom-level');
+        var zoomIn = document.getElementById('zoom-in-btn');
+        var zoomOut = document.getElementById('zoom-out-btn');
+        if (zoomIn) { zoomIn.onclick = function() {
+            if (currentZoom < 200) { currentZoom += 10; container.style.zoom = currentZoom / 100; zoomLevel.textContent = currentZoom + '%'; }
+        }; }
+        if (zoomOut) { zoomOut.onclick = function() {
+            if (currentZoom > 50) { currentZoom -= 10; container.style.zoom = currentZoom / 100; zoomLevel.textContent = currentZoom + '%'; }
+        }; }
     })();
 
     // Theme toggle

@@ -585,6 +585,20 @@ class ActionModule(BaseResourceActionPlugin):
 | 6 | Validate output against same argspec |
 | 7 | Return `changed`, result data, and `failed`/`msg` on error |
 
+> **Meraki implementation**: The `cisco.meraki_rm` collection eliminates per-module
+> `run()` methods entirely. All resource metadata lives on the User Model dataclass.
+> `BaseResourceActionPlugin` provides a data-driven `run()` that loads the User Model
+> via `importlib`, syncs its metadata onto `self`, and dispatches the operation.
+> Each action plugin is pure configuration (~2 lines):
+>
+> ```python
+> class ActionModule(BaseResourceActionPlugin):
+>     USER_MODEL = 'plugins.plugin_utils.user_models.admin.UserAdmin'
+> ```
+>
+> Steps 1–7 above are handled entirely by the base class. Adding a new resource
+> requires only the User Model dataclass and this 2-line action plugin.
+
 ---
 
 ## SECTION 7: Step 6 — Test with Playbook
@@ -812,6 +826,13 @@ class ActionModule(BaseResourceActionPlugin):
         super(ActionModule, self).run(tmp, task_vars)
         # ... same pattern as admin (validate, manager, dataclass, execute, validate, return)
 ```
+
+> **Meraki implementation**: In `cisco.meraki_rm`, the action plugin would be:
+>
+> ```python
+> class ActionModule(BaseResourceActionPlugin):
+>     USER_MODEL = 'plugins.plugin_utils.user_models.site.UserSite'
+> ```
 
 ### 5. Test Playbook
 

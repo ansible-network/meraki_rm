@@ -2166,7 +2166,8 @@ class ActionModule(BaseResourceActionPlugin):
 >     USER_MODEL = 'plugins.plugin_utils.user_models.vlan.UserVlan'
 > ```
 >
-> The same User Model metadata drives the MCP server's tool generation —
+> The same User Model metadata drives the MCP server's tool generation
+> and the CLI's argparse subcommand generation —
 > see [03-sdk-architecture.md](03-sdk-architecture.md) §10 for details.
 
 ---
@@ -2334,7 +2335,7 @@ The foundation provides:
 
 ## Related Documents
 
-- **07-implementation-features.md** — Adding new resource modules (vlan, ssid, organization)
-- **08-implementation-generators.md** — Code generation tools
+- **07-adding-resources.md** — Adding new resource modules (vlan, ssid, organization)
+- **08-code-generators.md** — Code generation tools
 - **03-sdk-architecture.md** — Presentation-layer independence, SDK boundary
 - **04-data-model-transformation.md** — User Model, Device Model, transformation patterns

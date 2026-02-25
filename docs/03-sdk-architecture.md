@@ -495,6 +495,9 @@ plugins/plugin_utils/               # SDK root
 │   ├── schema.py                   # dataclass → JSON Schema conversion
 │   ├── introspect.py               # User Model discovery + tool definition generation
 │   └── server.py                   # MCP server (task and live modes)
+├── cli/                            # CLI subpackage
+│   └── main.py                     # Dynamic argparse from User Model introspection
+├── mock.py                         # Shared mock server lifecycle utilities
 └── pyproject.toml                  # Standalone Python packaging (meraki-rm-sdk)
 ```
 
@@ -525,6 +528,7 @@ This single class drives:
 |----------|---------------|
 | **Ansible action plugin** | `MODULE_NAME`, `SCOPE_PARAM`, `CANONICAL_KEY`, `SYSTEM_KEY`, `VALID_STATES`, field types |
 | **MCP server** | Same metadata + `field.metadata["description"]` for tool schemas |
+| **CLI** | Same metadata + field types for argparse flag generation |
 | **Code generators** | Field names, types, descriptions for docs and test scaffolding |
 
 ### Dual Packaging
@@ -539,9 +543,11 @@ dependencies = ["requests"]
 
 [project.optional-dependencies]
 mcp = ["mcp", "pyyaml"]
+cli = ["pyyaml", "requests"]
 
 [project.scripts]
 meraki-mcp-server = "meraki_rm_sdk.mcp.server:main"
+meraki-cli = "meraki_rm_sdk.cli.main:main"
 ```
 
 Install modes:
@@ -549,10 +555,11 @@ Install modes:
 | Mode | Command | Use Case |
 |------|---------|----------|
 | **Ansible collection** | `ansible-galaxy collection install cisco.meraki_rm` | Playbook authors |
-| **SDK (non-editable)** | `pip install plugins/plugin_utils/` | MCP server, introspection tools |
+| **SDK (non-editable)** | `pip install plugins/plugin_utils/` | Introspection tools |
 | **SDK + MCP** | `pip install 'plugins/plugin_utils/[mcp]'` | Full MCP server with dependencies |
+| **SDK + CLI** | `pip install 'plugins/plugin_utils/[cli]'` | Command-line interface |
 
-The `galaxy.yml` `build_ignore` list excludes `pyproject.toml`, `mcp/`, and Python packaging artifacts from the Ansible collection tarball.
+The `galaxy.yml` `build_ignore` list excludes `pyproject.toml`, `mcp/`, `cli/`, `mock.py`, and Python packaging artifacts from the Ansible collection tarball.
 
 ### MCP Server
 
@@ -563,12 +570,25 @@ The MCP server dynamically generates 48 tools by introspecting User Model datacl
 3. `schema.py` converts field types and `metadata["description"]` to JSON Schema
 4. `server.py` registers tools with the low-level `mcp.server.Server` API
 
-Two modes are supported:
+Two modes are supported, plus a `--mock` flag for integration testing:
 
 | Mode | CLI Flag | Behavior |
 |------|----------|----------|
 | **task** (default) | `--mode=task` | Returns Ansible task YAML snippets. No API key needed. |
 | **live** | `--mode=live` | Executes operations against the Meraki Dashboard API. Requires `MERAKI_API_KEY`. |
+| **mock** | `--mock` | Auto-starts the stateful mock server and runs in live mode against it. No API key needed. |
+
+### CLI
+
+The `meraki-cli` tool uses the same introspection pipeline as the MCP server to generate argparse subcommands dynamically:
+
+```bash
+meraki-cli vlan gathered --network-id L_123
+meraki-cli --mock --json switch-port merged --serial Q2XX --port-id 1 --name Uplink
+meraki-cli --list
+```
+
+Global flags: `--mock` (auto-start mock server), `--json`, `--yaml`, `--list`. Complex fields (Dict, List[Dict]) accept JSON strings or `@file.json` references.
 
 ### Action Plugin Simplification
 

@@ -239,6 +239,10 @@ def _wrap_html(title: str, body: str, css_path: str | None = None) -> str:
 </head>
 <body>
     <div class="toolbar">
+        <button class="toolbar-btn" id="zoom-out-btn" title="Zoom out">&minus;</button>
+        <span class="zoom-label" id="zoom-level">100%</span>
+        <button class="toolbar-btn" id="zoom-in-btn" title="Zoom in">+</button>
+        <div class="toolbar-divider"></div>
         <button class="toolbar-btn" id="theme-btn" title="Toggle theme">auto</button>
     </div>
     <nav class="nav-bar">
@@ -250,6 +254,19 @@ def _wrap_html(title: str, body: str, css_path: str | None = None) -> str:
         {body}
     </div>
     <script>
+    (function() {{
+        var currentZoom = 100;
+        var container = document.querySelector('.md-content');
+        var zoomLevel = document.getElementById('zoom-level');
+        var zoomIn = document.getElementById('zoom-in-btn');
+        var zoomOut = document.getElementById('zoom-out-btn');
+        if (zoomIn) {{ zoomIn.onclick = function() {{
+            if (currentZoom < 200) {{ currentZoom += 10; container.style.zoom = currentZoom / 100; zoomLevel.textContent = currentZoom + '%'; }}
+        }}; }}
+        if (zoomOut) {{ zoomOut.onclick = function() {{
+            if (currentZoom > 50) {{ currentZoom -= 10; container.style.zoom = currentZoom / 100; zoomLevel.textContent = currentZoom + '%'; }}
+        }}; }}
+    }})();
     (function() {{
         var themes = ['auto', 'light', 'dark'];
         var prefersDark = window.matchMedia('(prefers-color-scheme: dark)');
